@@ -1,0 +1,9 @@
+when searching with a string, reset the starting letter to All
+debug the redirect scan_qr problem size of name in index.html to avoid zomom in
+
+make the table.html capable of editing and unify it with the admin.html
+canzoni di baglioni catalogate come inglesi
+search box and lens bigger
+create the current requested song page for the user
+creae the most requested song page
+Refine menu

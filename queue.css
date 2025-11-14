@@ -1,0 +1,114 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    margin: 0;
+    padding: 0;
+}
+
+h1 {
+    text-align: center;
+    margin-top: 20px;
+}
+
+#queueContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 20px;
+}
+
+.song-item {
+    display: flex;
+    align-items: center;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 10px;
+    margin-bottom: 10px;
+    width: 80%;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.author-image {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    margin-right: 10px;
+}
+
+.song-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.song-info p {
+    margin: 0;
+}
+
+button {
+    margin-left: auto;
+    padding: 5px 10px;
+    border: none;
+    background-color: #ff4d4d;
+    color: white;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #ff0000;
+}
+
+/* Ensure the container is responsive */
+.admin-actions-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 1rem; /* Space between forms */
+}
+
+/* Style each form */
+.admin-actions-container form {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem; /* Space between form elements */
+    flex: 1 1 auto; /* Allow forms to grow and shrink */
+    min-width: 200px; /* Minimum width for responsiveness */
+}
+
+/* Style the form elements */
+.admin-actions-container label {
+    margin-right: 0.5rem;
+}
+
+.admin-actions-container input,
+.admin-actions-container button {
+    padding: 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.admin-actions-container button {
+    background-color: #4CAF50;
+    color: white;
+    cursor: pointer;
+}
+
+.admin-actions-container button:hover {
+    background-color: #45a049;
+}
+
+/* Align the button right next to the input field */
+#updateMaxRequestsForm {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem; /* Space between label and input */
+}
+
+#updateMaxRequestsForm input {
+    flex-grow: 1;
+}
+
+#updateMaxRequestsForm button {
+    margin-left: 0; /* Remove any left margin to ensure the button sticks to the input field */
+}

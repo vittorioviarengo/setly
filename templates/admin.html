@@ -1,0 +1,1548 @@
+<!DOCTYPE html>
+<html lang="{{ g.lang_code }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if tenant %}{{ tenant.name }} - Admin{% else %}Admin{% endif %}</title>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename=favicon) }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='nav.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='admin.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dialog.css') }}">
+    <script src="{{ url_for('static', filename='dialog.js') }}"></script>
+</head>
+<body>
+    {% include 'nav.html' %}
+    
+    <div class="admin-container">
+        <div class="admin-header">
+            <h1>{% if tenant %}{{ tenant.name }} - {{ _('Admin Page Title') }}{% else %}{{ _('Admin Page Title') }}{% endif %}</h1>
+            <p class="admin-subtitle">{{ _('Manage your artist profile and song library') }}</p>
+        </div>
+        
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">
+                            <span class="alert-icon">{% if category == 'success' %}✓{% elif category == 'error' %}✕{% else %}⚠{% endif %}</span>
+                            <span class="alert-message">{{ message|safe }}</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+        
+        <!-- Setup Wizard Card (full width) -->
+        <div class="wizard-banner">
+            <div class="wizard-banner-content">
+                <div class="wizard-icon">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <path d="M12 6v6l4 2"></path>
+                    </svg>
+                </div>
+                <div class="wizard-text">
+                    <h3>{{ _('Setup Wizard') }}</h3>
+                    <p>{{ _('Configure your profile, import songs, and learn about all features') }}</p>
+                </div>
+            </div>
+            <a href="{{ url_for('wizard', tenant_slug=tenant.slug if tenant else 'wizard') }}" class="button primary">
+                {{ _('Run Setup Wizard') }}
+            </a>
+        </div>
+
+        <div class="admin-grid">
+            <!-- Logo Card -->
+            <div class="admin-card">
+                <div class="card-header">
+                    <span class="card-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                    </span>
+                    <div>
+                        <h2>{{ _('Update Logo') }}</h2>
+                        <p class="card-subtitle">{{ _('Upload a new logo image (16x16 recommended)') }}</p>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="image-preview-container">
+                        <div class="image-preview-label">{{ _('Current Logo') }}</div>
+                        <div class="image-preview-wrapper">
+                            <img id="logoPreview" src="{% if tenant and tenant.logo_image %}{{ url_for('static', filename=tenant.logo_image) }}{% else %}/static/img/musician-icon-default.png{% endif %}" alt="Logo Preview" class="logo-preview">
+                        </div>
+                    </div>
+                    <form id="logoForm" action="{% if tenant %}/{{ tenant.slug }}/update_logo{% else %}/update_logo{% endif %}" method="post" enctype="multipart/form-data">
+                        <label for="logoInput" class="file-upload-btn">
+                            <span>{{ _('Choose Logo Image') }}</span>
+                        </label>
+                        <input type="file" name="logo" accept="image/*" id="logoInput" style="display: none;">
+                    </form>
+                </div>
+            </div>
+
+            <!-- Banner Card -->
+            <div class="admin-card">
+                <div class="card-header">
+                    <span class="card-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+                    </span>
+                    <div>
+                        <h2>{{ _('Update Welcome Banner') }}</h2>
+                        <p class="card-subtitle">{{ _('Upload a new welcome screen banner image') }}</p>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="image-preview-container">
+                        <div class="image-preview-label">{{ _('Current Banner') }}</div>
+                        <div class="image-preview-wrapper banner-wrapper">
+                            <img id="bannerPreview" src="{% if tenant and tenant.banner_image %}{{ url_for('static', filename=tenant.banner_image) }}{% else %}/static/img/musician-welcome-stock-photo.jpg{% endif %}" alt="Banner Preview" class="banner-preview">
+                        </div>
+                    </div>
+                    <form id="bannerForm" action="{% if tenant %}/{{ tenant.slug }}/update_banner{% else %}/update_banner{% endif %}" method="post" enctype="multipart/form-data">
+                        <label for="bannerInput" class="file-upload-btn">
+                            <span>{{ _('Choose Banner Image') }}</span>
+                        </label>
+                        <input type="file" name="banner" accept="image/*" id="bannerInput" style="display: none;">
+                    </form>
+                </div>
+            </div>
+
+            <!-- Website URL Card -->
+            <div class="admin-card">
+                <div class="card-header">
+                    <span class="card-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                    </span>
+                    <div>
+                        <h2>{{ _('Artist Website') }}</h2>
+                        <p class="card-subtitle">{{ _('Update your official website URL') }}</p>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <form id="websiteForm">
+                        <div style="margin-bottom: 1rem;">
+                            <label for="websiteInput" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">{{ _('Website URL') }}</label>
+                            <input type="url" id="websiteInput" name="website_url" 
+                                   value="{% if tenant and tenant.website_url %}{{ tenant.website_url }}{% endif %}" 
+                                   placeholder="https://www.yourwebsite.com"
+                                   style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;">
+                            <small style="color: #666; display: block; margin-top: 0.5rem;">{{ _('This URL will be shown on the session expiry page') }}</small>
+                        </div>
+                        <button type="submit" class="btn" style="width: 100%;">
+                            {{ _('Save Website URL') }}
+                        </button>
+                        <p id="websiteMessage" style="margin-top: 0.75rem; font-weight: 500; display: none;"></p>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Events Link Card -->
+            <div class="admin-card">
+                <div class="card-header">
+                    <span class="card-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                    </span>
+                    <div>
+                        <h2>{{ _('Events Calendar') }}</h2>
+                        <p class="card-subtitle">{{ _('Link to your upcoming shows and events') }}</p>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <form id="eventsForm">
+                        <div style="margin-bottom: 1rem;">
+                            <label for="eventsInput" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">{{ _('Events/Calendar URL') }}</label>
+                            <input type="url" id="eventsInput" name="events_link" 
+                                   value="{{ tenant.events_link if tenant and tenant.events_link else '' }}" 
+                                   placeholder="https://www.bandsintown.com/artist"
+                                   style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;">
+                            <small style="color: #666; display: block; margin-top: 0.5rem;">{{ _('Fans will see a link to your upcoming shows in the app') }}</small>
+                        </div>
+                        <button type="submit" class="btn" style="width: 100%;">
+                            {{ _('Save Events Link') }}
+                        </button>
+                        <p id="eventsMessage" style="margin-top: 0.75rem; font-weight: 500; display: none;"></p>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Artist Bio Card -->
+            <div class="admin-card">
+                <div class="card-header">
+                    <span class="card-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                    </span>
+                    <div>
+                        <h2>{{ _('Artist Bio') }}</h2>
+                        <p class="card-subtitle">{{ _('A brief description that will appear on your public page') }}</p>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <form id="bioForm">
+                        <div style="margin-bottom: 1rem;">
+                            <label for="artistNameInput" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">{{ _('Artist Name') }}</label>
+                            <input type="text" id="artistNameInput" name="artist_name"
+                                   placeholder="Your artist name..."
+                                   value="{{ tenant.name if tenant and tenant.name else '' }}"
+                                   style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; font-family: inherit;">
+                            <small style="color: #666; display: block; margin-top: 0.5rem;">{{ _('Your artist or band name') }}</small>
+                        </div>
+                        <div style="margin-bottom: 1rem;">
+                            <label for="bioInput" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">{{ _('Bio / Description') }}</label>
+                            <textarea id="bioInput" name="bio" rows="4"
+                                   placeholder="Tell your fans about yourself..."
+                                   style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; font-family: inherit; resize: vertical;">{{ tenant.bio if tenant and tenant.bio else '' }}</textarea>
+                            <small style="color: #666; display: block; margin-top: 0.5rem;">{{ _('This will be displayed on your public profile page') }}</small>
+                        </div>
+                        <button type="submit" class="btn" style="width: 100%;">
+                            {{ _('Save Artist Info') }}
+                        </button>
+                        <p id="bioMessage" style="margin-top: 0.75rem; font-weight: 500; display: none;"></p>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Default Language Card -->
+            <div class="admin-card">
+                <div class="card-header">
+                    <span class="card-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                    </span>
+                    <div>
+                        <h2>{{ _('Default Language') }}</h2>
+                        <p class="card-subtitle">{{ _('Choose the default language for your app') }}</p>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <form id="defaultLanguageForm">
+                        <div style="margin-bottom: 1rem;">
+                            <label for="defaultLanguageInput" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">{{ _('Default Language') }}</label>
+                            <select id="defaultLanguageInput" name="default_language"
+                                   style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;">
+                                <option value="en" {% if tenant and tenant.default_language == 'en' %}selected{% endif %}>🇬🇧 English</option>
+                                <option value="it" {% if tenant and tenant.default_language == 'it' %}selected{% endif %}>🇮🇹 Italiano</option>
+                                <option value="fr" {% if tenant and tenant.default_language == 'fr' %}selected{% endif %}>🇫🇷 Français</option>
+                                <option value="de" {% if tenant and tenant.default_language == 'de' %}selected{% endif %}>🇩🇪 Deutsch</option>
+                                <option value="es" {% if tenant and tenant.default_language == 'es' %}selected{% endif %}>🇪🇸 Español</option>
+                            </select>
+                            <small style="color: #666; display: block; margin-top: 0.5rem;">{{ _('This language will be used when users first visit your page') }}</small>
+                        </div>
+                        <button type="submit" class="btn" style="width: 100%;">
+                            {{ _('Save Default Language') }}
+                        </button>
+                        <p id="defaultLanguageMessage" style="margin-top: 0.75rem; font-weight: 500; display: none;"></p>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Change Password Card -->
+            <div class="admin-card">
+                <div class="card-header">
+                    <span class="card-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                    </span>
+                    <div>
+                        <h2>{{ _('Change Password') }}</h2>
+                        <p class="card-subtitle">{{ _('Update your account password') }}</p>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <form id="changePasswordForm" novalidate>
+                        <div style="margin-bottom: 1rem;">
+                            <label for="currentPassword" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">{{ _('Current Password') }}</label>
+                            <input type="password" id="currentPassword" name="current_password" required
+                                   style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;">
+                            <div id="currentPasswordError" style="color: #dc3545; font-size: 0.875rem; margin-top: 0.25rem; display: none;"></div>
+                        </div>
+                        <div style="margin-bottom: 1rem;">
+                            <label for="newPassword" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">{{ _('New Password') }}</label>
+                            <input type="password" id="newPassword" name="new_password" required
+                                   style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;">
+                            <small style="color: #666; display: block; margin-top: 0.5rem;">{{ _('At least 6 characters') }}</small>
+                            <div id="newPasswordError" style="color: #dc3545; font-size: 0.875rem; margin-top: 0.25rem; display: none;"></div>
+                        </div>
+                        <div style="margin-bottom: 1rem;">
+                            <label for="confirmPassword" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">{{ _('Confirm New Password') }}</label>
+                            <input type="password" id="confirmPassword" name="confirm_password" required
+                                   style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;">
+                            <div id="confirmPasswordError" style="color: #dc3545; font-size: 0.875rem; margin-top: 0.25rem; display: none;"></div>
+                        </div>
+                        <button type="submit" class="btn" style="width: 100%;">
+                            {{ _('Change Password') }}
+                        </button>
+                        <p id="passwordMessage" style="margin-top: 0.75rem; font-weight: 500; display: none;"></p>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Upload Songs Card -->
+            <div class="admin-card csv-card">
+                <div class="card-header">
+                    <span class="card-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>
+                    </span>
+                    <div>
+                        <h2>{{ _('Upload Songs Title') }}</h2>
+                        <p class="card-subtitle">{{ _('Upload Songs Text Explanation') }}</p>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <form action="{% if tenant %}/{{ tenant.slug }}/upload{% else %}/upload{% endif %}" method="post" enctype="multipart/form-data" class="csv-upload-form" id="csvUploadForm">
+                        <label for="fileInput" class="file-upload-btn primary">
+                            <span id="fileLabel">{{ _('Choose CSV File') }}</span>
+                        </label>
+                        <input type="file" name="file" accept=".csv" id="fileInput" style="display: none;">
+                        <div id="fileInfo" style="display: none; margin: 1rem 0; padding: 0.75rem; background: rgba(44, 62, 80, 0.05); border-radius: 6px; border-left: 3px solid var(--primary-color);">
+                            <p style="margin: 0; font-size: 0.9em;"><strong>File Info:</strong></p>
+                            <p style="margin: 0.5rem 0 0 0; font-size: 0.9em;" id="fileInfoText"></p>
+                        </div>
+                        <button type="submit" class="btn upload-btn" id="uploadBtn" disabled>
+                            <span id="uploadBtnText">{{ _('Upload') }}</span>
+                        </button>
+                        <div id="uploadProgress" style="display: none; margin-top: 1rem;">
+                            <div style="background: rgba(255,255,255,0.2); border-radius: 8px; overflow: hidden; height: 30px;">
+                                <div id="progressBar" style="background: linear-gradient(90deg, #4CAF50, #8BC34A); height: 100%; width: 0%; transition: width 0.3s; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 0.9em;">
+                                    <span id="progressText">0%</span>
+                                </div>
+                            </div>
+                            <p id="uploadStatus" style="margin-top: 0.5rem; font-size: 0.9em; text-align: center;">{{ _('Uploading...') }}</p>
+                        </div>
+                    </form>
+                    <div class="csv-info">
+                        <p class="info-text">{{ _('CSV format: title, author, language, image, requests, popularity, genre, playlist') }}</p>
+                        <p class="info-text" style="font-size: 0.9em; margin-top: 0.5rem;">{{ _('Minimum 4 columns required. See CSV_FORMAT.md for details.') }}</p>
+                    </div>
+                    
+                    <!-- Download CSV Button -->
+                    <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.1);">
+                        <a href="{% if tenant %}/{{ tenant.slug }}/download_csv{% else %}/download_csv{% endif %}" 
+                           class="btn" 
+                           style="width: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); text-decoration: none; display: inline-block; text-align: center;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 8px;">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                            {{ _('Download Song Library as CSV') }}
+                        </a>
+                        <p style="margin-top: 0.75rem; font-size: 0.85em; color: rgba(255,255,255,0.7); text-align: center;">
+                            {{ _('Export all your songs to backup or edit offline') }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Referral Card -->
+            <div class="admin-card">
+                <div class="card-header">
+                    <span class="card-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                    </span>
+                    <div>
+                        <h2>{{ _('Invite Musicians') }}</h2>
+                        <p class="card-subtitle">{{ _('Share your referral link and help other musicians discover Setly!') }}</p>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if tenant and tenant.referral_code %}
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; font-weight: 500; margin-bottom: 0.5rem;">{{ _('Your Referral Link') }}:</label>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <input type="text" id="referralLink" readonly 
+                                   value="{{ app_url }}signup?ref={{ tenant.referral_code }}" 
+                                   style="flex: 1; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: var(--radius); background: var(--bg-main); font-family: monospace; font-size: 0.9em;">
+                            <button onclick="copyReferralLink()" class="btn" style="white-space: nowrap;">
+                                {{ _('Copy Link') }}
+                            </button>
+                        </div>
+                        <p id="copyMessage" style="margin-top: 0.5rem; color: var(--success-color); font-weight: 500; display: none;">
+                            ✓ {{ _('Link copied to clipboard!') }}
+                        </p>
+                    </div>
+                    
+                    <!-- Email Invitation Section -->
+                    <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color);">
+                        <label style="display: block; font-weight: 500; margin-bottom: 0.5rem;">{{ _('Invite by Email') }}:</label>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <input type="email" id="inviteEmail" placeholder="{{ _('Email Address') }}" 
+                                   style="flex: 1; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: var(--radius); background: white; font-size: 0.9em;">
+                            <button onclick="sendEmailInvite()" class="btn" style="white-space: nowrap;">
+                                {{ _('Send Invitation') }}
+                            </button>
+                        </div>
+                        <p id="emailInviteMessage" style="margin-top: 0.5rem; font-weight: 500; display: none;"></p>
+                    </div>
+                    
+                    <div style="background: var(--bg-main); padding: 1rem; border-radius: var(--radius); margin-top: 1rem;">
+                        <p style="margin: 0; font-weight: 500; color: var(--text-primary);">
+                            📊 {{ _('Referrals') }}: <span id="referralCount">{{ referral_stats.total if referral_stats else 0 }}</span>
+                        </p>
+                        {% if referral_stats and referral_stats.referred_artists %}
+                        <div style="margin-top: 0.75rem; font-size: 0.9em;">
+                            <p style="margin: 0 0 0.5rem 0; font-weight: 500;">{{ _('Musicians you invited') }}:</p>
+                            <ul style="margin: 0; padding-left: 1.5rem; color: var(--text-secondary);">
+                                {% for artist in referral_stats.referred_artists %}
+                                <li>{{ artist.name }} ({{ artist.created_at }})</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        {% else %}
+                        <p style="margin-top: 0.75rem; font-size: 0.85em; color: var(--text-secondary); font-style: italic;">
+                            {{ _('No musicians have signed up yet. The list will update when someone uses your referral link to create an account.') }}
+                        </p>
+                        {% endif %}
+                    </div>
+                    {% else %}
+                    <p style="color: var(--text-secondary);">{{ _('Referral link not available. Please contact support.') }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Print QR Code Card -->
+            <div class="admin-card" style="border: 2px solid #8b5cf6;">
+                <div class="card-header">
+                    <span class="card-icon" style="color: #8b5cf6;">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path><line x1="3" y1="16" x2="21" y2="16"></line></svg>
+                    </span>
+                    <div>
+                        <h2>{{ _('Print QR Code') }}</h2>
+                        <p class="card-subtitle">{{ _('Print a QR code for customers to request songs') }}</p>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <button onclick="window.open('{% if tenant %}/{{ tenant.slug }}/print_qr{% else %}/print_qr{% endif %}', '_blank')" class="btn" style="width: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 0.5rem;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                        {{ _('Open Printable QR Code') }}
+                    </button>
+                    <p style="margin-top: 1rem; font-size: 0.85em; color: var(--text-secondary); line-height: 1.5;">
+                        <strong style="color: #8b5cf6;">📱 {{ _('Info') }}:</strong> {{ _('This will open a beautifully designed page with your QR code that customers can scan to request songs. Perfect for printing and displaying at your venue!') }}
+                    </p>
+                </div>
+            </div>
+
+            <!-- Remove Duplicates Card -->
+            <div class="admin-card" style="border: 2px solid var(--info-color, #3498db);">
+                <div class="card-header">
+                    <span class="card-icon" style="color: var(--info-color, #3498db);">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                    </span>
+                    <div>
+                        <h2>{{ _('Remove Duplicate Songs') }}</h2>
+                        <p class="card-subtitle">{{ _('Find and remove duplicate entries (keeps the oldest copy)') }}</p>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <button id="removeDuplicatesBtn" class="btn" style="width: 100%; background: var(--info-color, #3498db); color: white;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 0.5rem;"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                        {{ _('Remove Duplicates') }}
+                    </button>
+                    <p id="removeDuplicatesMessage" style="margin-top: 0.75rem; font-weight: 500; display: none;"></p>
+                    <div id="duplicatesList" style="margin-top: 1rem; display: none; max-height: 200px; overflow-y: auto; padding: 0.75rem; background: var(--card-bg, #f8f9fa); border-radius: 8px; font-size: 0.85em;"></div>
+                    <p style="margin-top: 1rem; font-size: 0.85em; color: var(--text-secondary); line-height: 1.5;">
+                        <strong style="color: var(--info-color, #3498db);">ℹ️ {{ _('Info') }}:</strong> {{ _('This will identify songs with identical titles and authors (case-insensitive). The oldest entry will be kept, and newer duplicates will be removed along with their requests.') }}
+                    </p>
+                </div>
+            </div>
+
+            <!-- Delete All Songs Card -->
+            <div class="admin-card" style="border: 2px solid var(--warning-color);">
+                <div class="card-header">
+                    <span class="card-icon" style="color: var(--warning-color);">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                    </span>
+                    <div>
+                        <h2>{{ _('Delete All Songs') }}</h2>
+                        <p class="card-subtitle">{{ _('Permanently remove all songs from your library') }}</p>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <button id="deleteAllSongsBtn" class="btn" style="width: 100%; background: var(--warning-color); color: white;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 0.5rem;"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                        {{ _('Delete All Songs') }}
+                    </button>
+                    <p id="deleteAllSongsMessage" style="margin-top: 0.75rem; font-weight: 500; display: none;"></p>
+                    <p style="margin-top: 1rem; font-size: 0.85em; color: var(--text-secondary); line-height: 1.5;">
+                        <strong style="color: var(--warning-color);">⚠️ {{ _('Warning') }}:</strong> {{ _('This will permanently delete all songs from your library. This action cannot be undone. All associated song requests will also be deleted.') }}
+                    </p>
+                </div>
+            </div>
+
+            <!-- Sample Songs Card -->
+            <div class="admin-card">
+                <div class="card-header">
+                    <span class="card-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>
+                    </span>
+                    <div>
+                        <h2>{{ _('Sample Songs') }}</h2>
+                        <p class="card-subtitle">{{ _('Populate your library with sample songs for testing') }}</p>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                        <button onclick="populateSampleSongs()" id="addSampleSongsBtn" class="btn" style="width: 100%;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 0.5rem;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                            <span id="addSampleSongsText">{{ _('Add Sample Songs') }} (51)</span>
+                        </button>
+                        <button onclick="deleteSampleSongs()" class="btn" style="width: 100%; background: var(--warning-color);">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 0.5rem;"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                            {{ _('Delete Sample Songs') }}
+                        </button>
+                    </div>
+                    
+                    <!-- Progress section for sample songs -->
+                    <div id="sampleSongsProgress" style="display: none; margin-top: 1rem; text-align: center;">
+                        <p style="font-weight: 600; font-size: 1.1em; margin-bottom: 0.5rem;">
+                            <span id="sampleProgressCounter">Aggiunta canzoni...</span>
+                        </p>
+                        <div style="background: rgba(44, 62, 80, 0.1); border-radius: 8px; height: 8px; width: 100%; margin: 1rem 0; overflow: hidden;">
+                            <div id="sampleProgressBar" style="background: linear-gradient(90deg, var(--primary-color), var(--secondary-color)); height: 100%; width: 0%; transition: width 0.3s ease;"></div>
+                        </div>
+                        <p style="font-size: 0.9em; color: var(--text-secondary);">
+                            Attendere... Questo può richiedere circa 1 minuto.
+                        </p>
+                    </div>
+                    
+                    <!-- Results section for sample songs -->
+                    <div id="sampleSongsResults" style="display: none; margin-top: 1rem; padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px; text-align: center;">
+                        <p id="sampleSongsResultMessage" style="font-weight: 500; line-height: 1.6;"></p>
+                    </div>
+                    
+                    <p id="sampleSongsMessage" style="margin-top: 0.75rem; font-weight: 500; display: none;"></p>
+                    <p style="margin-top: 1rem; font-size: 0.85em; color: var(--text-secondary); line-height: 1.5;">
+                        {{ _('Sample songs are great for testing the app. They include popular songs across multiple genres and languages. You can delete them anytime.') }}
+                    </p>
+                </div>
+            </div>
+
+            <!-- Bulk Spotify Fetch Card -->
+            <div class="admin-card spotify-card">
+                <div class="card-header">
+                    <span class="card-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
+                    </span>
+                    <div>
+                        <h2>{{ _('Bulk Fetch from Spotify') }}</h2>
+                        <p class="card-subtitle">{{ _('Automatically fetch missing images, genres, and languages for all songs') }}</p>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <button class="btn" id="bulkFetchBtn" style="width: 100%;">
+                        <span id="bulkFetchText">{{ _('Fetch Missing Data') }}</span>
+                    </button>
+                    <div id="bulkFetchProgress" style="display: none; margin-top: 1rem; text-align: center;">
+                        <p style="font-weight: 600; font-size: 1.1em; margin-bottom: 0.5rem;">
+                            <span id="progressCounter">Processing...</span>
+                        </p>
+                        <div style="background: rgba(44, 62, 80, 0.1); border-radius: 8px; height: 8px; width: 100%; margin: 1rem 0; overflow: hidden;">
+                            <div id="progressBarFetch" style="background: var(--primary-color); height: 100%; width: 0%; transition: width 0.3s;"></div>
+                        </div>
+                        <p style="font-size: 0.9em; color: var(--text-secondary);">{{ _('This may take a few minutes depending on your song library size.') }}</p>
+                    </div>
+                    <div id="bulkFetchResults" style="display: none; margin-top: 1rem; padding: 1rem; background: rgba(44, 62, 80, 0.1); border-radius: 8px;">
+                        <p style="font-weight: 500;"><span id="bulkFetchMessage"></span></p>
+                    </div>
+                    <div class="csv-info" style="margin-top: 1rem;">
+                        <p class="info-text" style="padding: 0.75rem; border-radius: 6px; background: rgba(44, 62, 80, 0.05);">
+                            {{ _('This will scan all songs and automatically download missing artist images, add genres, and detect languages from Spotify.') }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Fallback for showAlert/showConfirm if dialog.js hasn't loaded yet
+        window.showAlert = window.showAlert || function(message, type = 'info') {
+            console.log(`[${type}] ${message}`);
+            alert(message);
+        };
+        window.showConfirm = window.showConfirm || function(message, title) {
+            return Promise.resolve(confirm(message));
+        };
+        window.showConfirmDanger = window.showConfirmDanger || function(message, title) {
+            return Promise.resolve(confirm(message));
+        };
+        
+        // Copy referral link to clipboard
+        function copyReferralLink() {
+            const linkInput = document.getElementById('referralLink');
+            const message = document.getElementById('copyMessage');
+            
+            linkInput.select();
+            linkInput.setSelectionRange(0, 99999); // For mobile devices
+            
+            navigator.clipboard.writeText(linkInput.value).then(() => {
+                message.style.display = 'block';
+                setTimeout(() => {
+                    message.style.display = 'none';
+                }, 3000);
+            }).catch(err => {
+                console.error('Failed to copy link:', err);
+                message.textContent = '✗ Failed to copy link';
+                message.style.color = 'var(--error-color)';
+                message.style.display = 'block';
+                setTimeout(() => {
+                    message.style.display = 'none';
+                    message.textContent = '✓ ' + {{ _('Link copied to clipboard!') | tojson }};
+                    message.style.color = 'var(--success-color)';
+                }, 3000);
+            });
+        }
+        
+        // Send email invitation
+        async function sendEmailInvite() {
+            const emailInput = document.getElementById('inviteEmail');
+            const email = emailInput.value.trim();
+            const messageEl = document.getElementById('emailInviteMessage');
+            const button = event.target;
+            
+            // Translation strings (properly escaped)
+            const translations = {
+                enterEmail: {{ _("Please enter an email address") | tojson }},
+                validEmail: {{ _("Please enter a valid email address") | tojson }},
+                sending: {{ _("Sending...") | tojson }},
+                success: {{ _("Invitation sent successfully!") | tojson }},
+                error: {{ _("Error sending invitation") | tojson }},
+                sendBtn: {{ _("Send Invitation") | tojson }}
+            };
+            
+            if (!email) {
+                messageEl.textContent = translations.enterEmail;
+                messageEl.style.color = 'var(--error-color)';
+                messageEl.style.display = 'block';
+                setTimeout(() => messageEl.style.display = 'none', 3000);
+                return;
+            }
+            
+            // Basic email validation
+            if (!email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+                messageEl.textContent = translations.validEmail;
+                messageEl.style.color = 'var(--error-color)';
+                messageEl.style.display = 'block';
+                setTimeout(() => messageEl.style.display = 'none', 3000);
+                return;
+            }
+            
+            // Disable button while sending
+            button.disabled = true;
+            button.textContent = translations.sending;
+            
+            try {
+                const response = await fetch('{{ url_for("tenant_send_invitation", tenant_slug=tenant.slug) }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email: email })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    messageEl.textContent = '✓ ' + (data.message || translations.success);
+                    messageEl.style.color = 'var(--success-color)';
+                    emailInput.value = ''; // Clear input
+                } else {
+                    messageEl.textContent = '✗ ' + (data.message || translations.error);
+                    messageEl.style.color = 'var(--error-color)';
+                }
+                
+                messageEl.style.display = 'block';
+                setTimeout(() => messageEl.style.display = 'none', 5000);
+                
+            } catch (error) {
+                console.error('Error sending invitation:', error);
+                messageEl.textContent = '✗ ' + translations.error + ': ' + error.message;
+                messageEl.style.color = 'var(--error-color)';
+                messageEl.style.display = 'block';
+                setTimeout(() => messageEl.style.display = 'none', 5000);
+            } finally {
+                // Re-enable button
+                button.disabled = false;
+                button.textContent = translations.sendBtn;
+            }
+        }
+    </script>
+    <script>
+        function uploadLogo(event) {
+            const file = event.target.files[0];
+            if (file) {
+                // Preview the image
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('logoPreview').src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+                
+                // Auto-submit the form
+                document.getElementById('logoForm').submit();
+            }
+        }
+
+        function uploadBanner(event) {
+            const file = event.target.files[0];
+            if (file) {
+                // Preview the image
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('bannerPreview').src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+                
+                // Auto-submit the form
+                document.getElementById('bannerForm').submit();
+            }
+        }
+
+        let csvRowCount = 0;
+        let csvFileSize = 0;
+
+        function updateFileName(event) {
+            console.log('updateFileName called', event);
+            const input = event.target;
+            const file = input.files[0];
+            const fileLabel = document.getElementById('fileLabel');
+            const uploadBtn = document.getElementById('uploadBtn');
+            const fileInfo = document.getElementById('fileInfo');
+            const fileInfoText = document.getElementById('fileInfoText');
+            
+            console.log('File selected:', file);
+            console.log('Upload button found:', uploadBtn);
+            
+            if (file) {
+                console.log('Updating UI for file:', file.name);
+                if (fileLabel) fileLabel.textContent = file.name;
+                if (uploadBtn) {
+                    uploadBtn.disabled = false;
+                    console.log('Button enabled');
+                }
+                csvFileSize = file.size;
+                
+                // Read file to count rows
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const text = e.target.result;
+                        const lines = text.split('\n').filter(line => line.trim() !== '');
+                        csvRowCount = lines.length;
+                        
+                        // Show file info
+                        const sizeKB = (csvFileSize / 1024).toFixed(2);
+                        const sizeMB = (csvFileSize / (1024 * 1024)).toFixed(2);
+                        const sizeText = csvFileSize > 1024 * 1024 ? `${sizeMB} MB` : `${sizeKB} KB`;
+                        
+                        if (fileInfoText) {
+                            fileInfoText.innerHTML = `
+                                <strong>${file.name}</strong><br>
+                                📏 Size: ${sizeText}<br>
+                                🎵 Estimated songs: ~${csvRowCount}<br>
+                                ${csvRowCount > 500 ? '<span style="color: #ff9800;">⚠️ Large file - upload may take a moment</span>' : ''}
+                            `;
+                        }
+                        if (fileInfo) fileInfo.style.display = 'block';
+                    } catch (err) {
+                        console.error('Error reading file:', err);
+                    }
+                };
+                reader.onerror = function(e) {
+                    console.error('FileReader error:', e);
+                };
+                reader.readAsText(file);
+            } else {
+                if (fileLabel) fileLabel.textContent = '{{ _("Choose CSV File") }}';
+                if (uploadBtn) uploadBtn.disabled = true;
+                if (fileInfo) fileInfo.style.display = 'none';
+            }
+        }
+
+        function confirmCsvUpload(event) {
+            // Show confirmation for large uploads
+            if (csvRowCount > 100) {
+                event.preventDefault();
+                
+                const message = `⚠️ You are about to upload ${csvRowCount} song(s).<br><br>` +
+                    `This will:<br>` +
+                    `• Add all songs to your database<br>` +
+                    `• Process images and metadata<br>` +
+                    `• May take ${Math.ceil(csvRowCount / 50)} minute(s)<br><br>` +
+                    `Continue with upload?`;
+                
+                showConfirm(
+                    message,
+                    () => {
+                        // User confirmed, submit the form
+                        const form = event.target;
+                        form.removeEventListener('submit', confirmCsvUpload);
+                        form.submit();
+                    },
+                    null,
+                    '{{ _("Confirm") }} CSV Upload'
+                );
+                
+                return false;
+            }
+            
+            // Show progress UI
+            const uploadBtn = document.getElementById('uploadBtn');
+            const uploadProgress = document.getElementById('uploadProgress');
+            const uploadBtnText = document.getElementById('uploadBtnText');
+            
+            if (uploadBtn) uploadBtn.disabled = true;
+            if (uploadBtnText) uploadBtnText.textContent = '{{ _("Uploading...") }}';
+            if (uploadProgress) uploadProgress.style.display = 'block';
+            
+            // Simulate progress
+            simulateProgress();
+            
+            // Allow form submission to proceed
+            return true;
+        }
+
+        function simulateProgress() {
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+            const uploadStatus = document.getElementById('uploadStatus');
+            
+            if (!progressBar) return;
+            
+            let progress = 0;
+            const estimatedTime = Math.max(5, Math.ceil(csvRowCount / 100));
+            const increment = 100 / (estimatedTime * 10);
+            
+            const interval = setInterval(() => {
+                progress += increment;
+                if (progress >= 95) {
+                    progress = 95;
+                    clearInterval(interval);
+                    if (uploadStatus) uploadStatus.textContent = '{{ _("Finalizing...") }}';
+                }
+                
+                progressBar.style.width = progress + '%';
+                if (progressText) progressText.textContent = Math.floor(progress) + '%';
+                
+                if (uploadStatus) {
+                    if (progress < 33) {
+                        uploadStatus.textContent = '{{ _("Reading CSV file...") }}';
+                    } else if (progress < 66) {
+                        uploadStatus.textContent = '{{ _("Processing songs...") }}';
+                    } else if (progress < 95) {
+                        uploadStatus.textContent = '{{ _("Adding to database...") }}';
+                    }
+                }
+            }, 100);
+        }
+
+        function updateWebsite(event) {
+            event.preventDefault();
+            const websiteUrl = document.getElementById('websiteInput').value;
+            
+            fetch('{% if tenant %}/{{ tenant.slug }}/update_website{% else %}/update_website{% endif %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ website_url: websiteUrl })
+            })
+            .then(response => response.json())
+            .then(data => {
+                const messageEl = document.getElementById('websiteMessage');
+                if (data.success) {
+                    messageEl.textContent = '✓ Website URL aggiornato con successo!';
+                    messageEl.style.color = 'var(--success-color)';
+                } else {
+                    messageEl.textContent = '✗ Errore nell\'aggiornamento dell\'URL del sito web';
+                    messageEl.style.color = 'var(--error-color)';
+                }
+                messageEl.style.display = 'block';
+                setTimeout(() => messageEl.style.display = 'none', 5000);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                const messageEl = document.getElementById('websiteMessage');
+                messageEl.textContent = '✗ Errore nell\'aggiornamento dell\'URL del sito web';
+                messageEl.style.color = 'var(--error-color)';
+                messageEl.style.display = 'block';
+                setTimeout(() => messageEl.style.display = 'none', 5000);
+            });
+        }
+
+        function updateEventsLink(event) {
+            event.preventDefault();
+            const eventsLink = document.getElementById('eventsInput').value;
+            
+            fetch('{% if tenant %}/{{ tenant.slug }}/update_events{% else %}/update_events{% endif %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ events_link: eventsLink })
+            })
+            .then(response => response.json())
+            .then(data => {
+                const messageEl = document.getElementById('eventsMessage');
+                if (data.success) {
+                    messageEl.textContent = '✓ Link eventi aggiornato con successo!';
+                    messageEl.style.color = 'var(--success-color)';
+                } else {
+                    messageEl.textContent = '✗ Errore nell\'aggiornamento del link eventi';
+                    messageEl.style.color = 'var(--error-color)';
+                }
+                messageEl.style.display = 'block';
+                setTimeout(() => messageEl.style.display = 'none', 5000);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                const messageEl = document.getElementById('eventsMessage');
+                messageEl.textContent = '✗ Errore nell\'aggiornamento del link eventi';
+                messageEl.style.color = 'var(--error-color)';
+                messageEl.style.display = 'block';
+                setTimeout(() => messageEl.style.display = 'none', 5000);
+            });
+        }
+
+        function updateBio(event) {
+            event.preventDefault();
+            const artistName = document.getElementById('artistNameInput').value;
+            const bio = document.getElementById('bioInput').value;
+            
+            fetch('{% if tenant %}/{{ tenant.slug }}/update_bio{% else %}/update_bio{% endif %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 
+                    artist_name: artistName,
+                    bio: bio 
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                const messageEl = document.getElementById('bioMessage');
+                if (data.success) {
+                    messageEl.textContent = '✓ ' + {{ _('Artist info updated successfully!') | tojson }};
+                    messageEl.style.color = 'var(--success-color)';
+                    // Reload page to update menu
+                    setTimeout(() => window.location.reload(), 1500);
+                } else {
+                    messageEl.textContent = '✗ ' + {{ _('Error updating artist info') | tojson }};
+                    messageEl.style.color = 'var(--error-color)';
+                }
+                messageEl.style.display = 'block';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                const messageEl = document.getElementById('bioMessage');
+                messageEl.textContent = '✗ ' + {{ _('Error updating artist info') | tojson }};
+                messageEl.style.color = 'var(--error-color)';
+                messageEl.style.display = 'block';
+            });
+        }
+
+        function updateDefaultLanguage(event) {
+            event.preventDefault();
+            const defaultLanguage = document.getElementById('defaultLanguageInput').value;
+            
+            fetch('{% if tenant %}/{{ tenant.slug }}/update_default_language{% else %}/update_default_language{% endif %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ default_language: defaultLanguage })
+            })
+            .then(response => response.json())
+            .then(data => {
+                const messageEl = document.getElementById('defaultLanguageMessage');
+                if (data.success) {
+                    messageEl.textContent = '✓ Lingua predefinita aggiornata con successo!';
+                    messageEl.style.color = 'var(--success-color)';
+                } else {
+                    messageEl.textContent = '✗ Errore nell\'aggiornamento della lingua predefinita';
+                    messageEl.style.color = 'var(--error-color)';
+                }
+                messageEl.style.display = 'block';
+                setTimeout(() => messageEl.style.display = 'none', 5000);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                const messageEl = document.getElementById('defaultLanguageMessage');
+                messageEl.textContent = '✗ Errore nell\'aggiornamento della lingua predefinita';
+                messageEl.style.color = 'var(--error-color)';
+                messageEl.style.display = 'block';
+                setTimeout(() => messageEl.style.display = 'none', 5000);
+            });
+        }
+
+        function changePassword(event) {
+            event.preventDefault();
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            // Clear previous errors
+            const currentPasswordError = document.getElementById('currentPasswordError');
+            const newPasswordError = document.getElementById('newPasswordError');
+            const confirmPasswordError = document.getElementById('confirmPasswordError');
+            const messageEl = document.getElementById('passwordMessage');
+            
+            currentPasswordError.style.display = 'none';
+            newPasswordError.style.display = 'none';
+            confirmPasswordError.style.display = 'none';
+            messageEl.style.display = 'none';
+            
+            let hasError = false;
+            
+            // Validate current password is not empty
+            if (!currentPassword || currentPassword.trim() === '') {
+                currentPasswordError.textContent = {{ _('Current password is required') | tojson }};
+                currentPasswordError.style.display = 'block';
+                hasError = true;
+            }
+            
+            // Validate new password length
+            if (newPassword.length < 6) {
+                newPasswordError.textContent = {{ _('Password must be at least 6 characters long') | tojson }};
+                newPasswordError.style.display = 'block';
+                hasError = true;
+            }
+            
+            // Validate passwords match
+            if (newPassword !== confirmPassword) {
+                confirmPasswordError.textContent = {{ _('Passwords do not match') | tojson }};
+                confirmPasswordError.style.display = 'block';
+                hasError = true;
+            }
+            
+            if (hasError) {
+                return;
+            }
+            
+            fetch('{% if tenant %}/{{ tenant.slug }}/change-password{% else %}/change-password{% endif %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 
+                    current_password: currentPassword,
+                    new_password: newPassword,
+                    confirm_password: confirmPassword
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                const messageEl = document.getElementById('passwordMessage');
+                if (data.success) {
+                    messageEl.textContent = '✓ Password cambiata con successo!';
+                    messageEl.style.color = 'var(--success-color)';
+                    document.getElementById('changePasswordForm').reset();
+                } else {
+                    messageEl.textContent = '✗ ' + (data.message || 'Errore nel cambio password');
+                    messageEl.style.color = 'var(--error-color)';
+                }
+                messageEl.style.display = 'block';
+                setTimeout(() => messageEl.style.display = 'none', 5000);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                const messageEl = document.getElementById('passwordMessage');
+                messageEl.textContent = '✗ Errore nel cambio password';
+                messageEl.style.color = 'var(--error-color)';
+                messageEl.style.display = 'block';
+                setTimeout(() => messageEl.style.display = 'none', 5000);
+            });
+        }
+        // Attach event listeners when DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            // Logo upload
+            const logoInput = document.getElementById('logoInput');
+            if (logoInput) logoInput.addEventListener('change', uploadLogo);
+            
+            // Banner upload
+            const bannerInput = document.getElementById('bannerInput');
+            if (bannerInput) bannerInput.addEventListener('change', uploadBanner);
+            
+            // Website form
+            const websiteForm = document.getElementById('websiteForm');
+            if (websiteForm) websiteForm.addEventListener('submit', updateWebsite);
+            
+            // Events form
+            const eventsForm = document.getElementById('eventsForm');
+            if (eventsForm) eventsForm.addEventListener('submit', updateEventsLink);
+            
+            // Bio form
+            const bioForm = document.getElementById('bioForm');
+            if (bioForm) bioForm.addEventListener('submit', updateBio);
+            
+            // Default language form
+            const defaultLanguageForm = document.getElementById('defaultLanguageForm');
+            if (defaultLanguageForm) defaultLanguageForm.addEventListener('submit', updateDefaultLanguage);
+            
+            // Change password form
+            const changePasswordForm = document.getElementById('changePasswordForm');
+            if (changePasswordForm) changePasswordForm.addEventListener('submit', changePassword);
+            
+            // Bulk fetch Spotify button
+            const bulkFetchBtn = document.getElementById('bulkFetchBtn');
+            if (bulkFetchBtn) bulkFetchBtn.addEventListener('click', bulkFetchSpotify);
+            
+            // CSV file input
+            const fileInput = document.getElementById('fileInput');
+            if (fileInput) fileInput.addEventListener('change', updateFileName);
+            
+            // CSV upload form
+            const csvForm = document.getElementById('csvUploadForm');
+            if (csvForm) csvForm.addEventListener('submit', confirmCsvUpload);
+            
+            // Delete all songs button
+            const deleteAllSongsBtn = document.getElementById('deleteAllSongsBtn');
+            if (deleteAllSongsBtn) deleteAllSongsBtn.addEventListener('click', deleteAllSongs);
+            
+            // Remove duplicates button
+            const removeDuplicatesBtn = document.getElementById('removeDuplicatesBtn');
+            if (removeDuplicatesBtn) removeDuplicatesBtn.addEventListener('click', removeDuplicates);
+        });
+
+        function bulkFetchSpotify(autoTriggered = false) {
+            const btn = document.getElementById('bulkFetchBtn');
+            const progress = document.getElementById('bulkFetchProgress');
+            const results = document.getElementById('bulkFetchResults');
+            const message = document.getElementById('bulkFetchMessage');
+            const btnText = document.getElementById('bulkFetchText');
+            const counter = document.getElementById('progressCounter');
+            const progressBar = document.getElementById('progressBarFetch');
+            
+            // Disable button and show progress
+            btn.disabled = true;
+            btnText.textContent = '{{ _("Starting...") }}';
+            progress.style.display = 'block';
+            results.style.display = 'none';
+            
+            const tenantSlug = '{{ tenant.slug if tenant else "" }}';
+            const startUrl = tenantSlug ? `/${tenantSlug}/bulk_fetch_spotify` : '/bulk_fetch_spotify';
+            
+            // Start the background job
+            return fetch(startUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({})
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().catch(() => {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }).then(data => {
+                        throw new Error(data.message || `HTTP ${response.status}: ${response.statusText}`);
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (!data.success || !data.job_id) {
+                    throw new Error(data.message || 'Failed to start bulk fetch job');
+                }
+                
+                // Start polling for job status
+                const jobId = data.job_id;
+                const statusUrl = `/${tenantSlug}/bulk_fetch_status/${jobId}`;
+                
+                let pollCount = 0;
+                const maxPolls = 600; // 10 minutes (600 * 1 second)
+                
+                const pollStatus = setInterval(() => {
+                    pollCount++;
+                    
+                    if (pollCount > maxPolls) {
+                        clearInterval(pollStatus);
+                        progress.style.display = 'none';
+                        results.style.display = 'block';
+                        message.innerHTML = `<strong>⏱️ Job is taking longer than expected</strong><br>
+                            <button onclick="window.location.reload()" style="margin-top: 10px; padding: 8px 16px; background: var(--primary-color); color: white; border: none; border-radius: 4px; cursor: pointer;">
+                                Reload Page to Check Results
+                            </button>`;
+                        btn.disabled = false;
+                        btnText.textContent = '{{ _("Fetch Missing Data") }}';
+                        return;
+                    }
+                    
+                    fetch(statusUrl)
+                        .then(r => r.json())
+                        .then(status => {
+                            if (status.success) {
+                                // Update progress bar and counter
+                                progressBar.style.width = status.progress + '%';
+                                counter.textContent = `Processing: ${status.progress}%`;
+                                if (status.current_song) {
+                                    counter.textContent += ` - ${status.current_song}`;
+                                }
+                                
+                                // Check if job is complete
+                                if (status.status === 'completed') {
+                                    clearInterval(pollStatus);
+                                    progress.style.display = 'none';
+                                    results.style.display = 'block';
+                                    
+                                    if (status.stats) {
+                                        message.innerHTML = `<strong>✓ Success!</strong><br>` +
+                                            `Images fetched: ${status.stats.images_fetched}<br>` +
+                                            `Genres added: ${status.stats.genres_added}<br>` +
+                                            `Languages added: ${status.stats.languages_added}<br>` +
+                                            `Skipped: ${status.stats.skipped} | Errors: ${status.stats.errors}`;
+                                    } else {
+                                        message.textContent = '✓ ' + (status.message || 'Bulk fetch completed!');
+                                    }
+                                    
+                                    // Only auto-reload if not auto-triggered
+                                    if (!autoTriggered) {
+                                        setTimeout(() => {
+                                            window.location.reload();
+                                        }, 3000);
+                                    }
+                                    
+                                    return { success: true, stats: status.stats };
+                                } else if (status.status === 'error') {
+                                    clearInterval(pollStatus);
+                                    progress.style.display = 'none';
+                                    results.style.display = 'block';
+                                    message.textContent = '❌ Error: ' + (status.error || 'Unknown error occurred');
+                                    btn.disabled = false;
+                                    btnText.textContent = '{{ _("Fetch Missing Data") }}';
+                                }
+                            }
+                        })
+                        .catch(err => {
+                            console.error('Error polling status:', err);
+                        });
+                }, 1000); // Poll every second
+                
+                return new Promise((resolve) => {
+                    // Return immediately, polling will continue in background
+                    resolve({ success: true, polling: true });
+                });
+            })
+            .catch(error => {
+                progress.style.display = 'none';
+                results.style.display = 'block';
+                const errorMsg = error.message || error;
+                
+                if (errorMsg.includes('403') || errorMsg.includes('Unauthorized')) {
+                    message.textContent = '❌ Session expired. Please log in again.';
+                } else {
+                    message.textContent = '❌ Error: ' + errorMsg;
+                }
+                
+                btn.disabled = false;
+                btnText.textContent = '{{ _("Fetch Missing Data") }}';
+                console.error('Bulk fetch error:', error);
+                throw error;
+            });
+        }
+
+        async function populateSampleSongs() {
+            const button = document.getElementById('addSampleSongsBtn');
+            const buttonText = document.getElementById('addSampleSongsText');
+            const progressDiv = document.getElementById('sampleSongsProgress');
+            const resultsDiv = document.getElementById('sampleSongsResults');
+            const counter = document.getElementById('sampleProgressCounter');
+            const progressBar = document.getElementById('sampleProgressBar');
+            const resultMessage = document.getElementById('sampleSongsResultMessage');
+            
+            showConfirm(
+                '{{ _("Add 51 sample songs to your library?") }}',
+                async () => {
+                    button.disabled = true;
+                    buttonText.textContent = '{{ _("Adding songs...") }}';
+            progressDiv.style.display = 'none';
+            resultsDiv.style.display = 'none';
+            
+            try {
+                // Step 1: Add sample songs to database
+                const response = await fetch('{{ url_for("tenant_populate_sample_songs", tenant_slug=tenant.slug if tenant else "") }}', {
+                    method: 'POST'
+                });
+                
+                const data = await response.json();
+                
+                if (!data.success) {
+                    resultsDiv.style.display = 'block';
+                    resultMessage.innerHTML = '<span style="color: var(--error-color);">✗ ' + data.message + '</span>';
+                    button.disabled = false;
+                    buttonText.textContent = '{{ _("Add Sample Songs") }} (51)';
+                    return;
+                }
+                
+                // Step 2: Show progress section
+                buttonText.textContent = 'Scaricando immagini...';
+                counter.textContent = 'Canzoni aggiunte! Scaricando immagini da Spotify...';
+                progressBar.style.width = '0%';
+                progressDiv.style.display = 'block';
+                resultsDiv.style.display = 'none';
+                
+                // Step 3: Start bulk fetch job
+                const tenantSlug = '{{ tenant.slug if tenant else "" }}';
+                const startUrl = `/${tenantSlug}/bulk_fetch_spotify`;
+                
+                const startResponse = await fetch(startUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({})
+                });
+                
+                const startData = await startResponse.json();
+                
+                if (!startData.success || !startData.job_id) {
+                    throw new Error(startData.message || 'Failed to start image download');
+                }
+                
+                // Step 4: Poll for job completion
+                const jobId = startData.job_id;
+                const statusUrl = `/${tenantSlug}/bulk_fetch_status/${jobId}`;
+                
+                const waitForCompletion = () => {
+                    return new Promise((resolve, reject) => {
+                        let pollCount = 0;
+                        const maxPolls = 600; // 10 minutes
+                        
+                        const pollStatus = setInterval(async () => {
+                            pollCount++;
+                            
+                            if (pollCount > maxPolls) {
+                                clearInterval(pollStatus);
+                                reject(new Error('Job timeout after 10 minutes'));
+                                return;
+                            }
+                            
+                            try {
+                                const statusResponse = await fetch(statusUrl);
+                                const status = await statusResponse.json();
+                                
+                                if (status.success) {
+                                    // Update progress
+                                    progressBar.style.width = status.progress + '%';
+                                    counter.textContent = `Scaricamento: ${status.progress}%`;
+                                    if (status.current_song) {
+                                        counter.textContent += ` - ${status.current_song}`;
+                                    }
+                                    
+                                    // Check completion
+                                    if (status.status === 'completed') {
+                                        clearInterval(pollStatus);
+                                        resolve(status);
+                                    } else if (status.status === 'error') {
+                                        clearInterval(pollStatus);
+                                        reject(new Error(status.error || 'Unknown error'));
+                                    }
+                                }
+                            } catch (err) {
+                                console.error('Polling error:', err);
+                            }
+                        }, 1000);
+                    });
+                };
+                
+                // Wait for completion
+                const finalStatus = await waitForCompletion();
+                
+                // Step 5: Show success and reload
+                progressDiv.style.display = 'none';
+                resultsDiv.style.display = 'block';
+                
+                if (finalStatus.stats) {
+                    resultMessage.innerHTML = `<strong style="color: var(--success-color);">✓ Completato!</strong><br>` +
+                        `Immagini scaricate: ${finalStatus.stats.images_fetched}<br>` +
+                        `Generi aggiunti: ${finalStatus.stats.genres_added}<br>` +
+                        `Lingue aggiunte: ${finalStatus.stats.languages_added}<br><br>` +
+                        `Ricaricamento pagina...`;
+                } else {
+                    resultMessage.innerHTML = '<span style="color: var(--success-color);">✓ Completato! Ricaricamento pagina...</span>';
+                }
+                
+                buttonText.textContent = '✓ Completato!';
+                
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2000);
+                
+            } catch (error) {
+                console.error('Error adding sample songs:', error);
+                    progressDiv.style.display = 'none';
+                    resultsDiv.style.display = 'block';
+                    resultMessage.innerHTML = '<span style="color: var(--error-color);">❌ Errore: ' + error.message + '</span>';
+                    button.disabled = false;
+                    buttonText.textContent = '{{ _("Add Sample Songs") }} (51)';
+                }
+            },
+            null,
+            '{{ _("Add Sample Songs Confirm Title") }}'
+            );
+        }
+
+        async function deleteSampleSongs() {
+            const messageEl = document.getElementById('sampleSongsMessage');
+            const button = event.target;
+            
+            showConfirmDanger(
+                '{{ _("Delete all sample songs?") }}',
+                async () => {
+                    button.disabled = true;
+                    button.textContent = '{{ _("Deleting...") }}';
+            
+            try {
+                const response = await fetch('{{ url_for("tenant_delete_sample_songs", tenant_slug=tenant.slug if tenant else "") }}', {
+                    method: 'POST'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    messageEl.textContent = '✓ ' + data.message;
+                    messageEl.style.color = 'var(--success-color)';
+                } else {
+                    messageEl.textContent = '✗ ' + data.message;
+                    messageEl.style.color = 'var(--error-color)';
+                }
+                
+                    messageEl.style.display = 'block';
+                    setTimeout(() => messageEl.style.display = 'none', 5000);
+                    
+                } catch (error) {
+                    messageEl.textContent = '✗ Error: ' + error.message;
+                    messageEl.style.color = 'var(--error-color)';
+                    messageEl.style.display = 'block';
+                } finally {
+                    button.disabled = false;
+                    button.textContent = '{{ _("Delete Sample Songs") }}';
+                }
+            },
+            null,
+            '{{ _("Delete") }}',
+            '{{ _("Delete Sample Songs Confirm Title") }}'
+            );
+        }
+
+        async function deleteAllSongs(event) {
+            const messageEl = document.getElementById('deleteAllSongsMessage');
+            const button = event ? event.target : document.getElementById('deleteAllSongsBtn');
+            
+            showConfirmDanger(
+                '{{ _("WARNING: This will permanently DELETE ALL songs from your library! This action CANNOT be undone. Are you absolutely sure?") }}',
+                async () => {
+                    button.disabled = true;
+                    button.textContent = '{{ _("Deleting...") }}';
+            
+            try {
+                const response = await fetch('{{ url_for("tenant_delete_all_songs", tenant_slug=tenant.slug if tenant else "") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    messageEl.textContent = '✓ ' + data.message;
+                    messageEl.style.color = 'var(--success-color)';
+                    
+                    // Reload page after 2 seconds to reflect changes
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2000);
+                } else {
+                    messageEl.textContent = '✗ ' + data.message;
+                    messageEl.style.color = 'var(--error-color)';
+                }
+                
+                    messageEl.style.display = 'block';
+                    
+                } catch (error) {
+                    messageEl.textContent = '✗ Error: ' + error.message;
+                    messageEl.style.color = 'var(--error-color)';
+                    messageEl.style.display = 'block';
+                } finally {
+                    button.disabled = false;
+                    button.textContent = '{{ _("Delete All Songs") }}';
+                }
+            },
+            null,
+            '{{ _("Delete All Songs") }}',
+            '{{ _("Delete All Songs Confirm Title") }}'
+            );
+        }
+
+        async function removeDuplicates(event) {
+            const messageEl = document.getElementById('removeDuplicatesMessage');
+            const listEl = document.getElementById('duplicatesList');
+            const button = event ? event.target : document.getElementById('removeDuplicatesBtn');
+            
+            // Use custom branded dialog instead of browser confirm
+            showConfirm(
+                '{{ _("Remove Duplicates Confirm Message") }}',
+                async () => {
+                    // User confirmed, proceed with removal
+                    button.disabled = true;
+                    button.textContent = '{{ _("Searching for duplicates...") }}';
+                    listEl.style.display = 'none';
+                    listEl.innerHTML = '';
+                    
+                    try {
+                        const response = await fetch('{{ url_for("tenant_remove_duplicates", tenant_slug=tenant.slug if tenant else "") }}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            }
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (data.success) {
+                            if (data.count === 0) {
+                                messageEl.textContent = '✓ ' + data.message;
+                                messageEl.style.color = 'var(--success-color)';
+                            } else {
+                                messageEl.textContent = '✓ ' + data.message;
+                                messageEl.style.color = 'var(--success-color)';
+                                
+                                // Display list of removed duplicates
+                                if (data.duplicates && data.duplicates.length > 0) {
+                                    let html = '<strong>{{ _("Removed duplicates:") }}</strong><ul style="margin-top: 0.5rem; padding-left: 1.5rem;">';
+                                    data.duplicates.forEach(dup => {
+                                        html += `<li><strong>${dup.title}</strong> by ${dup.author} (removed ${dup.count} duplicate${dup.count > 1 ? 's' : ''})</li>`;
+                                    });
+                                    if (data.count > data.duplicates.length) {
+                                        html += `<li><em>...and ${data.count - data.duplicates.length} more</em></li>`;
+                                    }
+                                    html += '</ul>';
+                                    listEl.innerHTML = html;
+                                    listEl.style.display = 'block';
+                                }
+                                
+                                // Reload page after 3 seconds to reflect changes
+                                setTimeout(() => {
+                                    window.location.reload();
+                                }, 3000);
+                            }
+                        } else {
+                            messageEl.textContent = '✗ ' + data.message;
+                            messageEl.style.color = 'var(--error-color)';
+                        }
+                        
+                        messageEl.style.display = 'block';
+                        
+                    } catch (error) {
+                        messageEl.textContent = '✗ Error: ' + error.message;
+                        messageEl.style.color = 'var(--error-color)';
+                        messageEl.style.display = 'block';
+                    } finally {
+                        button.disabled = false;
+                        button.textContent = '{{ _("Remove Duplicates") }}';
+                    }
+                },
+                null, // onCancel callback
+                '{{ _("Remove Duplicates Confirm Title") }}'
+            );
+        }
+    </script>
+</body>
+</html>

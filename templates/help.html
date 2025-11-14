@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="{{ session.get('language', 'en') if session else 'en' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ _('How to Use') }} - {{ tenant.name if tenant else _('Music Universe') }}</title>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename=favicon) }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/globals.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='search.css') }}">
+    
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --accent-color: #3498db;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
+            --text-primary: #2c3e50;
+            --text-secondary: #7f8c8d;
+            --bg-card: #ffffff;
+            --border-color: #dfe6e9;
+            --shadow-sm: 0 2px 8px rgba(0,0,0,0.1);
+            --shadow-md: 0 4px 16px rgba(0,0,0,0.15);
+            --radius: 8px;
+        }
+        
+        body {
+            font-family: 'Century Gothic', 'Apple Gothic', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+        
+        .help-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .help-header {
+            text-align: center;
+            color: white;
+            padding: 30px 20px;
+        }
+        
+        .help-header h1 {
+            font-size: 2.5rem;
+            margin: 0 0 10px 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .help-header p {
+            font-size: 1.2rem;
+            margin: 0;
+            opacity: 0.9;
+        }
+        
+        .help-card {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-md);
+            margin-bottom: 20px;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .help-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+        }
+        
+        .help-card-header {
+            background: linear-gradient(135deg, var(--accent-color) 0%, #2980b9 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .help-card-icon {
+            font-size: 2.5rem;
+            filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.2));
+        }
+        
+        .help-card-title {
+            flex: 1;
+        }
+        
+        .help-card-title h2 {
+            margin: 0 0 5px 0;
+            font-size: 1.5rem;
+        }
+        
+        .help-card-title p {
+            margin: 0;
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        .help-card-body {
+            padding: 25px;
+        }
+        
+        .step {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 25px;
+            align-items: flex-start;
+        }
+        
+        .step:last-child {
+            margin-bottom: 0;
+        }
+        
+        .step-number {
+            flex-shrink: 0;
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--accent-color) 0%, #2980b9 100%);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .step-content h3 {
+            margin: 0 0 8px 0;
+            color: var(--text-primary);
+            font-size: 1.1rem;
+        }
+        
+        .step-content p {
+            margin: 0;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+        
+        .demo-image {
+            width: 100%;
+            max-width: 600px;
+            margin: 20px auto;
+            display: block;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .feature {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: var(--radius);
+            text-align: center;
+            transition: background 0.3s ease;
+        }
+        
+        .feature:hover {
+            background: #e9ecef;
+        }
+        
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 10px;
+        }
+        
+        .feature h4 {
+            margin: 0 0 8px 0;
+            color: var(--text-primary);
+        }
+        
+        .feature p {
+            margin: 0;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--success-color) 0%, #229954 100%);
+            color: white;
+            padding: 15px 40px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-size: 1.1rem;
+            font-weight: bold;
+            box-shadow: var(--shadow-md);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            margin-top: 20px;
+        }
+        
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+        }
+        
+        .tip-box {
+            background: #fff3cd;
+            border-left: 4px solid var(--warning-color);
+            padding: 15px 20px;
+            border-radius: var(--radius);
+            margin-top: 20px;
+        }
+        
+        .tip-box strong {
+            color: var(--warning-color);
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .footer-links {
+            text-align: center;
+            padding: 30px 20px;
+            color: white;
+        }
+        
+        .footer-links a {
+            color: white;
+            text-decoration: none;
+            margin: 0 15px;
+            opacity: 0.9;
+            transition: opacity 0.3s ease;
+        }
+        
+        .footer-links a:hover {
+            opacity: 1;
+            text-decoration: underline;
+        }
+        
+        @media (max-width: 768px) {
+            .help-header h1 {
+                font-size: 2rem;
+            }
+            
+            .help-card-header {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .step {
+                flex-direction: column;
+            }
+            
+            .feature-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="help-container">
+        <div class="help-header">
+            <h1>🎵 {{ _('How to Request Songs') }}</h1>
+            <p>{{ _('Your guide to using the music request system') }}</p>
+        </div>
+        
+        <!-- Main Steps Card -->
+        <div class="help-card">
+            <div class="help-card-header">
+                <div class="help-card-icon">📋</div>
+                <div class="help-card-title">
+                    <h2>{{ _('Getting Started') }}</h2>
+                    <p>{{ _('Follow these simple steps to request your favorite songs') }}</p>
+                </div>
+            </div>
+            <div class="help-card-body">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h3>{{ _('Browse the Song Library') }}</h3>
+                        <p>{{ _('Scroll through the list of available songs. Use the search box at the top to quickly find a specific song or artist.') }}</p>
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h3>{{ _('Search by Title or Artist') }}</h3>
+                        <p>{{ _('Type in the search box to filter songs. You can search by song title, artist name, or even language!') }}</p>
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h3>{{ _('Click the Music Icon to Request') }}</h3>
+                        <p>{{ _('Found a song you like? Simply click the music note icon 🎵 next to the song. The song will be added to your request queue!') }}</p>
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                        <h3>{{ _('View Your Requests') }}</h3>
+                        <p>{{ _('Your requested songs appear in the box at the top of the page. You can see all the songs you have requested during this session.') }}</p>
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">5</div>
+                    <div class="step-content">
+                        <h3>{{ _('Remove Requests') }}</h3>
+                        <p>{{ _('Changed your mind? No problem! Click the ✖ button next to any song in your request box to remove it from the queue.') }}</p>
+                    </div>
+                </div>
+                
+                <div class="tip-box">
+                    <strong>💡 {{ _('Pro Tip') }}:</strong>
+                    {{ _('There is a limit on the number of songs you can request at once. If you reach the limit, you will need to wait for the artist to play one of your songs before requesting more.') }}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Features Card -->
+        <div class="help-card">
+            <div class="help-card-header" style="background: linear-gradient(135deg, #27ae60 0%, #229954 100%);">
+                <div class="help-card-icon">✨</div>
+                <div class="help-card-title">
+                    <h2>{{ _('Key Features') }}</h2>
+                    <p>{{ _('What makes this request system special') }}</p>
+                </div>
+            </div>
+            <div class="help-card-body">
+                <div class="feature-grid">
+                    <div class="feature">
+                        <div class="feature-icon">🔍</div>
+                        <h4>{{ _('Smart Search') }}</h4>
+                        <p>{{ _('Instantly find songs by title, artist, or language') }}</p>
+                    </div>
+                    
+                    <div class="feature">
+                        <div class="feature-icon">🌍</div>
+                        <h4>{{ _('Multilingual') }}</h4>
+                        <p>{{ _('Songs in multiple languages with flag indicators') }}</p>
+                    </div>
+                    
+                    <div class="feature">
+                        <div class="feature-icon">📱</div>
+                        <h4>{{ _('Mobile Friendly') }}</h4>
+                        <p>{{ _('Works perfectly on phones, tablets, and computers') }}</p>
+                    </div>
+                    
+                    <div class="feature">
+                        <div class="feature-icon">⚡</div>
+                        <h4>{{ _('Real-Time Updates') }}</h4>
+                        <p>{{ _('See your requests update instantly') }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Ready to Start -->
+        <div class="help-card">
+            <div class="help-card-header" style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);">
+                <div class="help-card-icon">🎤</div>
+                <div class="help-card-title">
+                    <h2>{{ _('Ready to Start?') }}</h2>
+                    <p>{{ _('Jump back to the song list and start requesting!') }}</p>
+                </div>
+            </div>
+            <div class="help-card-body" style="text-align: center;">
+                <p style="font-size: 1.1rem; color: var(--text-secondary); margin-bottom: 20px;">
+                    {{ _('Now that you know how it works, go ahead and request your favorite songs. The artist will see your requests and play them during the performance!') }}
+                </p>
+                <a href="{% if tenant %}/{{ tenant.slug }}/search{% else %}/search{% endif %}" class="cta-button">
+                    🎵 {{ _('Go to Song List') }}
+                </a>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="footer-links">
+            <a href="{% if tenant %}/{{ tenant.slug }}/search{% else %}/search{% endif %}">{{ _('Song List') }}</a>
+            {% if tenant and tenant.website_url %}
+            <a href="{{ tenant.website_url }}" target="_blank">{{ _('Artist Website') }}</a>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>
+

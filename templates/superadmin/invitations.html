@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invitations - Super Admin</title>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename=favicon) }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='superadmin.css') }}">
+</head>
+<body>
+    {% include 'superadmin/nav.html' %}
+    
+    <div class="dashboard-container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="flash-message {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+        
+        <div class="admin-header">
+            <h1>Invitations Management</h1>
+            <p class="admin-subtitle">Track and manage all sent invitations</p>
+        </div>
+
+        <div class="section">
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Email</th>
+                        <th>Invited By</th>
+                        <th>Sent At</th>
+                        <th>Status</th>
+                        <th>Completed At</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for invitation in invitations %}
+                    <tr>
+                        <td>{{ invitation.email }}</td>
+                        <td>
+                            {% if invitation.invited_by_name %}
+                                <a href="{{ url_for('superadmin.edit_tenant', id=invitation.invited_by) }}">
+                                    {{ invitation.invited_by_name }}
+                                </a>
+                            {% else %}
+                                <span style="color: var(--text-secondary);">Unknown</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ invitation.sent_at }}</td>
+                        <td>
+                            {% if invitation.status == 'pending' %}
+                                <span class="status-badge warning">Pending</span>
+                            {% elif invitation.status == 'completed' %}
+                                <span class="status-badge active">Completed</span>
+                            {% elif invitation.status == 'cancelled' %}
+                                <span class="status-badge inactive">Cancelled</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if invitation.completed_at %}
+                                {{ invitation.completed_at }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td class="actions">
+                            {% if invitation.status == 'pending' %}
+                                <form action="{{ url_for('superadmin.resend_invitation', id=invitation.id) }}" method="post" style="display: inline;">
+                                    <button type="submit" class="button small info">Resend</button>
+                                </form>
+                                <form action="{{ url_for('superadmin.cancel_invitation', id=invitation.id) }}" method="post" style="display: inline;" onsubmit="return confirm('Cancel this invitation?');">
+                                    <button type="submit" class="button small danger">Cancel</button>
+                                </form>
+                            {% else %}
+                                <span style="color: var(--text-secondary);">-</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="no-data">No invitations found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    </div>
+</body>
+</html>
+

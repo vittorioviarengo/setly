@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="{{ g.lang_code }}">
+<head>
+    <meta charset="utf-8" />
+    <title>Error</title>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename=favicon) }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/login.css') }}" />
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styleguide.css') }}" />
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/globals.css') }}" />
+    <style>
+        .error-container {
+            max-width: 600px;
+            margin: 100px auto;
+            padding: 40px;
+            text-align: center;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .error-icon {
+            font-size: 72px;
+            margin-bottom: 20px;
+        }
+        .error-title {
+            font-size: 28px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin: 0 0 15px 0;
+        }
+        .error-message {
+            font-size: 16px;
+            color: #7f8c8d;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+        .error-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .error-button {
+            display: inline-block;
+            padding: 12px 30px;
+            background: #2c3e50;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .error-button:hover {
+            background: #1a252f;
+            transform: translateY(-2px);
+        }
+        .error-button.secondary {
+            background: #95a5a6;
+        }
+        .error-button.secondary:hover {
+            background: #7f8c8d;
+        }
+    </style>
+</head>
+<body>
+    <div class="error-container">
+        <div class="error-icon">⚠️</div>
+        <h1 class="error-title">{{ title or 'Access Denied' }}</h1>
+        <p class="error-message">{{ message or 'You do not have permission to access this page.' }}</p>
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, msg in messages %}
+                    <p class="error-message" style="color: #e74c3c; font-weight: 500;">{{ msg }}</p>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <div class="error-actions">
+            {% if contact_email %}
+            <a href="mailto:{{ contact_email }}" class="error-button">Contact Support</a>
+            {% endif %}
+            <a href="{{ url_for('superadmin.login') }}" class="error-button secondary">Go to Login</a>
+        </div>
+    </div>
+</body>
+</html>
+

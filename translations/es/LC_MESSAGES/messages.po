@@ -1,0 +1,434 @@
+#
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "Sergio Music Universe"
+msgstr "la musica de sergio"
+
+msgid "English"
+msgstr "Inglés"
+
+msgid "Italian"
+msgstr "Italia"
+
+msgid "Spanish"
+msgstr "Español"
+
+msgid "German"
+msgstr "Alemán"
+
+msgid "Change Name"
+msgstr "cambiar nombre"
+
+msgid "Choose Language"
+msgstr "Elige el idioma de la aplicación"
+
+msgid "Enter your name"
+msgstr "Ingrese su nombre para solicitar canciones"
+
+msgid "Enter Name Button"
+msgstr "Entra en el universo musical"
+
+msgid "Enter Name to Request"
+msgstr "Ingresa tu nombre para solicitar una canción"
+
+msgid "Songs"
+msgstr "Canciones"
+
+msgid "Search Songs Box"
+msgstr "buscar canciones"
+
+msgid "Search Songs Button"
+msgstr "Investigación"
+
+msgid "Submit Button"
+msgstr "enviar a"
+
+msgid "Language Radio All"
+msgstr "TIENE"
+
+msgid "Language Radio Italian"
+msgstr "Italia"
+
+msgid "Language Radio English"
+msgstr "Inglés"
+
+msgid "Language Radio Spanish"
+msgstr "Español"
+
+msgid "Language Radio French"
+msgstr "Francés"
+
+msgid "Language Radio German"
+msgstr "Alemán"
+
+msgid "Your Name Label"
+msgstr "Su nombre:"
+
+msgid "Enter Button"
+msgstr "Entra en el universo Sergio"
+
+msgid "Music Universe of"
+msgstr "El universo musical de"
+
+msgid "Songs Requests"
+msgstr "Cola de canciones solicitadas"
+
+msgid "Remove from Queue"
+msgstr "Quitar canción de la cola"
+
+msgid "Admin Actions"
+msgstr "Acciones administrativas"
+
+msgid "Queued Songs"
+msgstr "Canciones en cola"
+
+msgid "Empty Queue"
+msgstr "Vaciar Cola"
+
+msgid "Are you sure you want to empty the queue?"
+msgstr "¿Estás seguro de que quieres vaciar la cola?"
+
+msgid "Delete all songs"
+msgstr "Eliminar todas las canciones"
+
+msgid "Max requests per user:"
+msgstr "Número máximo de solicitudes por usuario:"
+
+msgid "Venue:"
+msgstr "Local:"
+
+msgid "Browse Music"
+msgstr "Explora la música de Sergio"
+
+msgid "Request Song Button"
+msgstr "Encuesta"
+
+msgid "Delete Song Button"
+msgstr "eliminar cancion"
+
+msgid "Clear Search Button"
+msgstr "Búsqueda propia"
+
+msgid "Total songs in queue:"
+msgstr "Total de canciones en cola:"
+
+msgid "Enter Venue Name:"
+msgstr "Ingrese el nombre de la ubicación:"
+
+msgid "Update Venue Button"
+msgstr "Actualizar ubicación"
+
+msgid "Update Max Requests Button"
+msgstr "Límite de actualización"
+
+msgid "No songs in the queue."
+msgstr "No hay canciones en cola."
+
+msgid "Admin Page Title"
+msgstr "Gestión de aplicaciones"
+
+msgid "Manage your artist profile and song library"
+msgstr "Gestiona tu perfil de artista y biblioteca musical"
+
+msgid "Choose Logo Image"
+msgstr "Elegir Imagen de Logo"
+
+msgid "Choose Banner Image"
+msgstr "Elegir Imagen de Banner"
+
+msgid "Choose CSV File"
+msgstr "Elegir Archivo CSV"
+
+msgid "CSV should contain: title, author, language, image"
+msgstr "El CSV debe contener: título, autor, idioma, imagen"
+
+msgid "Manage your complete song repertoire"
+msgstr "Gestiona tu repertorio musical completo"
+
+msgid "Song Page Title"
+msgstr "Gestión de base de datos de canciones."
+
+msgid "Scan QR Code"
+msgstr "Escanea el código QR nuevamente"
+
+msgid "Please scan QR code message"
+msgstr ""
+"Tu evento en vivo anterior ha finalizado. Si asistes a un evento en vivo de "
+"Sergio Chiappa, escanea el código QR para solicitar canciones"
+
+msgid "Back to Search"
+msgstr "Volver a la biblioteca de canciones"
+
+msgid "Song request successful"
+msgstr "Tu solicitud de canción fue exitosa"
+
+msgid "Song Request Error"
+msgstr "Se produjo un error al solicitar la canción."
+
+msgid "Song Already Requested"
+msgstr "¿Alguna vez has pedido esta canción?"
+
+msgid "Maximum Request Reached"
+msgstr ""
+"Ha alcanzado el número máximo de solicitudes. Inténtalo de nuevo cuando tus "
+"canciones hayan terminado de reproducirse."
+
+msgid "User Required"
+msgstr "Para solicitar una canción necesitas un nombre de usuario."
+
+msgid "Your Requests Title"
+msgstr "Tus deseos"
+
+msgid "Song List Title"
+msgstr "Canciones"
+
+msgid "By Author"
+msgstr "del autor"
+
+msgid "Back to Sergio Chiappa.com"
+msgstr "Volver a Sergio Chiappa.com"
+
+msgid "No Songs Found"
+msgstr "No se encontraron canciones"
+
+msgid "Sort by"
+msgstr "Fuera de:"
+
+msgid "Title"
+msgstr "título"
+
+msgid "Author"
+msgstr "Cantante"
+
+msgid "All Requests"
+msgstr "Todas las solicitudes"
+
+msgid "Most Popular"
+msgstr "Más popular"
+
+msgid "About Sergio"
+msgstr "Acerca de Sergio"
+
+msgid "Loading..."
+msgstr "Esta cargando..."
+
+msgid "Song Database Administration"
+msgstr "Gestión de base de datos de canciones."
+
+msgid "Zero All Popularity"
+msgstr "Restablecer toda la popularidad"
+
+msgid "Add New Song"
+msgstr "Añadir una nueva canción"
+
+msgid "Image"
+msgstr "Imagen"
+
+msgid "Cancel"
+msgstr "anular"
+
+msgid "Song Database"
+msgstr "Base de datos de canciones"
+
+msgid "Author Image"
+msgstr "Imagen del autor"
+
+msgid "Popularity"
+msgstr "popularidad"
+
+msgid "Delete"
+msgstr "Retirar"
+
+msgid "Are you sure you want to reset the popularity of all songs to zero?"
+msgstr ""
+"¿Estás seguro de que quieres restablecer la popularidad de todas las "
+"canciones?"
+
+msgid "Are you sure you want to delete this song?"
+msgstr "¿Estás seguro de que quieres eliminar esta canción?"
+
+msgid "Please fill in all fields correctly."
+msgstr "Por favor complete todos los campos correctamente."
+
+msgid "UI Language"
+msgstr "Idioma de la interfaz de usuario"
+
+msgid "Play Song"
+msgstr "Toca una canción"
+
+msgid "Welcome to"
+msgstr "Bienvenido a"
+
+msgid "Song Page"
+msgstr "Gestión de base de datos de canciones."
+
+msgid "Admin Page"
+msgstr "Página administrativa"
+
+msgid "Queue Page"
+msgstr "lado de la cola"
+
+msgid "Create Songs Databae Explaination"
+msgstr ""
+"Reconstruir la base de datos de canciones desde cero. Todos los datos se "
+"perderán. Haga una copia de seguridad de sus datos antes de realizar esta "
+"acción."
+
+msgid "Delete Songs Explaination"
+msgstr ""
+"Elimina todas las canciones de la base de datos. Todos los datos se "
+"perderán. Haga una copia de seguridad de sus datos antes de realizar esta "
+"acción."
+
+msgid "Translate UI Explaination"
+msgstr ""
+"Traduce la interfaz de la aplicación a todos los idiomas admitidos. "
+"Ejecútelo cuando se agreguen nuevos elementos de la interfaz de usuario."
+
+msgid "Upload Songs Text Explaination"
+msgstr ""
+"Sube un archivo de texto con las canciones que deseas agregar a la base de "
+"datos. El archivo debe tener el siguiente formato: título, cantante, imagen "
+"del autor, popularidad. "
+
+msgid "Upload Songs File"
+msgstr "Descarga el archivo de la canción"
+
+msgid "Generate PDF"
+msgstr "Generar un PDF"
+
+msgid "Admin Page Link"
+msgstr "Administración"
+
+msgid "Queue Page Link"
+msgstr "Consultas en tiempo real"
+
+msgid "Songs Page Link"
+msgstr "Banco de fechas de canciones"
+
+msgid "Delete All Songs"
+msgstr "Eliminar todas las canciones"
+
+msgid "Remove Duplicate Songs"
+msgstr "Eliminar Canciones Duplicadas"
+
+msgid "Find and remove duplicate entries (keeps the oldest copy)"
+msgstr "Encuentra y elimina entradas duplicadas (mantiene la copia más antigua)"
+
+msgid "Remove Duplicates"
+msgstr "Eliminar Duplicados"
+
+msgid "Info"
+msgstr "Información"
+
+msgid "This will identify songs with identical titles and authors (case-insensitive). The oldest entry will be kept, and newer duplicates will be removed along with their requests."
+msgstr "Esto identificará canciones con títulos y autores idénticos (no distingue mayúsculas y minúsculas). Se mantendrá la entrada más antigua y se eliminarán los duplicados más recientes junto con sus solicitudes."
+
+msgid "Remove Duplicates Confirm Message"
+msgstr "Esto buscará canciones duplicadas (mismo título y autor) y eliminará las copias más recientes, manteniendo la entrada más antigua. ¿Continuar?"
+
+msgid "Remove Duplicates Confirm Title"
+msgstr "Eliminar Duplicados"
+
+msgid "Searching for duplicates..."
+msgstr "Buscando duplicados..."
+
+msgid "Removed duplicates:"
+msgstr "Duplicados eliminados:"
+
+msgid "Confirm"
+msgstr "Confirmar"
+
+msgid "Cancel"
+msgstr "Cancelar"
+
+msgid "Create Songs Database"
+msgstr "Crear una base de datos de canciones"
+
+msgid "Create Songs Database Explanation"
+msgstr ""
+"Recrea una base de datos de canciones vacía. ¡¡¡Esto eliminará su base de "
+"datos existente!!!!!"
+
+msgid "Delete Songs Explanation"
+msgstr ""
+"Elimina todas las canciones de la base de datos. ¡¡¡Esto eliminará tus "
+"canciones existentes!!!!!"
+
+msgid "Translate UI"
+msgstr "Traducir interfaz de usuario"
+
+msgid "Translate UI Explanation"
+msgstr ""
+"Traduce la interfaz de la aplicación a todos los idiomas admitidos. "
+"Ejecútelo cuando se agreguen nuevos elementos de la interfaz de usuario."
+
+msgid "Upload Songs Text"
+msgstr "Descarga un archivo separado por comas con las canciones."
+
+msgid "Upload"
+msgstr "Esta cargando"
+
+msgid "Upload Songs Title"
+msgstr "Descarga el archivo de la canción"
+
+msgid "Popularity must be a number"
+msgstr "La popularidad debe ser un número."
+
+msgid "Error updating song"
+msgstr "Error al actualizar la canción"
+
+msgid "Error deleting song"
+msgstr "Error al eliminar la canción"
+
+msgid "Error adding song"
+msgstr "Error al agregar la canción"
+
+msgid "Error uploading image"
+msgstr "Error al cargar la imagen"
+
+msgid "Error resetting popularity"
+msgstr "No se pudo restablecer la popularidad"
+
+msgid "Edit Image"
+msgstr "Editar imagen"
+
+msgid "Save"
+msgstr "Para salvaguardar"
+
+msgid "Search for songs"
+msgstr "Introduce el título o autor para buscar canciones..."
+
+msgid "Upload Songs Text Explanation"
+msgstr ""
+"Cargue un archivo llamado canciones.csv en el siguiente formato: "
+"&quot;título de la canción&quot;, &quot;autor de la canción&quot;, "
+"&quot;nombre de archivo de imagen auténtica&quot;, &quot;código de "
+"idioma&quot; (por ejemplo, &quot;No lo haga&quot;, &quot;Simple Minds&quot;,"
+" &quot;simpleminds&quot;) .jpg&quot;, &quot;fr&quot;) y luego haga clic en "
+"&quot;Rellenar base de datos de canciones&quot;."
+
+msgid "Use with Caution"
+msgstr "Usar con precaución"
+
+msgid "Enter Password to access Admin Area"
+msgstr "Ingrese la contraseña para acceder al área de administración"
+
+msgid "Incorrect password"
+msgstr "Contraseña incorrecta. Intentar otra vez."
+
+msgid "Live Event Is Over"
+msgstr "El evento en vivo ha terminado"
+
+msgid "Scan new QR Code"
+msgstr "Escanea un nuevo código QR"
+
+msgid "Go to SergioChiappa.com"
+msgstr "Ir a sergiochiappa.com"
+
+msgid "Visit Artist Website"
+msgstr "Visitar sitio web del artista"
+
+msgid "Thank you for attending!"
+msgstr "¡Gracias por asistir!"

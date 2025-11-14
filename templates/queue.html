@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="{{ g.lang_code }}">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ _('Queued Songs') }}</title>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename=favicon) }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='queue.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='nav.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='admin.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dialog.css') }}">
+    <script src="{{ url_for('static', filename='image-utils.js') }}"></script>
+    <script src="{{ url_for('static', filename='dialog.js') }}"></script>
+</head>
+
+<body>
+    {% if is_admin %}
+        {% include 'nav.html' %}
+    {% endif %}
+    
+    <div class="admin-container">
+        <div class="admin-header">
+            <h1 id="pagetitle">{{ tenant.name if tenant else '' }} - {{ _('Queued Songs') }}</h1>
+            <p class="admin-subtitle" id="datetime">{{ current_datetime }}</p>
+        </div>
+
+        {% if is_admin %}
+        <div class="admin-actions-container">
+            <div class="action-item">
+                <label for="maxRequests">{{ _('Max requests per user:') }}</label>
+                <input class="max-requests-input" type="number" id="maxRequests" value="{{ max_requests }}">
+                <button id="updateMaxRequestsButton" class="button">{{ _('Update Max Requests Button') }}</button>
+            </div>
+            <div class="action-item">
+                <label for="venueName">{{ _('Venue:') }}</label>
+                <input type="text" id="venueName" placeholder="{{ _('Enter venue name') }}">
+                <button id="updateVenueButton" class="button">{{ _('Update Venue Button') }}</button>
+            </div>
+        </div>
+        {% endif %}
+
+        <div id="userMessageContainer" class="message-container"></div>
+        <div id="songCountContainer">
+            <span class="song-count-text">{{ _('Total songs in queue:') }} <span id="songCount">0</span></span>
+            {% if is_admin %}
+            <form id="deleteSongsForm" action="{{ url_for('delete_all_requests') }}" method="POST" style="display: inline; margin: 0;">
+                <button type="submit" id="deleteAllSongsButton" class="button danger">{{ _('Empty Queue') }}</button>
+            </form>
+            {% endif %}
+        </div>
+        <div id="queueContainer"></div>
+    </div>
+
+    
+    <script>
+        // Fallback for showAlert/showConfirm/showConfirmDanger if dialog.js hasn't loaded yet
+        window.showAlert = window.showAlert || function(message, type = 'info') {
+            console.log(`[${type}] ${message}`);
+            alert(message);
+        };
+        window.showConfirm = window.showConfirm || function(message, onConfirm, onCancel, title) {
+            if (confirm(message)) {
+                if (onConfirm) onConfirm();
+            } else {
+                if (onCancel) onCancel();
+            }
+        };
+        window.showConfirmDanger = window.showConfirmDanger || function(message, onConfirm, onCancel, confirmText, title) {
+            if (confirm(message)) {
+                if (onConfirm) onConfirm();
+            } else {
+                if (onCancel) onCancel();
+            }
+        };
+        
+        document.addEventListener('DOMContentLoaded', function () {
+            const noSongsMessage = '{{ _("No songs in the queue.") }}';
+            const artistName = '{{ tenant.name if tenant else "" }}';
+
+            function fetchQueue() {
+                fetch('/get_queue')
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        updateQueue(data);
+                    })
+                    .catch(error => {
+                        console.error('Error fetching queue:', error);
+                        showError('Error fetching queue: ' + error.message);
+                    });
+            }
+
+
+    // Function to update the current time
+    function updateCurrentTime() {
+        const currentTimeElement = document.getElementById('datetime');
+        if (currentTimeElement) {
+            const now = new Date();
+            currentTimeElement.textContent = now.toLocaleString(undefined, {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                timeZoneName: 'short'
+            });
+        }
+    }
+
+    // Update the current time immediately and then every second
+    updateCurrentTime();
+    setInterval(updateCurrentTime, 1000);
+
+    // Function to update the queue
+    function updateQueue(songs) {
+        const queueContainer = document.getElementById('queueContainer');
+        const songCountElement = document.getElementById('songCount');
+        queueContainer.innerHTML = '';
+
+        // Sort songs by request time (assuming request_time is a Date string)
+        songs.sort((a, b) => new Date(a.request_time) - new Date(b.request_time));
+
+        if (songs.length === 0) {
+            queueContainer.innerHTML = `<p>${noSongsMessage}</p>`;
+        } else {
+            songs.forEach(song => {
+                const songItem = document.createElement('div');
+                songItem.classList.add('song-item');
+
+                // Use centralized image utility
+                const authorImage = createAuthorImage(song.image, song.author, null, 'author-image');
+
+                const songInfo = document.createElement('div');
+                songInfo.classList.add('song-info');
+
+                const songTitle = document.createElement('p');
+                songTitle.innerHTML = `<strong>${song.title}</strong> by ${song.author}`;
+
+                const requester = document.createElement('p');
+                const requestTime = new Date(song.request_time);
+
+                const formattedRequestTime = requestTime.toLocaleString(undefined, {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    timeZoneName: 'short'
+                });
+
+                if (Array.isArray(song.requesters)) {
+                    requester.textContent = `Requested by: ${song.requesters.join(', ')} at ${formattedRequestTime}`;
+                } else {
+                    requester.textContent = `Requested by: ${song.requesters} at ${formattedRequestTime}`;
+                }
+
+                songInfo.appendChild(songTitle);
+                songInfo.appendChild(requester);
+
+                songItem.appendChild(authorImage);
+                songItem.appendChild(songInfo);
+
+                if ({{ is_admin | tojson }}) {
+                    const removeButton = document.createElement('button');
+                    removeButton.textContent = '{{ _("Play Song") }}';
+                    removeButton.onclick = function () {
+                        removeFromQueue(song.song_id);
+                    };
+                    songItem.appendChild(removeButton);
+                }
+
+                queueContainer.appendChild(songItem);
+            });
+        }
+
+        // Update the song count
+        songCountElement.textContent = songs.length;
+    }
+            
+        function removeFromQueue(songId) {
+            fetch(`/delete_request/${songId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    incrementPopularity(songId);  // Increment popularity
+                    fetchQueue();  // Refresh the queue
+                })
+                .catch(error => console.error('Error removing from queue:', error));
+        }
+
+        function incrementPopularity(songId) {
+            fetch(`/increment_popularity/${songId}`, {
+                method: 'POST'
+            })
+                .then(response => response.json())
+                .then(data => {
+                    // Popularity incremented silently
+                })
+                .catch(error => console.error('Error incrementing popularity:', error));
+        }
+
+        function emptyQueue() {
+            fetch('/delete_all_requests', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    fetchQueue();  // Refresh the queue
+                })
+                .catch(error => console.error('Error emptying queue:', error));
+        }
+
+        function showMessage(message, type) {
+            const userMessageContainer = document.getElementById('userMessageContainer');
+            if (userMessageContainer) {
+                userMessageContainer.textContent = message;
+                userMessageContainer.className = 'message-container ' + type; // Add success or error class
+                userMessageContainer.style.display = 'block';
+                setTimeout(() => {
+                    userMessageContainer.style.display = 'none';
+                }, 5000); // Hide after 5 seconds
+            } else {
+                alert(message); // Fallback for showing messages
+            }
+        }
+
+        function showError(message) {
+            showMessage(message, 'error');
+        }
+
+        function showSuccess(message) {
+            showMessage(message, 'success');
+        }
+
+        fetchQueue();
+        setInterval(fetchQueue, 20000);
+
+        // Handle max requests form submission via AJAX
+        document.getElementById('updateMaxRequestsButton').addEventListener('click', function (event) {
+            event.preventDefault();
+            const maxRequestsInput = document.getElementById('maxRequests');
+            const maxRequests = maxRequestsInput.value;
+            fetch('/update_max_requests', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ max_requests: maxRequests })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data.message);
+                    showSuccess('Max requests per user updated successfully.');
+                    maxRequestsInput.value = data.max_requests;
+                })
+                .catch(error => {
+                    console.error('Error updating max requests:', error);
+                    showError('Error updating max requests: ' + error.message);
+                });
+        });
+
+        // Handle venue update via AJAX
+        document.getElementById('updateVenueButton').addEventListener('click', function (event) {
+            event.preventDefault();
+
+
+            const venueName = document.getElementById('venueName').value;
+            fetch('/update_venue', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ venue_name: venueName })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data.message);
+                    showSuccess('Venue updated successfully.');
+                    document.getElementById('venueName').value = data.venue_name;
+                    // Keep the artist name in the page title
+                    document.getElementById('pagetitle').textContent = artistName + ' - ' + '{{ _('Queued Songs') }}';
+
+                })
+                .catch(error => {
+                    console.error('Error updating venue:', error);
+                    showError('Error updating venue: ' + error.message);
+                });
+        });
+
+        // Function to fetch and display the current venue name
+        function fetchVenueName() {
+            fetch('/get_venue_name')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('venueName').value = data.venue_name;
+                    // Keep the artist name in the page title
+                    document.getElementById('pagetitle').textContent = artistName + ' - ' + '{{ _('Queued Songs') }}';
+
+                })
+                .catch(error => {
+                    console.error('Error fetching venue name:', error);
+                });
+        }
+
+        // Initial fetch to display the current venue name
+        fetchVenueName();
+
+        // Function to fetch and display the current max requests
+        function fetchMaxRequests() {
+            fetch('/get_max_requests')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('maxRequests').value = data.max_requests;
+                })
+                .catch(error => {
+                    console.error('Error fetching max requests:', error);
+                });
+        }
+
+        // Initial fetch to display the current max requests
+        fetchMaxRequests();
+
+        // Handle delete all songs form submission via AJAX
+        document.getElementById('deleteSongsForm').addEventListener('submit', function (event) {
+            event.preventDefault();
+            
+            showConfirmDanger(
+                '{{ _("Are you sure you want to empty the queue?") }}',
+                () => {
+                    fetch('{{ url_for('delete_all_requests') }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                        .then(response => {
+                            if (response.ok) {
+                                return response.json().catch(() => {
+                                    // If response is not JSON, return a default success message
+                                    return { message: 'All songs deleted successfully.' };
+                                });
+                            } else {
+                                throw new Error('Unexpected response format');
+                            }
+                        })
+                        .then(data => {
+                            console.log(data.message);
+                            showSuccess(data.message);
+                            fetchQueue();  // Refresh the queue
+                        })
+                        .catch(error => {
+                            console.error('Error deleting all songs:', error);
+                            showError('Error deleting all songs: ' + error.message);
+                        });
+                },
+                null,
+                '{{ _("Empty Queue") }}',
+                '{{ _("Empty Queue") }}'
+            );
+        });
+
+        
+
+        });
+    </script>
+</body>
+
+</html>
+</html>
+</html>
+</html>

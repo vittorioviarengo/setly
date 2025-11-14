@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+
+<head>
+    <meta charset="UTF-8">
+    <title>{{ _('Search Page') }}</title>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename=favicon) }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/search-mobile.css') }}" />
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styleguide.css') }}" />
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/globals.css') }}" />
+    <script src="{{ url_for('static', filename='image-utils.js') }}"></script>
+    <script>
+        // Set tenant slug globally for image utilities
+        setTenantSlug('{{ tenant.slug if tenant else "" }}');
+        // Set auto-refresh interval from system settings
+        window.autoRefreshInterval = {{ auto_refresh_interval }} * 1000; // Convert seconds to milliseconds
+    </script>
+    <script src="{{ url_for('static', filename='search.js') }}" defer></script>
+    <meta name="viewport" content="width=393, initial-scale=1">
+</head>
+
+<body style="margin: 0; background: #000000">
+        <div id="translations" 
+            song-request="{{ _('Request Song Button') }}" 
+            song-delete="{{ _('Delete Song Button') }}"
+            song-requests-title="{{ _('Your Requests Title') }}" 
+            song-list-title="{{ _('Song List Title') }}"
+            by-author="{{ _('By Author') }}"
+            no-song="{{ _('No Songs Found') }}" 
+            welcome="{{ _('Welcome to') }}"
+            >
+        </div>
+
+        <div class="container-center-horizontal">
+            <div class="search-mobile">
+                <div class="top-bar">
+                    <div class="title-div" id="title-div">
+                        <img class="setly-logo-title" src="{{ url_for('static', filename='img/setly-logo.png') }}" alt="Setly logo" />
+                        <div class="title">{{ tenant.name if tenant else _('Music Universe') }}</div>
+                        <img class="interface-hamburger-menu-color" src="{{ url_for('static', filename='img/interface-hamburger-menu-color.svg') }}" alt="interface/Hamburger Menu Color" id="hamburgerMenu" />
+                      
+                        <!-- Hidden menu -->
+                        <div class="menu" id="menu">
+                            <a href="{% if tenant %}/{{ tenant.slug }}/help{% else %}/help{% endif %}" style="color: #3498db;">
+                                ❓ {{ _('How to Use') }}
+                            </a>
+                            {% if tenant and tenant.events_link %}
+                            <a href="{{ tenant.events_link }}" target="_blank" style="color: #e67e22;">
+                                🎟️ {{ _('Upcoming Shows') }}
+                            </a>
+                            {% endif %}
+                            <!-- <a href="/queue">{{ _('All Requests') }}</a>
+                            <a href="/popular">{{ _('Most Popular') }}</a> -->
+                            {% if tenant and tenant.slug == 'sergio' %}
+                            <a href="http://sergiochiappa.com">{{ _('About') }} {{ tenant.name }}</a>
+                            {% endif %}
+                            <div class="menu-divider"></div> <!-- Divider -->
+                            <div class="menu-item" data-lang="en">English</div>
+                            <div class="menu-item" data-lang="it">Italiano</div>
+                            <div class="menu-item" data-lang="es">Espanol</div>
+                            <div class="menu-item" data-lang="fr">Français</div>
+                            <div class="menu-item" data-lang="de">Deutsch</div>
+                          </div>
+                      </div>
+                    <div class="welcome-div screen">
+                        <div class="welcome-rectangle"></div>
+                        <div class="welcome-name" id="welcome-name"></div>
+                    </div>
+                    <div class="search-bar">
+                        <div class="search-container">
+        
+                            <div class="search-div">
+                                <div class="search-box-div">
+                                    <input class="search-text" id="searchBox" name="searchtext"
+                                        placeholder="{{ _('Search Songs Box') }}" type="text" />
+                                </div>
+                            </div>
+        
+                            <div class="cancel-div">
+                                <div class="overlap-group-2">
+                                    <div class="cancel-image-div" onclick="clearSearch();">
+                                        <img class="cancel-image" src="{{ url_for('static', filename='img/cancel-image@2x.png') }}" alt="Cancel Image" />
+                                        <img class="interfaceadd-lg" src="{{ url_for('static', filename='img/interface-add-lg-1.svg') }}"
+                                            alt="interface/add-lg" />
+                                    </div>
+        
+                                </div>
+                            </div>
+        
+                            <div class="lens-div" id="searchButton" onclick="filterSongs(); window.event.stopPropagation();">
+                                <img class="lens-image" src="{{ url_for('static', filename='img/lens-image.svg') }}" alt="Lens Image" />
+                            </div>
+                        </div>
+                    </div>
+        
+        
+                    <div class="filter-div">
+                        <div class="flex-row">
+                            <div class="language ">{{ _('Language') }}</div>
+                            <div class="language-button" id="all-language-button" onclick="setSearchLanguage('all')">
+                                {{ _('Language Radio All') }}
+                            </div>
+                            <div class="language-button" id="italian-language-button" onclick="setSearchLanguage('it')">
+                                {{ _('Italian') }}
+                            </div>
+                            <div class="language-button" id="english-language-button" onclick="setSearchLanguage('en')">
+                                {{ _('English') }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="user-messages" id="user-messages"></div>
+                    <div class="requests-container">
+                        <div class="requests-list" id="user-requests"></div>
+                    </div>
+                </div>
+        
+                <div class="songs-div">
+                     <div class="x-title">{{ _('Song List Title') }}</div> 
+                    
+                        <div class="sorting-buttons">
+                            <div class="sort-title">{{ _('Sort by') }}</div>
+                            <button class="language-button" id="sortByTitleBtn" onclick="sortSongs('title', 'asc')">
+                                {{ _('Title') }}
+                            </button>
+                            <button class="language-button" id="sortByAuthorBtn" onclick="sortSongs('author', 'asc')">
+                                {{ _('Author') }}
+                            </button>
+                            <button class="language-button" id="sortByPopularityDescBtn" onclick="sortSongs('popularity', 'desc')">
+                                {{ _('Popularity') }}
+                            </button>
+                            <div>
+                                <select class="letters-dropdown" id="letterSelect">
+                                    <option value="All" {% if letter=='All' %}selected{% endif %}>{{ _('All') }}
+                                    </option>
+                                    <option value="A">A</option>
+                                    <option value="B">B</option>
+                                    <option value="C">C</option>
+                                    <option value="D">D</option>
+                                    <option value="E">E</option>
+                                    <option value="F">F</option>
+                                    <option value="G">G</option>
+                                    <option value="H">H</option>
+                                    <option value="I">I</option>
+                                    <option value="J">J</option>
+                                    <option value="K">K</option>
+                                    <option value="L">L</option>
+                                    <option value="M">M</option>
+                                    <option value="N">N</option>
+                                    <option value="O">O</option>
+                                    <option value="P">P</option>
+                                    <option value="Q">Q</option>
+                                    <option value="R">R</option>
+                                    <option value="S">S</option>
+                                    <option value="T">T</option>
+                                    <option value="U">U</option>
+                                    <option value="V">V</option>
+                                    <option value="W">W</option>
+                                    <option value="X">X</option>
+                                    <option value="Y">Y</option>
+                                    <option value="Z">Z</option>
+                                </select>
+                            </div>
+                        </div>
+                    <div class="song-list-container" id="song-list"></div>
+                    <div id="loading" style="display: none;">{{ _('Loading...') }}</div>
+                </div>
+        
+            </div>
+
+
+</body>
+
+</html>

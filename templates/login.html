@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="{{ g.lang_code }}">
+<head>
+    <meta charset="utf-8" />
+    <title>{% if tenant %}{{ tenant.name }} - Admin Login{% else %}Admin Login{% endif %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename=favicon) }}" />
+    <meta name="og:type" content="website" />
+    <meta name="twitter:card" content="photo" />
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/login.css') }}" />
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styleguide.css') }}" />
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/globals.css') }}" />
+    <style>
+        /* Flash messages styling */
+        .flash-messages {
+            margin: 20px auto;
+            max-width: 500px;
+            padding: 0 20px;
+        }
+        .flash-message {
+            padding: 15px 20px;
+            margin: 10px 0;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        .flash-message.error {
+            background: linear-gradient(135deg, #ff4757 0%, #ff3838 100%);
+            color: white;
+            border: 2px solid #ff6b7a;
+        }
+        .flash-message.success {
+            background: linear-gradient(135deg, #26de81 0%, #20bf6b 100%);
+            color: white;
+            border: 2px solid #45e89a;
+        }
+        .flash-message.info {
+            background: linear-gradient(135deg, #4b7bec 0%, #3867d6 100%);
+            color: white;
+            border: 2px solid #6c8eef;
+        }
+        /* Improve text visibility */
+        .enter-password-to-access-admin-area {
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            font-size: 18px;
+            line-height: 1.5;
+            padding: 10px 20px;
+        }
+        .name {
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+        }
+    </style>
+</head>
+<body>
+  
+    <input type="hidden" id="anPageName" name="page" value="login" />
+    <div class="container-center-horizontal">
+        <form class="login screen" name="form3" action="{% if tenant %}{{ url_for('tenant_login', tenant_slug=tenant.slug) }}{% else %}{{ url_for('login') }}{% endif %}" method="post">
+            <div class="top-bar">
+                <div class="title-div">
+                    <img class="setly-logo-title" src="{{ url_for('static', filename='img/setly-logo.png') }}" alt="Setly logo" />
+                    <div class="name">{% if tenant %}{{ tenant.name }}{% else %}{{ _('Music Universe') }}{% endif %}</div>
+                </div>
+                <p class="enter-password-to-access-admin-area valign-text-middle">
+                    {% if tenant %}
+                        {{ _('Welcome {name} - Enter your email and password to access Admin Area').replace('{name}', tenant.name) }}
+                    {% else %}
+                        {{ _('Enter Password to access Admin Area') }}
+                    {% endif %}
+                </p>
+            </div>
+            <div class="search-bar">
+                <div class="search-div">
+                    {% if tenant %}
+                    <div class="search-box-div">
+                        <input class="email-text" id="email-text" name="email" placeholder="{{ _('Email') }}" type="email" required />
+                    </div>
+                    {% endif %}
+                    <div class="search-box-div">
+                        <input class="password-text" id="password-text" name="password" placeholder="{{ _('Password') }}" type="password" required />
+                    </div>
+                    <button type="submit" class="search-button">
+                        <span class="start-my-search">{{ _('Login') }} →</span>
+                    </button>
+                </div>
+            </div>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="flash-messages">
+                        {% for category, message in messages %}
+                            <div class="flash-message {{ category }}">{{ message }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+            {% if tenant %}
+            <div class="forgot-password-container">
+                <a href="{{ url_for('tenant_forgot_password', tenant_slug=tenant.slug) }}" class="forgot-password-link">
+                    {{ _('Forgot Password?') }}
+                </a>
+            </div>
+            {% endif %}
+        </form>
+    </div>
+    <script>
+        // Add hover effect to login button
+        document.addEventListener('DOMContentLoaded', function() {
+            const btn = document.querySelector('button[type="submit"]');
+            if (btn) {
+                btn.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-2px)';
+                });
+                btn.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0)';
+                });
+            }
+        });
+    </script>
+</body>
+</html>

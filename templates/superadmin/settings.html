@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ app_name }} - System Settings</title>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename=favicon) }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='superadmin.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dialog.css') }}">
+    <script src="{{ url_for('static', filename='dialog.js') }}"></script>
+</head>
+<body>
+    {% include 'superadmin/nav.html' %}
+    
+    <div class="dashboard-container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}" style="margin-bottom: 1rem; padding: 1rem; border-radius: 4px; {% if category == 'success' %}background: #d4edda; color: #155724; border: 1px solid #c3e6cb;{% elif category == 'error' %}background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb;{% else %}background: #fff3cd; color: #856404; border: 1px solid #ffeaa7;{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <div class="admin-header">
+            <h1>System Settings</h1>
+            <p class="admin-subtitle">Configure application-wide settings</p>
+        </div>
+        
+        <div class="section">
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Setting</th>
+                            <th>Value</th>
+                            <th>Description</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for setting in settings %}
+                        {% if setting.key not in ['favicon', 'app_icon'] %}
+                        <tr>
+                            <td><strong>{{ setting.key }}</strong></td>
+                            <td>
+                                <input type="text" 
+                                       id="value_{{ setting.key }}" 
+                                       value="{{ setting.value }}" 
+                                       style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 4px;">
+                            </td>
+                            <td style="font-size: 0.9em; color: var(--text-secondary);">{{ setting.description }}</td>
+                            <td>
+                                <button onclick="updateSetting('{{ setting.key }}')" class="button small">Save</button>
+                            </td>
+                        </tr>
+                        {% endif %}
+                        {% else %}
+                        <tr>
+                            <td colspan="4" class="no-data">No settings configured</td>
+                        </tr>
+                        {% endfor %}
+                        
+                        <!-- Favicon Upload -->
+                        <tr>
+                            <td><strong>favicon</strong></td>
+                            <td>
+                                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                    <img id="favicon-preview" 
+                                         src="/static/{{ favicon }}" 
+                                         alt="Favicon" 
+                                         style="width: 24px; height: 24px; border: 1px solid var(--border-color); border-radius: 4px;"
+                                         onerror="this.src='/static/favicon.ico'">
+                                    <form id="favicon-form" enctype="multipart/form-data" style="display: flex; align-items: center; gap: 0.5rem; flex: 1;">
+                                        <input type="file" 
+                                               id="favicon-input" 
+                                               name="file" 
+                                               accept=".ico,.png,.jpg,.jpeg,.svg"
+                                               style="flex: 1; padding: 0.4rem; border: 1px solid var(--border-color); border-radius: 4px; font-size: 0.9em;">
+                                    </form>
+                                </div>
+                            </td>
+                            <td style="font-size: 0.9em; color: var(--text-secondary);">Browser favicon (.ico or .png, 32x32px)</td>
+                            <td>
+                                <button type="submit" form="favicon-form" class="button small">Upload</button>
+                            </td>
+                        </tr>
+                        
+                        <!-- App Icon Upload -->
+                        <tr>
+                            <td><strong>app_icon</strong></td>
+                            <td>
+                                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                    <img id="app-icon-preview" 
+                                         src="/static/{{ app_icon }}" 
+                                         alt="App Icon" 
+                                         style="width: 32px; height: 32px; border: 1px solid var(--border-color); border-radius: 4px;"
+                                         onerror="this.src='/static/app-icon.png'">
+                                    <form id="app-icon-form" enctype="multipart/form-data" style="display: flex; align-items: center; gap: 0.5rem; flex: 1;">
+                                        <input type="file" 
+                                               id="app-icon-input" 
+                                               name="file" 
+                                               accept=".png,.jpg,.jpeg,.svg"
+                                               style="flex: 1; padding: 0.4rem; border: 1px solid var(--border-color); border-radius: 4px; font-size: 0.9em;">
+                                    </form>
+                                </div>
+                            </td>
+                            <td style="font-size: 0.9em; color: var(--text-secondary);">Application icon (.png, 512x512px)</td>
+                            <td>
+                                <button type="submit" form="app-icon-form" class="button small">Upload</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Fallback for showAlert if dialog.js hasn't loaded yet
+        window.showAlert = window.showAlert || function(message, type = 'info') {
+            console.log(`[${type}] ${message}`);
+            alert(message);
+        };
+        
+        function updateSetting(key) {
+            const value = document.getElementById('value_' + key).value;
+            
+            fetch('/superadmin/settings/update', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ key: key, value: value })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert('Setting updated successfully!', 'success');
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showAlert('Error: ' + data.message, 'error');
+                }
+            })
+            .catch(error => {
+                showAlert('Error updating setting: ' + error, 'error');
+            });
+        }
+        
+        // Handle favicon upload
+        document.getElementById('favicon-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const fileInput = document.getElementById('favicon-input');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                showAlert('Please select a file', 'error');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('icon_type', 'favicon');
+            
+            fetch('/superadmin/settings/upload-icon', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert('Favicon uploaded successfully!', 'success');
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showAlert('Error: ' + data.message, 'error');
+                }
+            })
+            .catch(error => {
+                showAlert('Error uploading favicon: ' + error, 'error');
+            });
+        });
+        
+        // Handle app icon upload
+        document.getElementById('app-icon-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const fileInput = document.getElementById('app-icon-input');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                showAlert('Please select a file', 'error');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('icon_type', 'app_icon');
+            
+            fetch('/superadmin/settings/upload-icon', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert('App icon uploaded successfully!', 'success');
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showAlert('Error: ' + data.message, 'error');
+                }
+            })
+            .catch(error => {
+                showAlert('Error uploading app icon: ' + error, 'error');
+            });
+        });
+    </script>
+</body>
+</html>

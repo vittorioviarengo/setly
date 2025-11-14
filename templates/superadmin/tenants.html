@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Tenant Management - Super Admin</title>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename=favicon) }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='superadmin.css') }}">
+</head>
+<body>
+    {% include 'superadmin/nav.html' %}
+    
+    <div class="dashboard-container">
+        <div class="header-actions">
+            <h1>Tenant Management</h1>
+            <a href="{{ url_for('superadmin.new_tenant') }}" class="button">Add New Tenant</a>
+        </div>
+
+        <div class="section">
+            <div class="table-container">
+                <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Slug</th>
+                        <th>Email</th>
+                        <th>Status</th>
+                        <th>Last Login</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for tenant in tenants %}
+                    <tr>
+                        <td>{{ tenant.name }}</td>
+                        <td>{{ tenant.slug }}</td>
+                        <td>{{ tenant.email }}</td>
+                        <td>
+                            <span class="status-badge {% if tenant.active %}active{% else %}inactive{% endif %}">
+                                {{ 'Active' if tenant.active else 'Inactive' }}
+                            </span>
+                        </td>
+                        <td>{{ tenant.last_login_at if tenant.last_login_at else 'Never' }}</td>
+                        <td class="actions">
+                            <a href="{{ url_for('superadmin.edit_tenant', id=tenant.id) }}" class="button small">Edit</a>
+                            <button onclick="inviteTenant({{ tenant.id }})" class="button small info">Invite</button>
+                            <button onclick="toggleTenant({{ tenant.id }}, {{ tenant.active|tojson }})" class="button small {% if tenant.active %}warning{% else %}success{% endif %}">
+                                {{ 'Deactivate' if tenant.active else 'Activate' }}
+                            </button>
+                            <button 
+                                data-tenant-id="{{ tenant.id }}" 
+                                data-tenant-name="{{ tenant.name }}" 
+                                data-tenant-slug="{{ tenant.slug }}" 
+                                class="button small danger delete-tenant-btn">Delete</button>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="no-data">No tenants found. Click "Add New Tenant" to create one.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Attach event listeners to delete buttons
+        document.addEventListener('DOMContentLoaded', function() {
+            const deleteButtons = document.querySelectorAll('.delete-tenant-btn');
+            deleteButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = this.getAttribute('data-tenant-id');
+                    const name = this.getAttribute('data-tenant-name');
+                    const slug = this.getAttribute('data-tenant-slug');
+                    deleteTenant(id, name, slug);
+                });
+            });
+        });
+
+        function inviteTenant(id) {
+            if (confirm('Send invitation email to this tenant?')) {
+                fetch('/superadmin/tenant/' + id + '/invite', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Invitation sent successfully to ' + data.email);
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
+                });
+            }
+        }
+
+        function toggleTenant(id, currentStatus) {
+            if (confirm('Are you sure you want to ' + (currentStatus ? 'deactivate' : 'activate') + ' this tenant?')) {
+                fetch('/superadmin/tenant/' + id + '/toggle', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
+                });
+            }
+        }
+
+        function deleteTenant(id, name, slug) {
+            // First confirmation
+            const confirmMsg = '⚠️ DANGER ZONE ⚠️\n\n' +
+                'You are about to PERMANENTLY DELETE tenant "' + name + '"!\n\n' +
+                'This will delete:\n' +
+                '• All songs (' + name + ' entire database)\n' +
+                '• All song requests/queue items\n' +
+                '• All uploaded images\n' +
+                '• All tenant files and directories\n' +
+                '• The tenant account itself\n\n' +
+                '⚠️ THIS ACTION CANNOT BE UNDONE! ⚠️\n\n' +
+                'Are you sure you want to continue?';
+            
+            if (!confirm(confirmMsg)) {
+                return;
+            }
+            
+            // Second confirmation with tenant name verification
+            const promptMsg = 'To confirm deletion, please type the tenant name exactly:\n\n"' + name + '"\n\n(This is your last chance to cancel!)';
+            const confirmName = prompt(promptMsg);
+            
+            if (confirmName !== name) {
+                if (confirmName !== null) {
+                    alert('❌ Deletion cancelled. The name "' + confirmName + '" does not match "' + name + '".');
+                }
+                return;
+            }
+            
+            // Show loading indicator
+            const originalButtons = document.querySelectorAll('button');
+            originalButtons.forEach(btn => btn.disabled = true);
+            
+            // Proceed with deletion
+            console.log('Sending delete request for tenant ID:', id, 'Name:', name, 'Slug:', slug);
+            
+            fetch('/superadmin/tenant/' + id + '/delete', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    tenant_name: name,
+                    tenant_slug: slug,
+                    confirmed: true
+                })
+            })
+            .then(response => {
+                console.log('Delete response status:', response.status);
+                if (!response.ok) {
+                    throw new Error('HTTP ' + response.status + ': ' + response.statusText);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Delete response data:', data);
+                if (data.success) {
+                    const successMsg = '✓ Tenant deleted successfully.\n\nDeleted:\n' +
+                        '• ' + data.stats.songs_deleted + ' songs\n' +
+                        '• ' + data.stats.requests_deleted + ' queue items\n' +
+                        '• ' + data.stats.images_deleted + ' images\n' +
+                        '• ' + data.stats.directories_deleted + ' directories';
+                    alert(successMsg);
+                    location.reload();
+                } else {
+                    const errorMsg = data.error_type 
+                        ? '❌ Error (' + data.error_type + '): ' + data.message 
+                        : '❌ Error: ' + data.message;
+                    alert(errorMsg);
+                    originalButtons.forEach(btn => btn.disabled = false);
+                }
+            })
+            .catch(error => {
+                console.error('Delete error:', error);
+                alert('❌ Error deleting tenant: ' + error.message + '\n\nCheck the Flask console for detailed logs.');
+                originalButtons.forEach(btn => btn.disabled = false);
+            });
+        }
+    </script>
+</body>
+</html>

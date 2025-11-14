@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Super Admin Dashboard</title>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename=favicon) }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='superadmin.css') }}">
+</head>
+<body>
+    {% include 'superadmin/nav.html' %}
+    
+    <div class="dashboard-container">
+        <div class="admin-header">
+            <h1>Super Admin Dashboard</h1>
+            <p class="admin-subtitle">System overview and management</p>
+        </div>
+        
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}" style="margin-bottom: 1rem; padding: 1rem; border-radius: 4px; {% if category == 'success' %}background: #d4edda; color: #155724; border: 1px solid #c3e6cb;{% elif category == 'error' %}background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb;{% else %}background: #fff3cd; color: #856404; border: 1px solid #ffeaa7;{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                </div>
+                <h3>Total Tenants</h3>
+                <p class="stat-number">{{ tenant_count }}</p>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
+                </div>
+                <h3>Total Songs</h3>
+                <p class="stat-number">{{ song_count }}</p>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                </div>
+                <h3>Total Requests</h3>
+                <p class="stat-number">{{ total_request_count }}</p>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-header">
+                <h2>Recent Tenants</h2>
+                <a href="{{ url_for('superadmin.tenants') }}" class="button secondary">View All</a>
+            </div>
+            
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Status</th>
+                            <th>Last Login</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for tenant in recent_tenants %}
+                        <tr>
+                            <td>
+                                {% if tenant.logo_image %}
+                                <img src="{{ url_for('static', filename=tenant.logo_image) }}" 
+                                     class="tenant-logo" 
+                                     alt="{{ tenant.name }}"
+                                     onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='inline-flex';">
+                                <span class="tenant-logo-fallback" style="display:none;">
+                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                        <circle cx="12" cy="7" r="4"></circle>
+                                    </svg>
+                                </span>
+                                {% else %}
+                                <span class="tenant-logo-fallback">
+                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                        <circle cx="12" cy="7" r="4"></circle>
+                                    </svg>
+                                </span>
+                                {% endif %}
+                                {{ tenant.name }}
+                            </td>
+                            <td>{{ tenant.email }}</td>
+                            <td>
+                                <span class="status-badge {% if tenant.active %}active{% else %}inactive{% endif %}">
+                                    {{ 'Active' if tenant.active else 'Inactive' }}
+                                </span>
+                            </td>
+                            <td>{{ tenant.last_login_at if tenant.last_login_at else 'Never' }}</td>
+                            <td class="actions">
+                                <a href="{{ url_for('superadmin.edit_tenant', id=tenant.id) }}" class="button small">Edit</a>
+                                <button onclick="toggleTenant({{ tenant.id }}, {{ tenant.active|tojson }})" 
+                                        class="button small {% if tenant.active %}warning{% else %}success{% endif %}">
+                                    {{ 'Deactivate' if tenant.active else 'Activate' }}
+                                </button>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="5" class="no-data">No tenants found</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-header">
+                <h2>System Status</h2>
+                <a href="{{ url_for('superadmin.logs') }}" class="button secondary small">View Logs</a>
+            </div>
+            <div class="status-grid">
+                <div class="status-card">
+                    <h4>Database</h4>
+                    <span class="status-indicator active"></span>
+                    <p>Connected</p>
+                </div>
+                <div class="status-card">
+                    <h4>Storage</h4>
+                    <span class="status-indicator active"></span>
+                    <p>Available</p>
+                </div>
+                <div class="status-card">
+                    <h4>Services</h4>
+                    <span class="status-indicator active"></span>
+                    <p>Running</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-header">
+                <h2>System Utilities</h2>
+            </div>
+            <div class="utilities-grid">
+                <div class="utility-card">
+                    <h4>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 0.5rem;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                        Database Backup
+                    </h4>
+                    <p>Download a backup copy of the database. Includes all songs, tenants, and settings.</p>
+                    <a href="{{ url_for('superadmin.backup_database') }}" class="button" download>Download Database Backup</a>
+                </div>
+                <div class="utility-card">
+                    <h4>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 0.5rem;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                        Database Restore
+                    </h4>
+                    <p class="warning-text">⚠️ WARNING: This will replace the current database with the uploaded backup!</p>
+                    <form id="restoreForm" action="{{ url_for('superadmin.restore_database') }}" method="post" enctype="multipart/form-data" onsubmit="return confirm('Are you sure? This will REPLACE the current database!');">
+                        <input type="file" name="backup_file" accept=".db" required style="margin-bottom: 0.5rem; font-size: 0.9em;">
+                        <button type="submit" class="button warning">Restore Database</button>
+                    </form>
+                </div>
+                <div class="utility-card">
+                    <h4>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 0.5rem;"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"></path></svg>
+                        Create Empty Database
+                    </h4>
+                    <p class="warning-text">⚠️ WARNING: This will create a new empty database and delete all existing data!</p>
+                    <form action="{{ url_for('superadmin.create_db') }}" method="post" onsubmit="return confirm('Are you sure? This will DELETE ALL DATA!');">
+                        <button type="submit" class="button warning">Create DB</button>
+                    </form>
+                </div>
+                <div class="utility-card">
+                    <h4>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 0.5rem;"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                        Delete All Songs
+                    </h4>
+                    <p class="warning-text">⚠️ WARNING: This will delete all songs from all tenants!</p>
+                    <form action="{{ url_for('superadmin.delete_all_songs_global') }}" method="post" onsubmit="return confirm('Are you sure? This will DELETE ALL SONGS from ALL tenants!');">
+                        <button type="submit" class="button danger">Delete All Songs</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleTenant(id, currentStatus) {
+            if (confirm('Are you sure you want to ' + (currentStatus ? 'deactivate' : 'activate') + ' this tenant?')) {
+                fetch('/superadmin/tenant/' + id + '/toggle', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
+                });
+            }
+        }
+    </script>
+</body>
+</html>

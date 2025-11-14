@@ -1,0 +1,171 @@
+!DOCTYPE html>
+<html lang="{{ lang }}">
+
+<head>
+    <meta charset="UTF-8">
+    <title>{{ _('Search Page') }}</title>
+    <link rel="stylesheet" href="/static/search.css">
+    <link rel="stylesheet" type="text/css" href="static/css/search-mobile.css" />
+    <link rel="stylesheet" type="text/css" href="static/css/styleguide.css" />
+    <link rel="stylesheet" type="text/css" href="static/css/globals.css" />
+    <script src="/static/image-utils.js"></script>
+    <script src="/static/search.js" defer></script>
+</head>
+
+<body style="margin: 0; background: #121111">
+    <h1>{{ _('La Musica di Sergio Chiappa') }}</h1>
+        
+        <div id="translations"
+            song-request="{{ _('Request Song Button') }}"
+            song-delete="{{ _('Delete Song Button') }}"
+            song-requests-title="{{ _('Your Requests Title') }}"
+            song-list-title="{{ _('Song List Title') }}"
+            by-author="{{ _('By Author') }}"
+            no-song="{{ _('No Songs Found') }}"
+
+        </div>
+
+        <div id="userNameContainer">
+            <div id="userNameDisplay">{{ user_name if user_name else '' }}</div>
+            <button id="editNameButton" style="display: {{ 'block' if user_name else 'none' }}" onclick="editName()">{{
+                _('Change Name') }}</button>
+        </div>
+
+        <!-- Only display the form if username is not present or needs to be edited -->
+        <form id="nameForm" action="/search" method="post" style="display: {{ 'none' if user_name else 'block' }}">
+            <label for="userName">{{ _('Your Name Label') }}</label>
+            <input type="text" id="userName" name="userName" placeholder="{{ _('Enter Name') }}"
+                value="{{ user_name }}">
+            <button type="submit">{{ _('Submit Button') }}</button>
+        </form>
+
+
+        <!-- UI Language Selector Dropdown -->
+        <label for="uiLanguageSelect">UI Language:</label>
+        <select id="uiLanguageSelect">
+            <option value="en">English</option>
+            <option value="it">Italian</option>
+            <option value="es">Spanish</option>
+            <option value="fr">French</option>
+        </select>
+
+        <!-- Search Language Selector Dropdown -->
+        <label for="searchLanguageSelect">Search Songs in Language:</label>
+        <select id="searchLanguageSelect">
+            <option value="all">All</option>
+            <option value="en">English</option>
+            <option value="it">Italian</option>
+            <option value="es">Spanish</option>
+            <option value="fr">French</option>
+        </select>
+
+        <div id="errorContainer" style="display:none; color: red;"></div>
+        <div id="successContainer" style="display:none; color: green;"></div>
+
+        <!-- Sorting buttons -->
+        <button id="sortByAuthor" data-sort="author">Sort by Author</button>
+        <button id="sortByTitle" data-sort="title">Sort by Title</button>
+
+        <!--     <h2>{{ _('Browse Music') }}</h2>
+-->
+        <div class="search-container">
+            <input type="text" id="searchBox" placeholder="{{ _('Search Songs Box') }}">
+            <button type="submit" id="searchButton" onclick="filterSongs()">{{ _('Search Songs Button') }}</button>
+            <button type="submit" id="clearButton" onclick="clearSearch()">{{ _('Clear Search Button') }}</button>
+        </div>
+
+
+        <div>
+            <select id="letterSelect">
+                <option value="All" {% if letter=='All' %}selected{% endif %}>All</option>
+                <option value="A" selected>A</option>
+                <option value="B">B</option>
+                <option value="C">C</option>
+                <option value="D">D</option>
+                <option value="E">E</option>
+                <option value="F">F</option>
+                <option value="G">G</option>
+                <option value="H">H</option>
+                <option value="I">I</option>
+                <option value="J">J</option>
+                <option value="K">K</option>
+                <option value="L">L</option>
+                <option value="M">M</option>
+                <option value="N">N</option>
+                <option value="O">O</option>
+                <option value="P">P</option>
+                <option value="Q">Q</option>
+                <option value="R">R</option>
+                <option value="S">S</option>
+                <option value="T">T</option>
+                <option value="U">U</option>
+                <option value="V">V</option>
+                <option value="W">W</option>
+                <option value="X">X</option>
+                <option value="Y">Y</option>
+                <option value="Z">Z</option>
+            </select>
+        </div>
+
+
+        <!-- Div to display the user's requests -->
+        <div id="user-requests">
+
+            <!-- User's requests will be dynamically inserted here -->
+        </div>
+
+        <div id="song-list">
+            <!-- All songs will be displayed here -->
+        </div>
+
+        <script>
+            var canRequestSongs = {{ 'true' if can_request_songs else 'false' }};
+        </script>
+</body>
+
+</html>
+
+
+
+
+data.forEach(song => {
+                
+    const songDiv = document.createElement('div');
+    songDiv.classList.add('queue-item'); // Use the same class as the rest of the songs
+
+    // Use centralized image utility
+    const authorImage = createAuthorImage(song.image, `${song.author} Image`, null, 'queue-image');
+
+    const songDetails = document.createElement('div');
+    songDetails.classList.add('queue-details'); // Use the same class as the rest of the songs
+
+    const songTitle = document.createElement('div');
+    songTitle.textContent = `${song.title}`;
+    songTitle.classList.add('queue-title'); // Use the same class as the rest of the songs
+
+    const songAuthor = document.createElement('div');
+    const byAuthor = translations.getAttribute('by-author');
+    songAuthor.textContent = `${byAuthor} ${song.author}`;
+    songAuthor.classList.add('queue-author'); // Use the same class as the rest of the songs
+
+    songDetails.appendChild(songTitle);
+    songDetails.appendChild(songAuthor);
+    songDiv.appendChild(authorImage);
+    songDiv.appendChild(songDetails);
+
+
+    // Append delete button only if there is a global username
+    if (globalUserName) {
+        const deleteButton = document.createElement('div');
+        deleteButton.textContent = deleteText;
+        deleteButton.classList.add('queue-button'); // Use the same class as the request button
+        deleteButton.dataset.songId = song.song_id;
+        deleteButton.onclick = function() {
+            deleteRequest(song.song_id, globalUserName);
+        };
+
+        songDiv.appendChild(deleteButton);
+    }
+
+    userRequestsDiv.appendChild(songDiv);
+});

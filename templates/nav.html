@@ -1,0 +1,66 @@
+<nav class="tenant-nav">
+    <ul>
+        {% if tenant %}
+        <li><a href="{{ url_for('tenant_queue', tenant_slug=tenant.slug) }}" class="{% if request.endpoint == 'tenant_queue' %}active{% endif %}">
+            <span class="nav-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+            </span> {{ _('Queue Page Link') }}
+        </a></li>
+        <li><a href="{{ url_for('tenant_songs', tenant_slug=tenant.slug) }}" class="{% if request.endpoint == 'tenant_songs' %}active{% endif %}">
+            <span class="nav-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
+            </span> {{ _('Songs Page Link') }}
+        </a></li>
+        <li><a href="{{ url_for('tenant_admin', tenant_slug=tenant.slug) }}" class="{% if request.endpoint == 'tenant_admin' %}active{% endif %}">
+            <span class="nav-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M12 1v6m0 6v6m5.196-14.804L13.5 7.893m-3 3l-3.697 3.697M23 12h-6m-6 0H1m14.804 5.196l-3.697-3.697m-3-3l-3.697-3.697"></path></svg>
+            </span> {{ _('Admin Page Link') }}
+        </a></li>
+        {% if session.get('is_tenant_admin') %}
+        <li class="right"><a href="{{ url_for('tenant_logout', tenant_slug=tenant.slug) }}">
+            <span class="nav-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+            </span> {{ _('Logout') }}
+        </a></li>
+        {% endif %}
+        {% else %}
+        <li><a href="{{ url_for('queue') }}" class="{% if request.endpoint == 'queue' %}active{% endif %}">
+            <span class="nav-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+            </span> {{ _('Queue Page Link') }}
+        </a></li>
+        <li><a href="{{ url_for('songs') }}" class="{% if request.endpoint == 'songs' %}active{% endif %}">
+            <span class="nav-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
+            </span> {{ _('Songs Page Link') }}
+        </a></li>
+        <li><a href="{{ url_for('admin') }}" class="{% if request.endpoint == 'admin' %}active{% endif %}">
+            <span class="nav-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M12 1v6m0 6v6m5.196-14.804L13.5 7.893m-3 3l-3.697 3.697M23 12h-6m-6 0H1m14.804 5.196l-3.697-3.697m-3-3l-3.697-3.697"></path></svg>
+            </span> {{ _('Admin Page Link') }}
+        </a></li>
+        {% endif %}
+        <li class="language-selector-nav">
+            <label for="languageSelect">{{ _('UI Language') }}:</label>
+            <select id="languageSelect" name="language" onchange="changeLanguage(this.value)">
+                <option value="en" {{ 'selected' if g.lang_code == 'en' else '' }}>{{ _('English') }}</option>
+                <option value="it" {{ 'selected' if g.lang_code == 'it' else '' }}>{{ _('Italiano') }}</option>
+                <option value="es" {{ 'selected' if g.lang_code == 'es' else '' }}>{{ _('Espanol') }}</option>
+                <option value="de" {{ 'selected' if g.lang_code == 'de' else '' }}>{{ _('Deutsch') }}</option>
+                <option value="fr" {{ 'selected' if g.lang_code == 'fr' else '' }}>{{ _('Français') }}</option>
+            </select>
+        </li>
+    </ul>
+</nav>
+
+
+
+<script>
+    function changeLanguage(lang) {
+        {% if tenant %}
+        window.location.href = `/{{ tenant.slug }}/change_language/${lang}`;
+        {% else %}
+        window.location.href = `/change_language/${lang}`;
+        {% endif %}
+    }
+</script>

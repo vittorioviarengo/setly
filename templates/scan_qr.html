@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="{{ g.lang_code }}">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename=favicon) }}">
+  <meta name="og:type" content="website" />
+  <meta name="twitter:card" content="photo" />
+  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/scan-qr.css') }}" />
+  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styleguide.css') }}" />
+  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/globals.css') }}" />
+  <title>{{ _('Live Event Is Over') }} - {{ tenant.name if tenant else _('Music Universe') }}</title>
+</head>
+
+<body style="margin: 0; background: #121111">
+  <input type="hidden" id="anPageName" name="page" value="scan-qr" />
+  <div class="container-center-horizontal">
+    <div class="scan-qr screen">
+      <div class="overlap-group2">
+        <div class="top-bar">
+          <div class="title-div">
+            {% if tenant and tenant.logo_image %}
+            <img class="setly-logo-title" src="{{ url_for('static', filename=tenant.logo_image) }}" alt="{{ tenant.name }} Logo" style="max-height: 60px; object-fit: contain;" />
+            {% else %}
+            <img class="setly-logo-title" src="{{ url_for('static', filename='img/setly-logo.png') }}" alt="Music Logo" />
+            {% endif %}
+            <div class="name">{{ tenant.name if tenant else _('Music Universe') }}</div>
+          </div>
+          <p class="the-live-event-is-over valign-text-middle">{{ _('Live Event Is Over') }}</p>
+          <p class="scan-new-qr-code valign-text-middle">{{ _('Scan new QR Code') }}</p>
+        </div>
+      </div>
+      
+      {% if tenant and tenant.website_url %}
+      <a href="{{ tenant.website_url }}" target="_blank">
+        <div class="button-link-div">
+          <div class="overlap-group1">
+            <div class="qr-code-button-1 valign-text-middle">{{ _('Visit Artist Website') }}</div>
+          </div>
+        </div>
+      </a>
+      {% elif tenant %}
+      <!-- No website configured - show thank you message -->
+      <div style="text-align: center; padding: 20px; color: #999;">
+        <p>{{ _('Thank you for attending!') }}</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</body>
+
+</html>

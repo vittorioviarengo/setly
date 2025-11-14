@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ 'Edit' if tenant else 'New' }} Tenant - Super Admin</title>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename=favicon) }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='superadmin.css') }}">
+</head>
+<body>
+    {% include 'superadmin/nav.html' %}
+    
+    <div class="dashboard-container">
+        <div class="admin-header">
+            <h1>{{ 'Edit' if tenant else 'New' }} Tenant</h1>
+            <p class="admin-subtitle">{{ 'Update tenant information and configuration' if tenant else 'Create a new tenant account' }}</p>
+        </div>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category if category in ['success', 'error', 'warning', 'info'] else 'info' }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <!-- Main Form -->
+        <div class="section">
+            <form method="POST" action="{{ url_for('superadmin.new_tenant' if not tenant else 'superadmin.edit_tenant', id=tenant.id if tenant else None) }}" enctype="multipart/form-data">
+                <div class="section-header">
+                    <h2>Tenant Information</h2>
+                </div>
+                <div style="padding: 2rem;">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="name">Tenant Name*</label>
+                            <input type="text" id="name" name="name" value="{{ form_data.name if form_data else (tenant.name if tenant else '') }}" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="slug">URL Slug*</label>
+                            <input type="text" id="slug" name="slug" value="{{ form_data.slug if form_data else (tenant.slug if tenant else '') }}" 
+                                   pattern="[a-z0-9-]+" title="Only lowercase letters, numbers, and hyphens allowed" required>
+                            <small>e.g., "artist1" for /artist1/</small>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="email">Email*</label>
+                            <input type="email" id="email" name="email" value="{{ form_data.email if form_data else (tenant.email if tenant else '') }}" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="preferred_language">Preferred Language*</label>
+                            <select id="preferred_language" name="preferred_language" required>
+                                <option value="en" {{ 'selected' if (form_data and form_data.preferred_language == 'en') or (tenant and tenant.preferred_language == 'en') or (not tenant and not form_data) else '' }}>English</option>
+                                <option value="it" {{ 'selected' if (form_data and form_data.preferred_language == 'it') or (tenant and tenant.preferred_language == 'it') else '' }}>Italiano</option>
+                                <option value="es" {{ 'selected' if (form_data and form_data.preferred_language == 'es') or (tenant and tenant.preferred_language == 'es') else '' }}>Español</option>
+                                <option value="de" {{ 'selected' if (form_data and form_data.preferred_language == 'de') or (tenant and tenant.preferred_language == 'de') else '' }}>Deutsch</option>
+                                <option value="fr" {{ 'selected' if (form_data and form_data.preferred_language == 'fr') or (tenant and tenant.preferred_language == 'fr') else '' }}>Français</option>
+                            </select>
+                            <small>Default language for email invitations and admin panel</small>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="website_url">Website URL</label>
+                            <input type="url" id="website_url" name="website_url" value="{{ form_data.website_url if form_data else (tenant.website_url if tenant else '') }}" 
+                                   placeholder="https://www.artistname.com">
+                            <small>Artist's official website (used on session expiry page)</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="events_link">Events/Calendar Link</label>
+                            <input type="url" id="events_link" name="events_link" value="{{ form_data.events_link if form_data else (tenant.events_link if tenant else '') }}" 
+                                   placeholder="https://www.bandsintown.com/artistname">
+                            <small>Link to upcoming shows/events schedule</small>
+                        </div>
+                    </div>
+
+                    {% if tenant %}
+                    <div class="form-group">
+                        <label>Password Management</label>
+                        <p class="info-text">Tenant will receive a password setup link via email. Use "Invite" button to resend.</p>
+                    </div>
+                    {% endif %}
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="logo">Logo Image</label>
+                            <input type="file" id="logo" name="logo" accept="image/*" onchange="previewImage(this, 'logoPreview')">
+                            <div id="logoPreview" style="margin-top: 1rem; display: none;">
+                                <img id="logoPreviewImg" src="" alt="Logo Preview" style="max-width: 200px; max-height: 200px; border: 1px solid var(--border-light); border-radius: 8px; padding: 8px;">
+                            </div>
+                            {% if tenant and tenant.logo_image %}
+                            <small>Current: {{ tenant.logo_image }}</small>
+                            {% else %}
+                            <small>Small icon - 64x64px recommended</small>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            <label for="banner">Welcome Banner Image</label>
+                            <input type="file" id="banner" name="banner" accept="image/*" onchange="previewImage(this, 'bannerPreview')">
+                            <div id="bannerPreview" style="margin-top: 1rem; display: none;">
+                                <img id="bannerPreviewImg" src="" alt="Banner Preview" style="max-width: 100%; max-height: 200px; border: 1px solid var(--border-light); border-radius: 8px;">
+                            </div>
+                            {% if tenant and tenant.banner_image %}
+                            <small>Current: {{ tenant.banner_image }}</small>
+                            {% else %}
+                            <small>Large banner - 1200x400px recommended</small>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="form-section-title">Payment Options</div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="paypal_enabled" name="paypal_enabled" 
+                                       {{ 'checked' if (form_data and form_data.paypal_enabled) or (tenant and tenant.paypal_enabled) else '' }}>
+                                <label for="paypal_enabled">Enable PayPal</label>
+                            </div>
+                            <input type="text" id="paypal_link" name="paypal_link" 
+                                   value="{{ form_data.paypal_link if form_data else (tenant.paypal_link if tenant else '') }}"
+                                   placeholder="PayPal.me link or similar">
+                        </div>
+
+                        <div class="form-group">
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="venmo_enabled" name="venmo_enabled"
+                                       {{ 'checked' if (form_data and form_data.venmo_enabled) or (tenant and tenant.venmo_enabled) else '' }}>
+                                <label for="venmo_enabled">Enable Venmo</label>
+                            </div>
+                            <input type="text" id="venmo_link" name="venmo_link"
+                                   value="{{ form_data.venmo_link if form_data else (tenant.venmo_link if tenant else '') }}"
+                                   placeholder="Venmo username or link">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="active" name="active" 
+                                       {{ 'checked' if (form_data and form_data.active) or (not tenant or tenant.active) else '' }}>
+                                <label for="active">Active Tenant</label>
+                            </div>
+                        </div>
+
+                        {% if not tenant %}
+                        <div class="form-group">
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="send_invitation" name="send_invitation" checked>
+                                <label for="send_invitation">Send invitation email</label>
+                            </div>
+                            <small>Tenant will receive login instructions and welcome email</small>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="button">{{ 'Update' if tenant else 'Create' }} Tenant</button>
+                        <a href="{{ url_for('superadmin.tenants') }}" class="button secondary">Cancel</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        {% if tenant %}
+        <!-- CSV Upload Section -->
+        <div class="section">
+            <div class="section-header">
+                <h2>Upload Songs from CSV</h2>
+            </div>
+            <div style="padding: 2rem;">
+                <p class="info-text">Upload a CSV file to add songs to this artist's database. This is helpful for artists who need assistance setting up their song library.</p>
+                
+                <form action="{{ url_for('superadmin.upload_tenant_csv', tenant_id=tenant.id) }}" method="post" enctype="multipart/form-data" id="superadminCsvForm">
+                    <div class="form-group">
+                        <label for="csvFile">Choose CSV File</label>
+                        <input type="file" name="file" id="csvFile" accept=".csv" required>
+                        <small>Format: title, author, language, image, requests, popularity, genre, playlist</small>
+                    </div>
+                    <div id="csvPreview" style="display: none; margin: 1rem 0; padding: 1rem; background: var(--bg-main); border-radius: var(--radius);">
+                        <p id="csvPreviewText" style="margin: 0;"></p>
+                    </div>
+                    <button type="submit" class="button" id="uploadCsvBtn" disabled>Upload CSV</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Delete All Songs Section -->
+        <div class="section" style="border: 2px solid var(--warning-color);">
+            <div class="section-header" style="background: rgba(243, 156, 18, 0.1);">
+                <h2>Delete All Songs for {{ tenant.name }}</h2>
+            </div>
+            <div style="padding: 2rem;">
+                <div class="alert alert-warning" style="margin-bottom: 1rem;">
+                    <strong>Warning:</strong> This will permanently delete all songs in this artist's database. This action cannot be undone!
+                </div>
+                <button onclick="confirmDeleteAllSongs()" class="button danger">Delete All Songs</button>
+                <div id="deleteResult" style="display: none; margin-top: 1rem;"></div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <style>
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-section-title {
+            font-weight: 600;
+            font-size: 1rem;
+            color: var(--text-primary);
+            margin: 2rem 0 1rem 0;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border-light);
+        }
+
+        .info-text {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            margin: 0;
+            line-height: 1.5;
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+
+    <script>
+        // Image preview function
+        function previewImage(input, previewDivId) {
+            const previewDiv = document.getElementById(previewDivId);
+            const previewImg = document.getElementById(previewDivId + 'Img');
+            
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    previewImg.src = e.target.result;
+                    previewDiv.style.display = 'block';
+                };
+                
+                reader.readAsDataURL(input.files[0]);
+            } else {
+                previewDiv.style.display = 'none';
+            }
+        }
+
+        // CSV file preview
+        const csvFileInput = document.getElementById('csvFile');
+        const uploadCsvBtn = document.getElementById('uploadCsvBtn');
+        const csvPreview = document.getElementById('csvPreview');
+        const csvPreviewText = document.getElementById('csvPreviewText');
+
+        if (csvFileInput) {
+            csvFileInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    uploadCsvBtn.disabled = false;
+                    
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        const text = event.target.result;
+                        const lines = text.split('\n').filter(line => line.trim() !== '');
+                        const rowCount = lines.length;
+                        const fileSize = (file.size / 1024).toFixed(2);
+                        
+                        csvPreviewText.innerHTML = `
+                            <strong>${file.name}</strong><br>
+                            Size: ${fileSize} KB | Estimated songs: ~${rowCount}
+                        `;
+                        csvPreview.style.display = 'block';
+                    };
+                    reader.readAsText(file);
+                } else {
+                    uploadCsvBtn.disabled = true;
+                    csvPreview.style.display = 'none';
+                }
+            });
+        }
+
+        // Delete all songs function
+        function confirmDeleteAllSongs() {
+            const tenantName = '{{ tenant.name if tenant else "" }}';
+            const tenantId = '{{ tenant.id if tenant else "" }}';
+            
+            if (!confirm(`⚠️ WARNING: You are about to delete ALL songs for ${tenantName}!\n\nThis will permanently remove all songs from their database.\n\nThis action CANNOT be undone!\n\nAre you absolutely sure?`)) {
+                return;
+            }
+            
+            const typedName = prompt(`Type "${tenantName}" to confirm deletion:`);
+            if (typedName !== tenantName) {
+                alert('Name does not match. Deletion cancelled.');
+                return;
+            }
+            
+            const deleteResult = document.getElementById('deleteResult');
+            deleteResult.style.display = 'block';
+            deleteResult.className = 'alert alert-info';
+            deleteResult.textContent = 'Deleting all songs...';
+            
+            fetch(`/superadmin/tenant/${tenantId}/delete_all_songs`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(response => response.json())
+            .then(data => {
+                deleteResult.className = data.success ? 'alert alert-success' : 'alert alert-error';
+                deleteResult.textContent = data.message;
+            })
+            .catch(error => {
+                deleteResult.className = 'alert alert-error';
+                deleteResult.textContent = `Error: ${error.message}`;
+            });
+        }
+    </script>
+</body>
+</html>

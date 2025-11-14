@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "seergiochiappa",
+  "private_key_id": "d3bb22c20d7013b7f1b2ba1619699bfe5b131d5d",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDAbKgpQZN5leUD\n4Iy8z1VQ2+NnEWQXrr17KwWeql1yJcBxQuZ3DNIeqGFWqG8MFeEFRpa8pJGRE2fN\nR35uVtDnclKeBEP/PA5SsGEKVZcoFujdmkNEz53KUFo1MtmiqDuLYQYb5IcyKf8G\nsrAJVbGFGFhEMkYlZScnVoW8C9ZUcDxJPOe1siyfDaLASvt0Vr1UotwPKEQv+quR\nluQSHuRLiFkNeTmwqY5NilyrbjrgChqHtRQwJoNLBSfMpDLVNjiv6Oy3ox4hkJSk\ncRQocZ3Vz3ujIoocPJeMp5eFJao5eOUOq9plRjyZqx8XSVyy+4YqXBHVB6BWH4Zi\nUDF1drChAgMBAAECggEAARA8qe00iaELIOdLWdIGw32SmzfGswWOgyUuyNSh03Mb\nVhjnvYfQ67XUI2KnCfTfP2xnYfuiGRBXlBQpggY5bXUFmT1Wa50/KkRypdgpH6Ho\nR6y+A03nLiZ9aCK7vo0R1qxqqGnt+BhQsi6Xv9Z1FqJmvvo85mEhqzNMhgh19tWd\nQKcVzK/6N9Rdiok5meVfnvK/hyHaGSoAgjuZaff3u+PD3lkFfriMBjZc/h+iITE+\nFRW6OmyGzkqAI14aJtYrzj4APUjI9Nw6EOY00Pm8HSBc3YT0dGhWzLTAA5OKXOGf\nqcWIRq21kZ43EfZ+d/VFCGkxQ6bfGBOu8F0uvLUy8QKBgQDe3Vd15x7Us9dIwTBz\nG6DSwwyUBNSB+SUSWz0gom+17E9zau3PX98dF/xXgtwmbm2R1guqVfqo8Vp1l3OX\nUYEIHbvYrwWlsHSY2xyfqMN7QShKHF60QcQjOZKtK+f+0+VyBgwv+B8I1zv0eGp8\nVCHHLQjXm3GrnFg2NwHnRcIo8QKBgQDdCLQLnKM5qYH74gY/SEA4Le4exrC3/4sg\nzJrzrDNjqSEf3hVPuh70USfqwCNIvSeJ1QEliZdCVkUCQnMUKIVsW7YUwn2U9xke\nupp/l0c67m9y/YExLJATGvy6aGYiMnlPUzs4TZ8vpARkf3XUhWFfcRVvFMeRivoP\navdHqE6CsQKBgGdsFiNLzv3sO1Ky/FXek2JbS6IBH9D1GqQLHTHgz7B/6lroW1Wp\n6vMoZ10BCEL5afWMfDtezQTLhCwfzW+CTjvC+KJUjm1WlrU8sWrSOW0gTp8dzUEf\nZ/Lky9F7F50lHkwszEkSfuxuXY9Uti3eKRKyLnFH3JdD5Ze7LTHzKGgxAoGATd4z\nD6QvHLFKyaHm8YRSm3gS22TD/Q5ZxURPkmin8gQzVza161B2dzvgBCOMSqPYugYA\nUWkXkJcz2IfwYrmjx3jHvKiH9WLXxquWojx5K5m0SZ5lVR2N5C0tu73rvUBq3DdG\nNZ+i5PWzVnRQ3n3ev/DmzCtV40BCuAvG8cepYQECgYEAk0tyWGvQINYfIEO2pN2q\n/+NC973xkFb1jRnWRTdNbC+DWLxyYqPyFKTPHsj/nu1xXWN9+B+Nfw6j+SZAE11e\nX9zpLGrBumV0h1aN8ebS1Fo/hW+1pZXblMt44S+ZRlUSeKnLEO5kimtFNp1y1hsV\nEjgye0hFHnPKg7hoWnI8zyQ=\n-----END PRIVATE KEY-----\n",
+  "client_email": "sergiochiappa@seergiochiappa.iam.gserviceaccount.com",
+  "client_id": "108778640249202946282",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/sergiochiappa%40seergiochiappa.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<script>
+  function setTimestamp(event) {
+    event.preventDefault(); // Prevent the form from submitting immediately
+    fetch('/set_timestamp', { method: 'POST' })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Failed to set timestamp');
+        }
+        return response.json();
+      })
+      .then(data => {
+        document.getElementById('searchForm').submit(); // Submit the form after setting the timestamp
+      })
+      .catch(error => {
+        console.error('Error setting timestamp:', error);
+      });
+  }
+</script>
+<html lang="{{ lang | default('en') }}">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename=favicon) }}" />
+  <meta name="og:type" content="website" />
+  <meta name="twitter:card" content="photo" />
+  <link rel="stylesheet" type="text/css" href="/static/css/launch-screen.css" />
+  <link rel="stylesheet" type="text/css" href="/static/css/styleguide.css" />
+  <link rel="stylesheet" type="text/css" href="/static/css/globals.css" />
+
+</head>
+<body>
+  <div class="container-center-horizontal">
+    <div class="launch-screen screen">
+      {% if tenant and tenant.banner_image %}
+      <img class="sergio-chiappa-piano" src="/static/{{ tenant.banner_image }}" alt="{{ tenant.name }} Banner" />
+      {% else %}
+      <img class="sergio-chiappa-piano" src="/static/img/musician-welcome-stock-photo.jpg" alt="Welcome" />
+      {% endif %}
+      <div class="form-container">
+        <form action="{% if tenant %}/{{ tenant.slug }}/search{% else %}/search{% endif %}" method="get" id="searchForm">
+          <div class="overlap-group">
+            <h1 class="text">
+              <span class="text-wrapper">{{ _('Music Universe of') }}</span>
+              <span class="span1">{{ tenant.name if tenant else 'Sergio Chiappa' }}</span>
+            </h1>
+            <!--<select id="languageSelect" class="language-dropdown">
+              <option value="en">{{ _('English') }}</option>
+              <option value="it">{{ _('Italian') }}</option>
+              <option value="es">{{ _('Spanish') }}</option>
+              <option value="de">{{ _('German') }}</option>
+              <option value="fr">{{ _('French') }}</option>
+            </select>-->
+            <select id="languageSelect" class="language-dropdown">
+              <option value="en">English</option>
+              <option value="it">Italiano</option>
+              <option value="es">Espanol</option>
+              <option value="de">Deutsch</option>
+              <option value="fr">Français</option>
+            </select>
+            <input type="text" id="userNameInput" name="user_name" class="input-field" placeholder="{{ _('Enter your name') }}" value="{{ user_name }}">
+            
+            <button type="submit" class="submit-button" id="submitButton" disabled>
+              <p class="button-text">{{ _('Enter Name Button') }}</p>
+            </button>
+            <img src="{{ url_for('static', filename='img/setly-logo.png') }}" class="setly-logo" alt="Setly logo">
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var userLang = navigator.language || navigator.userLanguage;
+        userLang = userLang.substring(0, 2); // Get two-letter language code
+        var langSelect = document.getElementById('languageSelect');
+
+        // Retrieve selected language from localStorage or default to browser language
+        var selectedLanguage = localStorage.getItem('selectedLanguage') || userLang;
+        if (['en', 'it', 'es', 'de', 'fr'].includes(selectedLanguage)) {
+            langSelect.value = selectedLanguage;
+        } else {
+            langSelect.value = 'en'; // Default to English if not supported
+        }
+
+        // Retrieve globalUserName from localStorage
+        const userNameInput = document.getElementById('userNameInput');
+        const globalUserName = localStorage.getItem('globalUserName') || '';
+        if (userNameInput && globalUserName) {
+            userNameInput.value = globalUserName;
+        }
+
+        // Update placeholder text based on the selected language
+        function updatePlaceholder() {
+            const placeholders = {
+                en: "Enter your name",
+                it: "Inserisci il tuo nome",
+                es: "Introduce tu nombre",
+                de: "Geben Sie Ihren Namen ein",
+                fr: "Entrez votre nom"
+            };
+            userNameInput.placeholder = placeholders[selectedLanguage] || placeholders['en'];
+        }
+        updatePlaceholder(); // Call this function initially to set the placeholder
+
+        // Store globalUserName in localStorage whenever it changes
+        if (userNameInput) {
+            userNameInput.addEventListener('input', function() {
+                localStorage.setItem('globalUserName', userNameInput.value.trim());
+                // Enable or disable the submit button based on the input
+                document.getElementById('submitButton').disabled = !userNameInput.value.trim();
+            });
+        }
+
+        // Initially disable the submit button if the username is empty
+        document.getElementById('submitButton').disabled = !userNameInput.value.trim();
+
+        // Change language and preserve username
+        langSelect.addEventListener('change', function() {
+            var selectedLanguage = this.value;
+            localStorage.setItem('selectedLanguage', selectedLanguage);
+            
+            var userName = userNameInput.value.trim();
+            var url = `/change_language/${selectedLanguage}`;
+            
+            // Only append the user parameter if userName is not empty
+            if (userName) {
+                url += `?user=${encodeURIComponent(userName)}`;
+            }
+
+            window.location.href = url;
+        });
+
+        // Add event listener to the form to handle the submit event
+        document.getElementById('searchForm').addEventListener('submit', setTimestamp);
+    });
+  </script>
+</body>
+</html>
+

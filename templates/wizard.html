@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="{{ session.get('language', 'it') }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ _('Setup Wizard') }} - {{ app_name }}</title>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename=favicon) }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='wizard.css') }}">
+</head>
+<body>
+    <div class="wizard-container">
+        <!-- Progress Bar -->
+        <div class="progress-container">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-steps">
+                <div class="step active" data-step="1">
+                    <div class="step-number">1</div>
+                    <div class="step-label">{{ _('Info') }}</div>
+                </div>
+                <div class="step" data-step="2">
+                    <div class="step-number">2</div>
+                    <div class="step-label">{{ _('Branding') }}</div>
+                </div>
+                <div class="step" data-step="3">
+                    <div class="step-number">3</div>
+                    <div class="step-label">{{ _('Songs') }}</div>
+                </div>
+                <div class="step" data-step="4">
+                    <div class="step-number">4</div>
+                    <div class="step-label">{{ _('Settings') }}</div>
+                </div>
+                <div class="step" data-step="5">
+                    <div class="step-number">5</div>
+                    <div class="step-label">{{ _('Promote') }}</div>
+                </div>
+                <div class="step" data-step="6">
+                    <div class="step-number">6</div>
+                    <div class="step-label">{{ _('Tutorial') }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Wizard Content -->
+        <div class="wizard-content">
+            <form id="wizardForm" method="POST" enctype="multipart/form-data">
+                
+                <!-- Step 1: Basic Info -->
+                <div class="wizard-step active" data-step="1">
+                    <h2>{{ _('Basic Information') }}</h2>
+                    <p class="step-description">{{ _('Let\'s start with the essentials') }}</p>
+                    
+                    <div class="form-group">
+                        <label for="artist_name">{{ _('Artist Name') }} <span class="required">*</span></label>
+                        <input type="text" id="artist_name" name="artist_name" value="{{ tenant.name if tenant else '' }}" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="bio">{{ _('Bio / Description') }}</label>
+                        <textarea id="bio" name="bio" rows="4" placeholder="{{ _('Tell your audience about yourself...') }}">{{ tenant.bio if tenant and tenant.bio else '' }}</textarea>
+                        <small class="help-text">{{ _('A brief description that will appear on your public page') }}</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="website">{{ _('Website URL') }}</label>
+                        <input type="url" id="website" name="website" value="{{ tenant.website_url if tenant and tenant.website_url else '' }}" placeholder="https://yourwebsite.com">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="event_calendar">{{ _('Event Calendar Link') }}</label>
+                        <input type="url" id="event_calendar" name="event_calendar" value="{{ tenant.events_link if tenant and tenant.events_link else '' }}" placeholder="https://calendar.google.com/...">
+                        <small class="help-text">{{ _('Optional: Link to your event calendar') }}</small>
+                    </div>
+                </div>
+
+                <!-- Step 2: Branding -->
+                <div class="wizard-step" data-step="2">
+                    <h2>{{ _('Branding & URL') }}</h2>
+                    <p class="step-description">{{ _('Choose your URL and customize your page appearance') }}</p>
+                    
+                    <div class="form-group">
+                        <label for="slug">{{ _('Your URL') }} <span class="required">*</span></label>
+                        <div class="url-preview">
+                            <span class="url-base">{{ request.host_url }}</span>
+                            <input type="text" id="slug" name="slug" value="{{ tenant.slug if tenant else '' }}" 
+                                   pattern="[a-z0-9\-]+" 
+                                   {% if tenant and tenant.slug %}readonly disabled{% endif %}
+                                   required>
+                        </div>
+                        <small class="help-text">
+                            {{ _('Only lowercase letters, numbers, and hyphens. Cannot be changed later!') }}
+                        </small>
+                        <div id="slugValidation" class="validation-message"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="logo_image">{{ _('Logo Image') }}</label>
+                        {% if tenant and tenant.logo_image %}
+                        <div class="current-image" id="logo_preview_container">
+                            <img id="logo_preview" src="{{ url_for('static', filename=tenant.logo_image) }}" alt="Current logo">
+                            <span>{{ _('Current logo') }}</span>
+                        </div>
+                        {% else %}
+                        <div class="current-image" id="logo_preview_container" style="display:none;">
+                            <img id="logo_preview" src="" alt="Logo preview">
+                            <span>{{ _('Current logo') }}</span>
+                        </div>
+                        {% endif %}
+                        <input type="file" id="logo_image" name="logo_image" accept="image/*" onchange="previewImage(this, 'logo_preview')">
+                        <small class="help-text">{{ _('Square image recommended (512x512px)') }}</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="banner_image">{{ _('Banner Image') }}</label>
+                        {% if tenant and tenant.banner_image %}
+                        <div class="current-image" id="banner_preview_container">
+                            <img id="banner_preview" src="{{ url_for('static', filename=tenant.banner_image) }}" alt="Current banner">
+                            <span>{{ _('Current banner') }}</span>
+                        </div>
+                        {% else %}
+                        <div class="current-image" id="banner_preview_container" style="display:none;">
+                            <img id="banner_preview" src="" alt="Banner preview">
+                            <span>{{ _('Current banner') }}</span>
+                        </div>
+                        {% endif %}
+                        <input type="file" id="banner_image" name="banner_image" accept="image/*" onchange="previewImage(this, 'banner_preview')">
+                        <small class="help-text">{{ _('Wide image recommended (1920x1080px)') }}</small>
+                    </div>
+                </div>
+
+                <!-- Step 3: Songs -->
+                <div class="wizard-step" data-step="3">
+                    <h2>{{ _('Import Your Songs') }}</h2>
+                    <p class="step-description">{{ _('Add songs to your repertoire - you can always add more later') }}</p>
+                    
+                    <div class="import-options">
+                        <div class="import-option">
+                            <h3>{{ _('Upload CSV File') }}</h3>
+                            <p>{{ _('Import your existing song list from a CSV file') }}</p>
+                            <input type="file" id="csv_file" name="csv_file" accept=".csv" onchange="csvFileSelected()">
+                            <button type="button" id="uploadCSVButton" class="button primary" onclick="uploadCSVSongs()" style="display:none; margin-top: 10px;">
+                                {{ _('Upload Songs') }}
+                            </button>
+                            <button type="button" class="button secondary" onclick="downloadCSVTemplate()" style="margin-top: 10px;">
+                                {{ _('Download Template') }}
+                            </button>
+                            <small class="help-text">{{ _('Format: Title, Author, Language, Genre, Playlist (optional)') }}</small>
+                            <div id="csvUploadStatus" style="margin-top: 10px;"></div>
+                        </div>
+
+                        <div class="import-option-divider">{{ _('OR') }}</div>
+
+                        <div class="import-option">
+                            <h3>{{ _('Load Sample Songs') }}</h3>
+                            <p>{{ _('Start with our curated list of popular songs') }}</p>
+                            <button type="button" class="button secondary" onclick="loadSampleSongs()">
+                                {{ _('Load 100+ Sample Songs') }}
+                            </button>
+                            <div id="sampleSongsStatus"></div>
+                        </div>
+                    </div>
+
+                    <div class="warning-box" id="noSongsWarning" style="display:none;">
+                        <strong>⚠️ {{ _('Warning') }}</strong>
+                        <p>{{ _('No songs have been imported. You can add them later from the admin panel.') }}</p>
+                    </div>
+                </div>
+
+                <!-- Step 4: Settings -->
+                <div class="wizard-step" data-step="4">
+                    <h2>{{ _('App Settings') }}</h2>
+                    <p class="step-description">{{ _('Configure how your song request app works') }}</p>
+                    
+                    <div class="form-group">
+                        <label for="max_requests">{{ _('Max Requests Per User') }} <span class="required">*</span></label>
+                        <input type="number" id="max_requests" name="max_requests" 
+                               value="{{ tenant.max_requests if tenant else 3 }}" 
+                               min="1" max="20" required>
+                        <small class="help-text">{{ _('How many songs each user can request') }}</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="venue">{{ _('Venue Name') }}</label>
+                        <input type="text" id="venue" name="venue" 
+                               value="{{ tenant.venue_name if tenant and tenant.venue_name else '' }}" 
+                               placeholder="{{ _('e.g., The Blue Note, Central Park...') }}">
+                        <small class="help-text">{{ _('Optional: Where you typically perform') }}</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="default_language">{{ _('Default Language') }} <span class="required">*</span></label>
+                        <select id="default_language" name="default_language" required>
+                            <option value="it" {% if tenant and tenant.default_language == 'it' %}selected{% endif %}>Italiano</option>
+                            <option value="en" {% if tenant and tenant.default_language == 'en' %}selected{% endif %}>English</option>
+                            <option value="fr" {% if tenant and tenant.default_language == 'fr' %}selected{% endif %}>Français</option>
+                            <option value="de" {% if tenant and tenant.default_language == 'de' %}selected{% endif %}>Deutsch</option>
+                            <option value="es" {% if tenant and tenant.default_language == 'es' %}selected{% endif %}>Español</option>
+                        </select>
+                        <small class="help-text">{{ _('The default language for your public page') }}</small>
+                    </div>
+                </div>
+
+                <!-- Step 5: Promote -->
+                <div class="wizard-step" data-step="5">
+                    <h2>{{ _('Promote Your App') }}</h2>
+                    <p class="step-description">{{ _('Share your song request page with your audience') }}</p>
+                    
+                    <div class="promote-section">
+                        <h3>{{ _('Your Public Link') }}</h3>
+                        <div class="link-preview-box">
+                            <input type="text" id="publicLink" readonly value="{{ request.host_url }}{{ tenant.slug if tenant else 'your-slug' }}">
+                            <button type="button" class="button secondary" onclick="copyLink()">{{ _('Copy') }}</button>
+                            <button type="button" class="button secondary" onclick="previewLink()">{{ _('Preview') }}</button>
+                        </div>
+                    </div>
+
+                    <div class="promote-section">
+                        <h3>{{ _('QR Code') }}</h3>
+                        <p>{{ _('Print this QR code for easy access at your events') }}</p>
+                        <button type="button" class="button" onclick="printQRCode()">
+                            🖨️ {{ _('Print QR Code') }}
+                        </button>
+                    </div>
+
+                    <div class="promote-section">
+                        <h3>{{ _('Invite a Friend') }}</h3>
+                        <p>{{ _('Share your experience with other artists') }}</p>
+                        <div class="invite-form">
+                            <input type="email" id="inviteEmail" placeholder="{{ _('friend@example.com') }}">
+                            <button type="button" class="button secondary" onclick="sendInvite()">{{ _('Send Invite') }}</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 6: Tutorial -->
+                <div class="wizard-step" data-step="6">
+                    <h2>{{ _('You\'re All Set!') }} 🎉</h2>
+                    <p class="step-description">{{ _('Watch this quick tutorial to learn about the main features') }}</p>
+                    
+                    <div class="video-container">
+                        <!-- Placeholder for YouTube video -->
+                        <div class="video-placeholder">
+                            <svg width="120" height="120" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polygon points="10 8 16 12 10 16 10 8"></polygon>
+                            </svg>
+                            <p>{{ _('Tutorial Video Coming Soon!') }}</p>
+                            <small>{{ _('In the meantime, explore the admin panel to discover all features') }}</small>
+                        </div>
+                        <!-- When ready, replace with: -->
+                        <!-- <iframe src="https://www.youtube.com/embed/YOUR_VIDEO_ID" frameborder="0" allowfullscreen></iframe> -->
+                    </div>
+
+                    <div class="success-message">
+                        <h3>✅ {{ _('Setup Complete!') }}</h3>
+                        <p>{{ _('Your song request app is ready to use. Here\'s what you can do next:') }}</p>
+                        <ul>
+                            <li>{{ _('Share your public link with your audience') }}</li>
+                            <li>{{ _('Customize your song list in the admin panel') }}</li>
+                            <li>{{ _('View and manage song requests in the queue') }}</li>
+                            <li>{{ _('Update your profile and settings anytime') }}</li>
+                        </ul>
+                    </div>
+                </div>
+
+            </form>
+        </div>
+
+        <!-- Navigation Buttons -->
+        <div class="wizard-navigation">
+            <button type="button" class="button secondary" id="prevBtn" onclick="navigateStep(-1)">
+                {{ _('Previous') }}
+            </button>
+            <button type="button" class="button skip-btn" id="skipBtn" onclick="skipWizard()">
+                {{ _('Skip for Now') }}
+            </button>
+            <button type="button" class="button primary" id="nextBtn" onclick="navigateStep(1)">
+                {{ _('Next') }}
+            </button>
+            <button type="button" class="button primary" id="finishBtn" style="display:none;" onclick="finishWizard()">
+                {{ _('Go to Dashboard') }} →
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let currentStep = 1;
+        const totalSteps = 6;
+        let songsImported = false;
+        let slugValidated = false;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            updateProgress();
+            updateButtons();
+            
+            // Slug validation
+            const slugInput = document.getElementById('slug');
+            if (slugInput && !slugInput.disabled && !slugInput.readOnly) {
+                slugInput.addEventListener('input', debounce(validateSlug, 500));
+                console.log('Slug validation enabled for editable input');
+            } else if (slugInput && (slugInput.disabled || slugInput.readOnly)) {
+                // If slug is already set (wizard re-run), mark as validated
+                slugValidated = true;
+                console.log('Slug is read-only/disabled, marking as validated:', slugInput.value);
+            }
+        });
+
+        function navigateStep(direction) {
+            const currentStepEl = document.querySelector(`.wizard-step[data-step="${currentStep}"]`);
+            
+            // Validate current step before moving forward
+            if (direction > 0 && !validateCurrentStep()) {
+                return;
+            }
+            
+            // Hide current step
+            currentStepEl.classList.remove('active');
+            document.querySelector(`.step[data-step="${currentStep}"]`).classList.remove('active');
+            
+            // Update step number
+            currentStep += direction;
+            
+            // Show new step
+            const newStepEl = document.querySelector(`.wizard-step[data-step="${currentStep}"]`);
+            newStepEl.classList.add('active');
+            document.querySelector(`.step[data-step="${currentStep}"]`).classList.add('active');
+            
+            // Update UI
+            updateProgress();
+            updateButtons();
+            
+            // Save progress
+            if (direction > 0) {
+                saveProgress();
+            }
+            
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function validateCurrentStep() {
+            switch(currentStep) {
+                case 1:
+                    // Step 1: Basic Info - Only artist name required
+                    const artistName = document.getElementById('artist_name').value.trim();
+                    
+                    if (!artistName) {
+                        showAlert({{ _("Please enter your artist name") | tojson }}, 'error');
+                        return false;
+                    }
+                    
+                    return true;
+                    
+                case 2:
+                    // Step 2: Branding - Validate slug
+                    const slug = document.getElementById('slug').value.trim();
+                    
+                    if (!slug) {
+                        showAlert({{ _("Please enter a URL slug") | tojson }}, 'error');
+                        return false;
+                    }
+                    
+                    const slugInput = document.getElementById('slug');
+                    if (!slugValidated && !slugInput.disabled && !slugInput.readOnly) {
+                        showAlert({{ _("Please wait for slug validation...") | tojson }}, 'warning');
+                        return false;
+                    }
+                    
+                    return true;
+                    
+                case 3:
+                    // Step 3: Songs - Check if songs were imported
+                    const csvFile = document.getElementById('csv_file').files.length > 0;
+                    if (!csvFile && !songsImported) {
+                        document.getElementById('noSongsWarning').style.display = 'block';
+                    }
+                    return true;
+                    
+                case 4:
+                    // Step 4: Settings - Validate settings
+                    const maxRequests = document.getElementById('max_requests').value;
+                    if (!maxRequests || maxRequests < 1) {
+                        showAlert({{ _("Please set max requests per user") | tojson }}, 'error');
+                        return false;
+                    }
+                    return true;
+                    
+                default:
+                    return true;
+            }
+        }
+
+        function updateProgress() {
+            const progress = ((currentStep - 1) / (totalSteps - 1)) * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+        }
+
+        function updateButtons() {
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const skipBtn = document.getElementById('skipBtn');
+            const finishBtn = document.getElementById('finishBtn');
+            
+            prevBtn.style.display = currentStep === 1 ? 'none' : 'block';
+            nextBtn.style.display = currentStep === totalSteps ? 'none' : 'block';
+            skipBtn.style.display = currentStep === totalSteps ? 'none' : 'block';
+            finishBtn.style.display = currentStep === totalSteps ? 'block' : 'none';
+        }
+
+        async function validateSlug() {
+            const slugInput = document.getElementById('slug');
+            const slug = slugInput.value.trim().toLowerCase();
+            const validation = document.getElementById('slugValidation');
+            
+            if (!slug) {
+                validation.textContent = '';
+                slugValidated = false;
+                return;
+            }
+            
+            // Check format
+            if (!/^[a-z0-9-]+$/.test(slug)) {
+                validation.textContent = {{ _("Only lowercase letters, numbers, and hyphens allowed") | tojson }};
+                validation.className = 'validation-message error';
+                slugValidated = false;
+                return;
+            }
+            
+            // Check availability
+            try {
+                const response = await fetch('/api/validate-slug', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ slug: slug })
+                });
+                
+                const data = await response.json();
+                
+                if (data.available) {
+                    validation.textContent = '✓ ' + {{ _("Available!") | tojson }};
+                    validation.className = 'validation-message success';
+                    slugValidated = true;
+                } else {
+                    validation.textContent = '✗ ' + data.message;
+                    validation.className = 'validation-message error';
+                    slugValidated = false;
+                }
+            } catch (error) {
+                console.error('Slug validation error:', error);
+                validation.textContent = {{ _("Error checking availability") | tojson }};
+                validation.className = 'validation-message error';
+                slugValidated = false;
+            }
+        }
+
+        function csvFileSelected() {
+            const fileInput = document.getElementById('csv_file');
+            const uploadButton = document.getElementById('uploadCSVButton');
+            
+            if (fileInput.files.length > 0) {
+                uploadButton.style.display = 'block';
+                document.getElementById('csvUploadStatus').innerHTML = '';
+            } else {
+                uploadButton.style.display = 'none';
+            }
+        }
+
+        async function uploadCSVSongs() {
+            const fileInput = document.getElementById('csv_file');
+            const status = document.getElementById('csvUploadStatus');
+            const uploadButton = document.getElementById('uploadCSVButton');
+            
+            if (!fileInput.files.length) {
+                showAlert({{ _("Please select a CSV file first") | tojson }}, 'error');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('csv_file', fileInput.files[0]);
+            
+            status.innerHTML = '<span class="loading">⏳ {{ _("Uploading and importing songs...") }}</span>';
+            uploadButton.disabled = true;
+            
+            try {
+                const slug = '{{ tenant.slug if tenant else "" }}';
+                const response = await fetch(`/${slug}/upload`, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json'
+                    },
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    status.innerHTML = `<span class="success">✅ ${data.message}</span>`;
+                    songsImported = true;
+                    document.getElementById('noSongsWarning').style.display = 'none';
+                    showAlert({{ _("Songs imported successfully!") | tojson }}, 'success');
+                    uploadButton.style.display = 'none';
+                    fileInput.value = '';
+                } else {
+                    const errorMsg = data.message || {{ _("Failed to import songs") | tojson }};
+                    status.innerHTML = `<span class="error">❌ ${errorMsg}</span>`;
+                    showAlert(errorMsg, 'error');
+                }
+            } catch (error) {
+                console.error('Error uploading CSV:', error);
+                const errorMsg = {{ _("Error uploading CSV file") | tojson }};
+                status.innerHTML = `<span class="error">❌ ${errorMsg}</span>`;
+                showAlert(errorMsg, 'error');
+            } finally {
+                uploadButton.disabled = false;
+            }
+        }
+
+        async function loadSampleSongs() {
+            const status = document.getElementById('sampleSongsStatus');
+            status.innerHTML = '<span class="loading">{{ _("Loading sample songs...") }}</span>';
+            
+            try {
+                const response = await fetch('{{ url_for("add_sample_songs_route") }}', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    status.innerHTML = `<span class="success">✓ ${data.message}</span>`;
+                    songsImported = true;
+                    document.getElementById('noSongsWarning').style.display = 'none';
+                } else {
+                    status.innerHTML = `<span class="error">✗ ${data.message}</span>`;
+                }
+            } catch (error) {
+                console.error('Error loading sample songs:', error);
+                status.innerHTML = '<span class="error">{{ _("Error loading sample songs") }}</span>';
+            }
+        }
+
+        function downloadCSVTemplate() {
+            window.location.href = '{{ url_for("download_csv_template") }}';
+        }
+
+        function copyLink() {
+            const link = document.getElementById('publicLink');
+            link.select();
+            document.execCommand('copy');
+            showAlert({{ _("Link copied to clipboard!") | tojson }}, 'success');
+        }
+
+        function previewLink() {
+            const link = document.getElementById('publicLink').value;
+            window.open(link, '_blank');
+        }
+
+        function printQRCode() {
+            const slug = document.getElementById('slug').value || '{{ tenant.slug if tenant else "" }}';
+            window.open(`/${slug}/print_qr`, '_blank');
+        }
+
+        async function sendInvite() {
+            const email = document.getElementById('inviteEmail').value.trim();
+            
+            if (!email) {
+                showAlert({{ _("Please enter an email address") | tojson }}, 'error');
+                return;
+            }
+            
+            if (!email.includes('@')) {
+                showAlert({{ _("Please enter a valid email address") | tojson }}, 'error');
+                return;
+            }
+            
+            // TODO: Implement invite endpoint
+            showAlert({{ _("Invite sent!") | tojson }}, 'success');
+            document.getElementById('inviteEmail').value = '';
+        }
+
+        async function saveProgress() {
+            const formData = new FormData(document.getElementById('wizardForm'));
+            formData.append('step', currentStep - 1); // Save previous step
+            
+            try {
+                await fetch('{{ url_for("wizard_save", tenant_slug=tenant.slug) }}', {
+                    method: 'POST',
+                    body: formData
+                });
+            } catch (error) {
+                console.error('Error saving progress:', error);
+            }
+        }
+
+        async function finishWizard() {
+            // Save final step
+            await saveProgress();
+            
+            // Mark wizard as completed
+            const formData = new FormData(document.getElementById('wizardForm'));
+            formData.append('wizard_completed', '1');
+            
+            try {
+                const response = await fetch('{{ url_for("wizard_complete", tenant_slug=tenant.slug) }}', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showAlert({{ _("Setup completed successfully! Redirecting to your song library...") | tojson }}, 'success');
+                    setTimeout(() => {
+                        window.location.href = '{{ url_for("tenant_songs", tenant_slug=tenant.slug if tenant else "songs") }}';
+                    }, 1500);
+                } else {
+                    showAlert(data.message || {{ _("Error completing setup") | tojson }}, 'error');
+                }
+            } catch (error) {
+                console.error('Error completing wizard:', error);
+                showAlert({{ _("Error completing setup") | tojson }}, 'error');
+            }
+        }
+
+        function skipWizard() {
+            showConfirm(
+                {{ _("Are you sure you want to skip the setup wizard? You can always access it later from the admin panel.") | tojson }},
+                () => {
+                    window.location.href = '{{ url_for("tenant_admin", tenant_slug=tenant.slug if tenant else "admin") }}';
+                },
+                {{ _("Skip Setup") | tojson }}
+            );
+        }
+
+        function previewImage(input, previewId) {
+            const container = document.getElementById(previewId + '_container');
+            const preview = document.getElementById(previewId);
+            
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    container.style.display = 'block';
+                };
+                
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // Custom alert for wizard
+        function showAlert(message, type = 'info') {
+            // Create custom alert for wizard
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `wizard-alert wizard-alert-${type}`;
+            alertDiv.innerHTML = `
+                <strong>${type === 'error' ? '✗' : type === 'warning' ? '⚠' : '✓'}</strong>
+                <span>${message}</span>
+                <button onclick="this.parentElement.remove()">×</button>
+            `;
+            
+            // Remove existing alerts
+            document.querySelectorAll('.wizard-alert').forEach(el => el.remove());
+            
+            // Add to top of wizard content
+            const wizardContent = document.querySelector('.wizard-content');
+            if (wizardContent) {
+                wizardContent.insertBefore(alertDiv, wizardContent.firstChild);
+                
+                // Auto-remove after 5 seconds
+                setTimeout(() => {
+                    if (alertDiv.parentElement) {
+                        alertDiv.remove();
+                    }
+                }, 5000);
+            }
+        }
+
+        // Custom confirm for wizard
+        function showConfirm(message, callback, title) {
+            // Create custom confirm dialog
+            const overlay = document.createElement('div');
+            overlay.className = 'wizard-confirm-overlay';
+            overlay.innerHTML = `
+                <div class="wizard-confirm-dialog">
+                    <h3>${title || 'Conferma'}</h3>
+                    <p>${message}</p>
+                    <div class="wizard-confirm-buttons">
+                        <button class="wizard-confirm-btn cancel">Cancel</button>
+                        <button class="wizard-confirm-btn ok">OK</button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(overlay);
+            
+            // Handle button clicks
+            overlay.querySelector('.cancel').onclick = function() {
+                document.body.removeChild(overlay);
+            };
+            
+            overlay.querySelector('.ok').onclick = function() {
+                document.body.removeChild(overlay);
+                callback();
+            };
+            
+            // Close on overlay click
+            overlay.onclick = function(e) {
+                if (e.target === overlay) {
+                    document.body.removeChild(overlay);
+                }
+            };
+        }
+    </script>
+</body>
+</html>
+

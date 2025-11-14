@@ -1,0 +1,307 @@
+/* Modern Login Screen - Matching Admin Interface */
+
+:root {
+    --primary-color: #2c3e50;
+    --primary-hover: #1a252f;
+    --bg-main: #ecf0f1;
+    --text-primary: #2c3e50;
+    --text-secondary: #7f8c8d;
+    --border-color: #bdc3c7;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background-color: var(--bg-main);
+    margin: 0;
+    padding: 0;
+}
+
+/* Full screen container */
+.container-center-horizontal {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    width: 100%;
+    background-color: var(--bg-main);
+    padding: 20px;
+}
+
+/* Main login form */
+.login {
+    display: flex;
+    flex-direction: column; /* Stack sections vertically */
+    width: 100%;
+    max-width: 450px;
+}
+
+/* Main login card */
+.screen {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    max-width: 450px;
+    width: 100%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column; /* Stack sections vertically */
+}
+
+/* Header section */
+.top-bar {
+    background: var(--primary-color);
+    padding: 40px 30px;
+    text-align: center;
+}
+
+.title-div {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.setly-logo-title {
+    height: 40px;
+    width: 40px;
+    object-fit: contain;
+    background: white;
+    border-radius: 6px;
+    padding: 5px;
+}
+
+.name {
+    color: white;
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    margin: 0;
+}
+
+.enter-password-to-access-admin-area {
+    color: rgba(255, 255, 255, 0.95);
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 1.5;
+    margin: 0;
+}
+
+/* Form section */
+.search-bar {
+    padding: 40px 30px;
+}
+
+.search-div {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: 100%;
+}
+
+.search-box-div {
+    width: 100%;
+}
+
+/* Input fields */
+.password-text,
+.email-text,
+input[type="email"],
+input[type="password"] {
+    width: 100%;
+    padding: 14px 16px;
+    font-size: 16px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    background: white;
+    color: var(--text-primary);
+    font-family: inherit;
+    transition: all 0.2s ease;
+}
+
+.password-text:focus,
+.email-text:focus,
+input[type="email"]:focus,
+input[type="password"]:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(44, 62, 80, 0.1);
+}
+
+.password-text::placeholder,
+.email-text::placeholder,
+input::placeholder {
+    color: var(--text-secondary);
+}
+
+/* Login button */
+.search-button,
+button[type="submit"] {
+    width: 100%;
+    padding: 14px;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.search-button:hover,
+button[type="submit"]:hover {
+    background: var(--primary-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(44, 62, 80, 0.2);
+}
+
+.search-button:active,
+button[type="submit"]:active {
+    transform: translateY(0);
+}
+
+.search-icon,
+.start-my-search {
+    display: inline-flex;
+    align-items: center;
+}
+
+/* Footer section */
+.bottom-bar {
+    background: var(--bg-main);
+    padding: 20px 30px;
+    text-align: center;
+}
+
+.you-will-be-asked-t {
+    color: var(--text-secondary);
+    font-size: 13px;
+    line-height: 1.4;
+    margin: 0;
+}
+
+/* Links */
+.bottom-bar a,
+a {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s;
+}
+
+.bottom-bar a:hover,
+a:hover {
+    color: var(--primary-hover);
+    text-decoration: underline;
+}
+
+/* Forgot password */
+.forgot-password-container {
+    text-align: center;
+    margin-top: 20px;
+    padding: 0 30px;
+}
+
+.forgot-password-link {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    transition: color 0.2s;
+}
+
+.forgot-password-link:hover {
+    color: var(--primary-hover);
+    text-decoration: underline;
+}
+
+/* Flash messages */
+.flash-messages {
+    padding: 0 30px;
+    margin: 20px 0 0 0;
+}
+
+.flash-message,
+.alert {
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    font-size: 14px;
+}
+
+.alert-success,
+.flash-message.success {
+    background: #d4edda;
+    color: #155724;
+    border-left: 4px solid #28a745;
+}
+
+.alert-error,
+.alert-danger,
+.flash-message.error {
+    background: #f8d7da;
+    color: #721c24;
+    border-left: 4px solid #dc3545;
+}
+
+.alert-info,
+.flash-message.info {
+    background: #d1ecf1;
+    color: #0c5460;
+    border-left: 4px solid #17a2b8;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .screen {
+        max-width: 100%;
+        border-radius: 0;
+    }
+
+    .top-bar {
+        padding: 30px 20px;
+    }
+
+    .search-bar {
+        padding: 30px 20px;
+    }
+
+    .bottom-bar {
+        padding: 15px 20px;
+    }
+
+    .name {
+        font-size: 28px;
+    }
+}
+
+/* Loading state */
+.search-button:disabled,
+button:disabled {
+    background: var(--text-secondary);
+    cursor: not-allowed;
+    transform: none;
+}
+
+.search-button:disabled:hover,
+button:disabled:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+/* Remove any old purple/cyan colors */
+.valign-text-middle {
+    display: flex;
+    align-items: center;
+}

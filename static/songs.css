@@ -1,0 +1,127 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    margin: 0;
+    padding: 0;
+}
+
+h1 {
+    text-align: center;
+    color: #333;
+}
+
+button {
+    background-color: #464646; /* Green */
+    border: none;
+    color: white;
+    padding: 5px 10px; /* Reduced padding */
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 14px; /* Adjust font size as needed */
+    margin: 4px 2px;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+button:hover {
+    background-color: #0091d3;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+}
+
+th, td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+
+th {
+    background-color: #f2f2f2;
+    cursor: pointer;
+}
+
+th.sorted-asc::after {
+    content: '▲'; /* Up arrow */
+    margin-left: 5px;
+}
+
+th.sorted-desc::after {
+    content: '▼'; /* Down arrow */
+    margin-left: 5px;
+}
+
+tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+tr:hover {
+    background-color: #ddd;
+}
+
+.language-dropdown {
+    width: 100px; /* Adjust the width as needed */
+    padding: 5px; /* Reduced padding */
+    margin: 5px 0;
+}
+
+#addSongForm {
+    background-color: #fff;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    margin: 20px 0;
+}
+
+#addSongForm h2 {
+    margin-top: 0;
+}
+
+#addSongForm label {
+    display: block;
+    margin: 10px 0;
+}
+
+#addSongForm input[type="text"],
+#addSongForm input[type="file"],
+#addSongForm select {
+    width: 100%;
+    padding: 8px;
+    margin: 5px 0;
+    box-sizing: border-box;
+}
+
+#addSongForm button {
+    width: auto;
+    margin-top: 10px;
+}
+
+.enlarged-image {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    max-width: 90%;
+    max-height: 90%;
+    border: 5px solid #fff;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    z-index: 1001;
+    cursor: pointer;
+}
+
+.overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 1000;
+    cursor: pointer;
+}

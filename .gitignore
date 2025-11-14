@@ -1,0 +1,54 @@
+# Logs
+*.log
+app.log
+nohup.out
+
+# Database (DO NOT commit to git!)
+songs.db
+songs.db-journal
+*.db
+*.db-journal
+
+# Environment variables (NEVER commit!)
+.env
+.env.local
+.env.production
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+.venv
+
+# Flask
+instance/
+.webassets-cache
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Compiled translations (optional - can be committed or regenerated)
+# translations/**/*.mo
+
+# Temporary files
+*.tmp
+temp/
+tmp/

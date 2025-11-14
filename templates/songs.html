@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="{{ g.lang_code }}">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ _('Song Page Title') }}</title>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename=favicon) }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='nav.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='songs.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='admin.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dialog.css') }}">
+    <script src="{{ url_for('static', filename='image-utils.js') }}"></script>
+    <script src="{{ url_for('static', filename='dialog.js') }}"></script>
+</head>
+
+<body>
+    {% include 'nav.html' %}
+    
+    <div class="admin-container">
+        <div class="admin-header">
+            <h1>{{ _('Song Database Administration') }}</h1>
+            <p class="admin-subtitle">{% if tenant %}{{ tenant.name }} - {% endif %}{{ _('Manage your complete song repertoire') }}</p>
+        </div>
+
+        <div class="admin-actions-container" style="margin-bottom: 2rem;">
+            <button onclick="showAddSongForm()" class="button">{{ _('Add New Song') }}</button>
+            <button onclick="generatePDF()" class="button" id="generatePdfBtn">{{ _('Generate PDF') }}</button>
+            <button onclick="bulkFetchSpotify()" class="button" id="bulkFetchBtnSongs" style="background: var(--primary-color);">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 5px;">
+                    <path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle>
+                </svg>
+                {{ _('Bulk Fetch from Spotify') }}
+            </button>
+            <button onclick="removeDuplicates()" class="button" style="background: var(--warning-color);">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 5px;">
+                    <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                    <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                    <line x1="10" y1="11" x2="10" y2="17"></line>
+                    <line x1="14" y1="11" x2="14" y2="17"></line>
+                </svg>
+                {{ _('Remove Duplicates') }}
+            </button>
+            <button onclick="zeroPopularity()" class="button secondary">{{ _('Zero All Popularity') }}</button>
+        </div>
+
+        <!-- Bulk Fetch Progress/Results -->
+        <div id="bulkFetchProgressSongs" style="display: none; margin-bottom: 2rem; padding: 1.5rem; background: white; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            <p style="font-weight: 600; font-size: 1.1em; margin-bottom: 0.5rem; text-align: center;">
+                <span id="progressCounterSongs">Processing...</span>
+            </p>
+            <div style="background: rgba(44, 62, 80, 0.1); border-radius: 8px; height: 8px; width: 100%; margin: 1rem 0; overflow: hidden;">
+                <div id="progressBarFetchSongs" style="background: var(--primary-color); height: 100%; width: 0%; transition: width 0.3s;"></div>
+            </div>
+            <p style="font-size: 0.9em; color: var(--text-secondary); text-align: center;">{{ _('Fetching images, genres, and languages from Spotify...') }}</p>
+        </div>
+        
+        <div id="bulkFetchResultsSongs" style="display: none; margin-bottom: 2rem; padding: 1.5rem; background: white; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            <p style="font-weight: 500;"><span id="bulkFetchMessageSongs"></span></p>
+        </div>
+
+    <!-- Add Song Form as Table Row -->
+    <div id="addSongForm" style="display:none; margin-bottom: 2rem;">
+        <h2>{{ _('Add New Song') }}</h2>
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="background: #f5f5f5;">
+                    <th style="width: 20%; padding: 10px; text-align: left;">{{ _('Title') }}</th>
+                    <th style="width: 15%; padding: 10px; text-align: left;">{{ _('Author') }}</th>
+                    <th style="width: 25%; padding: 10px; text-align: left;">{{ _('Image') }}</th>
+                    <th style="width: 8%; padding: 10px; text-align: left;">{{ _('Language') }}</th>
+                    <th style="width: 10%; padding: 10px; text-align: left;">{{ _('Genre') }}</th>
+                    <th style="width: 10%; padding: 10px; text-align: left;">{{ _('Playlist') }}</th>
+                    <th style="width: 12%; padding: 10px; text-align: left;">{{ _('Actions') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr style="background: #f8f9fa; border: 2px solid var(--primary-color); border-left: 4px solid var(--primary-color);">
+                    <td style="padding: 10px;">
+                        <input type="text" id="newSongTitle" placeholder="{{ _('Enter title') }}" 
+                               style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    </td>
+                    <td style="padding: 10px;">
+                        <input type="text" id="newSongAuthor" placeholder="{{ _('Enter author') }}" 
+                               style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    </td>
+                    <td colspan="3" style="padding: 10px;">
+                        <div style="display: flex; gap: 10px; align-items: stretch;">
+                            <!-- Image Column -->
+                            <div style="flex: 1; display: flex; flex-direction: column; gap: 8px;">
+                                <label style="font-size: 11px; color: #666; font-weight: 600;">{{ _('Image') }}</label>
+                                <img id="imagePreview" src="{{ url_for('static', filename='img/setly-logo.png') }}" alt="Preview" 
+                                     style="width: 80px; height: 80px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd; display: block;">
+                            </div>
+                            <!-- Language Column -->
+                            <div style="flex: 1; display: flex; flex-direction: column; gap: 8px;">
+                                <label style="font-size: 11px; color: #666; font-weight: 600;">{{ _('Language') }}</label>
+                                <select id="languageSelect" class="language-dropdown" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; flex: 1;">
+                                    <option value="en">{{ _('English') }}</option>
+                                    <option value="it">{{ _('Italiano') }}</option>
+                                    <option value="es">{{ _('Espanol') }}</option>
+                                    <option value="de">{{ _('Deutsch') }}</option>
+                                    <option value="fr">{{ _('Français') }}</option>
+                                </select>
+                            </div>
+                            <!-- Genre Column -->
+                            <div style="flex: 1; display: flex; flex-direction: column; gap: 8px;">
+                                <label style="font-size: 11px; color: #666; font-weight: 600;">{{ _('Genre') }}</label>
+                                <input type="text" id="newSongGenre" placeholder="{{ _('Auto-filled') }}"
+                                       style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; flex: 1;">
+                            </div>
+                        </div>
+                        <!-- Spotify Fetch Button spans all three -->
+                        <button onclick="fetchSpotifyImage()" class="button" style="width: 100%; margin-top: 10px; padding: 10px; font-size: 13px; background: var(--primary-color); border: none; color: white;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 5px;">
+                                <path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle>
+                            </svg>
+                            {{ _('Fetch from Spotify') }} ({{ _('Image + Language + Genre') }})
+                        </button>
+                    </td>
+                    <td style="padding: 10px;">
+                        <input type="text" id="newSongPlaylist" list="playlistOptions" placeholder="{{ _('Optional') }}"
+                               style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                        <datalist id="playlistOptions"></datalist>
+                    </td>
+                    <td style="padding: 10px;">
+                        <div style="display: flex; gap: 5px; flex-direction: column;">
+                            <button onclick="addSong()" class="button" style="width: 100%; padding: 8px; font-size: 13px;">
+                                ✓ {{ _('Add Song') }}
+                            </button>
+                            <button onclick="hideAddSongForm()" class="button secondary" style="width: 100%; padding: 8px; font-size: 13px;">
+                                ✕ {{ _('Cancel') }}
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h2>{{ _('Song Database') }}</h2>
+    <div class="filter-container" style="margin-bottom: 1rem;">
+        <input type="text" width="300" id="searchInput" onkeyup="filterTable()" placeholder="{{ _('Search for songs') }}">
+        <select id="genreFilter" onchange="filterTable()" style="margin-left: 10px;">
+            <option value="">{{ _('All Genres') }}</option>
+        </select>
+        <select id="playlistFilter" onchange="filterTable()" style="margin-left: 10px;">
+            <option value="">{{ _('All Playlists') }}</option>
+        </select>
+        <button onclick="clearSearch()">{{ _('Clear Search Button') }}</button>
+    </div>
+    <table id="songsTable">
+        <thead>
+            <tr>
+                <th style="width: 15%;" class="sorted-asc" onclick="sortTable.call(this, 0)">{{ _('Title') }}</th>
+                <th style="width: 12%;" onclick="sortTable.call(this, 1)">{{ _('Author') }}</th>
+                <th colspan="3" style="width: 45%; background-color: #f8f9fa; text-align: center;">{{ _('Image') }} / {{ _('Language') }} / {{ _('Genre') }} + Spotify</th>
+                <th style="width: 10%;">{{ _('Playlist') }}</th>
+                <th style="width: 5%;" onclick="sortTable.call(this, 4)">{{ _('Popularity') }}</th>
+                <th style="width: 4%;">{{ _('Edit') }}</th>
+                <th style="width: 3%;">{{ _('Delete') }}</th>
+            </tr>
+        </thead>
+        <tbody id="songsTableBody">
+            <!-- Rows will be populated here by JavaScript -->
+        </tbody>
+    </table>
+
+    <div class="overlay" onclick="closeImage()"></div>
+    <img id="enlargedImage" class="enlarged-image" onclick="closeImage()">
+
+    <script>
+        // Fallback for showAlert/showConfirm if dialog.js hasn't loaded yet
+        window.showAlert = window.showAlert || function(message, type = 'info') {
+            console.log(`[${type}] ${message}`);
+        };
+        window.showConfirm = window.showConfirm || function(message, title) {
+            return Promise.resolve(confirm(message));
+        };
+        window.showConfirmDanger = window.showConfirmDanger || function(message, title) {
+            return Promise.resolve(confirm(message));
+        };
+        
+        // Set tenant slug globally for image utilities
+        const tenantSlug = '{{ tenant.slug if tenant else "" }}';
+        setTenantSlug(tenantSlug);
+        
+        let currentPage = 1;
+        const perPage = 40;
+        let currentSearchQuery = '';
+        let currentGenreFilter = '';
+        let currentPlaylistFilter = '';
+        let currentSortBy = 'title';
+        let currentSortOrder = 'asc';
+        let allSongs = []; // Store all songs for filter population
+
+        // Translations passed from Flask to JavaScript
+        const translations = {
+            save: "{{ _('Save') }}",
+            editImage: "{{ _('Edit Image') }}",
+            delete: "{{ _('Delete') }}",
+            fetchImage: "{{ _('Fetch Information from Spotify') }}",
+            allGenres: "{{ _('All Genres') }}",
+            allPlaylists: "{{ _('All Playlists') }}"
+        };
+
+        document.addEventListener('DOMContentLoaded', function () {
+            var langSelect = document.getElementById('languageSelect');
+
+            // Set the dropdown to the current language from the server
+            var currentLanguage = "{{ g.get('lang_code', 'en') }}";
+            langSelect.value = currentLanguage;
+
+            // Change language
+            langSelect.addEventListener('change', function () {
+                var selectedLanguage = this.value;
+                localStorage.setItem('selectedLanguage', selectedLanguage);
+
+                var url = `/change_language/${selectedLanguage}`;
+                window.location.href = url;
+            });
+
+            fetchSongs(currentPage, currentSortBy, currentSortOrder, currentSearchQuery);
+        });
+
+        function fetchSongs(page = 1, sort_by = currentSortBy, sort_order = currentSortOrder, search = currentSearchQuery) {
+            fetch(`/get_all_songs?page=${page}&per_page=${perPage}&sort_by=${sort_by}&sort_order=${sort_order}&search=${search}`)
+                .then(response => {
+                    if (!response.ok) {
+                        return response.text().then(text => { throw new Error(`Network response was not ok: ${response.status} - ${text}`); });
+                    }
+                    return response.json();
+                })
+                .then(data => populateTable(data, page > 1))
+                .catch(error => console.error('Error fetching songs:', error));
+        }
+
+        function populateTable(data, append = false) {
+            const tableBody = document.getElementById('songsTableBody');
+            if (!append) {
+                tableBody.innerHTML = '';
+                allSongs = []; // Reset allSongs on fresh load
+            }
+            
+            // Add to allSongs collection
+            allSongs = allSongs.concat(data);
+            
+            // Apply genre and playlist filters
+            const filteredData = data.filter(song => {
+                const genreMatch = !currentGenreFilter || song.genre === currentGenreFilter;
+                const playlistMatch = !currentPlaylistFilter || song.playlist === currentPlaylistFilter;
+                return genreMatch && playlistMatch;
+            });
+            
+            filteredData.forEach(song => {
+                // Use centralized image utility
+                console.log('Loading song:', song.title, 'Image from DB:', song.image);
+                const authorImage = song.image ? getAuthorImageUrl(song.image) : '/static/img/music-music-note-2.svg';
+                console.log('Resolved image URL:', authorImage);
+                const row = document.createElement('tr');
+                row.innerHTML = `
+            <td contenteditable="true" oninput="markRowAsChanged(this)">${song.title}</td>
+            <td contenteditable="true" oninput="markRowAsChanged(this)">${song.author}</td>
+            <td colspan="3" style="background-color: #f8f9fa; padding: 8px;">
+                <div style="display: flex; gap: 8px; align-items: stretch;">
+                    <!-- Image Column -->
+                    <div style="flex: 1; display: flex; flex-direction: column; gap: 4px; min-width: 60px;">
+                        <div class="image-container">
+                            <img src="${authorImage}" alt="Author Image" width="50" onclick="enlargeImage('${authorImage}')" onerror="this.src='/static/img/music-music-note-2.svg'" style="cursor: pointer; border-radius: 4px;">
+                            <div class="button-container">
+                                <button onclick="triggerFileInput(this)" style="font-size: 11px; padding: 4px 8px;">${translations.editImage}</button>
+                                <input type="file" class="file-input" style="display: none;" onchange="uploadImage(event, '${song.id}', this)">
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Language Column -->
+                    <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
+                        <select class="language-dropdown" onchange="markRowAsChanged(this)" style="width: 100%; padding: 6px;">
+                            <option value="en" ${song.language === 'en' ? 'selected' : ''}>English</option>
+                            <option value="it" ${song.language === 'it' ? 'selected' : ''}>Italian</option>
+                            <option value="es" ${song.language === 'es' ? 'selected' : ''}>Spanish</option>
+                            <option value="de" ${song.language === 'de' ? 'selected' : ''}>German</option>
+                            <option value="fr" ${song.language === 'fr' ? 'selected' : ''}>French</option>
+                        </select>
+                    </div>
+                    <!-- Genre Column -->
+                    <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
+                        <input type="text" value="${song.genre || ''}" oninput="markRowAsChanged(this)" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;" placeholder="Genre">
+                    </div>
+                </div>
+                <!-- Spotify Fetch Button spans all three -->
+                <button onclick="fetchSpotifyImageForSong('${song.id}', this)" style="width: 100%; margin-top: 6px; padding: 6px; font-size: 12px; background: var(--primary-color); border: none; color: white; border-radius: 4px; cursor: pointer;">
+                    🎵 ${translations.fetchImage}
+                </button>
+            </td>
+            <td><input type="text" value="${song.playlist || ''}" list="playlistOptions" oninput="markRowAsChanged(this)" style="width: 100%; border: none; background: transparent;"></td>
+            <td contenteditable="true" oninput="markRowAsChanged(this); this.innerText = this.innerText.replace(/[^0-9]/g, '')">${song.popularity}</td>
+            <td><button class="save-btn" onclick="saveChanges('${song.id}', this)" style="display: none;">${translations.save}</button></td>
+            <td><button onclick="deleteSong('${song.id}')">${translations.delete}</button></td>
+        `;
+                tableBody.appendChild(row);
+            });
+            
+            // Update filter dropdowns with unique values from ALL songs
+            updateFilters(allSongs);
+        }
+
+        function markRowAsChanged(element) {
+            const row = element.closest('tr');
+            row.style.backgroundColor = '#e8f4f8'; // Soft blue matching app palette
+            
+            // Show the Save button for this row
+            const saveBtn = row.querySelector('.save-btn');
+            if (saveBtn) {
+                saveBtn.style.display = 'inline-block';
+            }
+        }
+
+        function saveImage(id, button) {
+            const row = button.parentElement.parentElement;
+            const imgElement = row.querySelector('img');
+            const imageUrl = imgElement.src;
+
+            const formData = new FormData();
+            formData.append('image', imageUrl.split('/').pop());
+
+            fetch(`/upload_author_image/${id}`, {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.text().then(text => { throw new Error(`Network response was not ok: ${response.status} - ${text}`); });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    //alert(data.message);
+                    fetchSongs(); // Refresh the table to show the updated image
+                })
+                .catch(error => console.error('Error saving image:', error));
+        }
+
+        window.addEventListener('scroll', () => {
+            if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight) {
+                currentPage++;
+                fetchSongs(currentPage, currentSortBy, currentSortOrder, currentSearchQuery);
+            }
+        });
+
+        function filterTable() {
+            const input = document.getElementById('searchInput');
+            currentSearchQuery = input.value.toLowerCase();
+            currentGenreFilter = document.getElementById('genreFilter').value;
+            currentPlaylistFilter = document.getElementById('playlistFilter').value;
+            currentPage = 1; // Reset to the first page
+            fetchSongs(currentPage, currentSortBy, currentSortOrder, currentSearchQuery);
+        }
+
+        function clearSearch() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('genreFilter').value = '';
+            document.getElementById('playlistFilter').value = '';
+            currentSearchQuery = '';
+            currentGenreFilter = '';
+            currentPlaylistFilter = '';
+            currentPage = 1; // Reset to the first page
+            fetchSongs(currentPage, currentSortBy, currentSortOrder, currentSearchQuery);
+        }
+
+        function sortTable(n) {
+            const headers = ['title', 'author', 'image', 'language', 'popularity'];
+            currentSortBy = headers[n];
+            currentSortOrder = currentSortOrder === 'asc' ? 'desc' : 'asc';
+            currentPage = 1; // Reset to the first page
+
+            // Remove existing sort indicators
+            const thElements = document.querySelectorAll('th');
+            thElements.forEach(th => {
+                th.classList.remove('sorted-asc', 'sorted-desc');
+            });
+
+            // Add sort indicator to the clicked column
+            const th = thElements[n];
+            th.classList.add(currentSortOrder === 'asc' ? 'sorted-asc' : 'sorted-desc');
+
+            fetchSongs(currentPage, currentSortBy, currentSortOrder, currentSearchQuery);
+        }
+
+        function saveChanges(id, button) {
+            const row = button.parentElement.parentElement;
+            const title = row.cells[0].innerText.trim();
+            const author = row.cells[1].innerText.trim();
+            const language = row.querySelector('.language-dropdown').value; // Get the selected value from the dropdown
+            // Genre is now within cells[2] (the colspan cell), need to find the input
+            const genreInput = row.cells[2].querySelector('input[type="text"]');
+            const genre = genreInput ? genreInput.value.trim() : '';
+            // Playlist is now in cells[3] (was cells[6])
+            const playlistInput = row.cells[3].querySelector('input');
+            const playlist = playlistInput ? playlistInput.value.trim() : '';
+            // Popularity is now in cells[4] (was cells[7])
+            const popularity = parseInt(row.cells[4].innerText.trim(), 10); // Ensure popularity is an integer
+            const imgElement = row.querySelector('img');
+            const imageUrl = imgElement.src;
+
+            if (isNaN(popularity)) {
+                showAlert({{ _('Popularity must be a number') | tojson }}, 'warning');
+                return;
+            }
+
+            // Use the uploaded filename if available, otherwise extract from URL
+            let imageFilename;
+            if (imgElement.dataset.uploadedFilename) {
+                // Use the stored filename from upload
+                imageFilename = imgElement.dataset.uploadedFilename;
+                console.log('Using stored uploaded filename:', imageFilename);
+            } else if (imageUrl.startsWith('data:')) {
+                // If it's still a data URL, something went wrong
+                console.log('Image is still a data URL, using empty string');
+                imageFilename = '';
+            } else {
+                // Check if URL contains /tenants/ - extract from there if so (for consistency)
+                if (imageUrl.includes('/tenants/')) {
+                    // Extract just the filename from tenant path
+                    imageFilename = imageUrl.split('/').pop();
+                    console.log('Extracted filename from tenant path:', imageFilename);
+                } else if (imageUrl.includes('/author_images/')) {
+                    // Extract just the filename from author_images path
+                    imageFilename = imageUrl.split('/').pop();
+                    console.log('Extracted filename from author_images path:', imageFilename);
+                } else {
+                    // Fallback: just get the last part of the URL
+                    imageFilename = imageUrl.split('/').pop();
+                    console.log('Extracted filename as fallback:', imageFilename);
+                }
+            }
+
+            const data = {
+                title: title,
+                author: author,
+                language: language,
+                genre: genre,
+                playlist: playlist,
+                popularity: popularity,
+                image: imageFilename
+            };
+
+            console.log('Saving song with data:', data);
+            console.log('Image filename being saved:', imageFilename);
+
+            fetch(`/update_song/${id}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.text().then(text => { throw new Error(`Network response was not ok: ${response.status} - ${text}`); });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Save successful. Response:', data);
+                    row.style.backgroundColor = ''; // Reset the row color
+                    
+                    // Hide the Save button again
+                    const saveBtn = row.querySelector('.save-btn');
+                    if (saveBtn) {
+                        saveBtn.style.display = 'none';
+                    }
+                    
+                    fetchSongs(); // Refresh the table to show the updated data
+                })
+                .catch(error => {
+                    console.error('Error updating song:', error);
+                    if (typeof showAlert === 'function') {
+                        showAlert('Error updating song: ' + error.message, 'error');
+                    }
+                });
+        }
+
+        function deleteSong(id) {
+            showConfirmDanger(
+                {{ _('Are you sure you want to delete this song ? ') | tojson }},
+                () => {
+                    fetch(`/delete_song/${id}`, {
+                        method: 'DELETE'
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            // Song disappears from list - no success alert needed
+                            fetchSongs(); // Refresh the table to show the updated list
+                        })
+                        .catch(error => {
+                            console.error('Error deleting song:', error);
+                            showAlert('Error deleting song', 'error');
+                        });
+                },
+                null,
+                'Delete',
+                'Delete Song'
+            );
+        }
+
+        function addSong() {
+            const title = document.getElementById('newSongTitle').value.trim();
+            const author = document.getElementById('newSongAuthor').value.trim();
+            const language = document.getElementById('languageSelect').value.trim();
+            const genre = document.getElementById('newSongGenre').value.trim();
+            const playlist = document.getElementById('newSongPlaylist').value.trim();
+            const imageFile = document.getElementById('imagePreview').src;
+
+            if (!title || !author || !language) {
+                showAlert({{ _('Please fill in all fields correctly.') | tojson }}, 'warning');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('title', title);
+            formData.append('author', author);
+            formData.append('language', language);
+            formData.append('genre', genre);
+            formData.append('playlist', playlist);
+            formData.append('popularity', 0); // Set popularity to 0 by default
+            if (imageFile) {
+                formData.append('image', imageFile.split('/').pop());
+            }
+
+            fetch('/add_song', {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.text().then(text => { throw new Error(`Network response was not ok: ${response.status} - ${text}`); });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // No success message - just refresh the list
+                    hideAddSongForm();
+                    fetchSongs(); // Refresh the table to show the new song
+                })
+                .catch(error => {
+                    console.error('Error adding song:', error);
+                    showAlert({{ _('Error adding song') | tojson }}, 'error');
+                });
+        }
+
+        function showAddSongForm() {
+            document.getElementById('addSongForm').style.display = 'block';
+        }
+
+        function hideAddSongForm() {
+            // Clear all form fields
+            document.getElementById('newSongTitle').value = '';
+            document.getElementById('newSongAuthor').value = '';
+            document.getElementById('languageSelect').value = 'en';
+            document.getElementById('newSongGenre').value = '';
+            document.getElementById('newSongPlaylist').value = '';
+            // Reset to default icon
+            document.getElementById('imagePreview').src = "{{ url_for('static', filename='img/setly-logo.png') }}";
+            
+            // Hide the form
+            document.getElementById('addSongForm').style.display = 'none';
+        }
+
+        function uploadImage(event, id, inputElement) {
+            const file = event.target.files[0];
+            if (!file) {
+                console.log('No file selected');
+                return;
+            }
+
+            console.log('File selected:', file.name, 'Size:', file.size);
+
+            const formData = new FormData();
+            formData.append('image', file);
+
+            // Update the image preview immediately
+            const imgElement = inputElement.closest('.image-container').querySelector('img');
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                console.log('FileReader loaded, setting preview');
+                imgElement.src = e.target.result;
+                imgElement.style.display = 'block';
+                console.log('Image src set to data URL, length:', e.target.result.length);
+
+                // Mark the row as changed
+                const row = inputElement.closest('tr');
+                row.style.backgroundColor = '#e8f4f8'; // Soft blue matching app palette
+                
+                // Show the Save button
+                const saveBtn = row.querySelector('.save-btn');
+                if (saveBtn) {
+                    saveBtn.style.display = 'inline-block';
+                }
+            };
+            reader.onerror = function(e) {
+                console.error('FileReader error:', e);
+            };
+            reader.readAsDataURL(file);
+
+            // Upload the image in the background
+            console.log('Starting upload to server...');
+            fetch(`/upload_author_image/${id}`, {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => {
+                    console.log('Server response status:', response.status);
+                    if (!response.ok) {
+                        return response.text().then(text => { throw new Error(`Network response was not ok: ${response.status} - ${text}`); });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Upload response:', data);
+                    if (data.message === 'Image uploaded successfully') {
+                        // Store the uploaded filename as a data attribute
+                        // so saveChanges can use it later
+                        imgElement.dataset.uploadedFilename = data.image;
+                        console.log('Stored filename:', data.image);
+                        
+                        // Update the image src to point to the actual uploaded file
+                        // This ensures it displays correctly after save/refresh
+                        imgElement.src = getAuthorImageUrl(data.image);
+                        console.log('Updated image src to:', imgElement.src);
+                    } else {
+                        showAlert(data.message, 'warning');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error uploading image:', error);
+                    showAlert('Error uploading image. Please try again.', 'error');
+                });
+        }
+
+        function triggerFileInput(button) {
+            const fileInput = button.nextElementSibling;
+            fileInput.click();
+        }
+
+        function fetchSpotifyImageForSong(id, button) {
+            const row = button.closest('tr');
+            const author = row.cells[1].innerText.trim(); // Get the author name from the Author column
+
+            if (!author) {
+                showAlert({{ _('Please enter the author name to fetch the image from Spotify') | tojson }}, 'warning');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('author', author);
+
+            // Show loading on button
+            const originalText = button.innerHTML;
+            button.disabled = true;
+            button.innerHTML = '⏳';
+
+            // Add 15 second timeout
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+            fetch('/fetch_spotify_image', {
+                method: 'POST',
+                body: formData,
+                signal: controller.signal
+            })
+                .then(response => {
+                    clearTimeout(timeoutId);
+                    if (!response.ok) {
+                        return response.json().then(data => {
+                            throw new Error(data.message || `HTTP error ${response.status}`);
+                        }).catch(() => {
+                            throw new Error(`HTTP error ${response.status}`);
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Spotify response:', data);
+                    if (data.message === 'Image fetched successfully') {
+                        const imgElement = row.querySelector('img');
+                        if (data.image) {
+                            imgElement.src = getAuthorImageUrl(data.image);
+                            imgElement.style.display = 'block';
+                            // Store the uploaded filename
+                            imgElement.dataset.uploadedFilename = data.image;
+                        }
+
+                        let updated = false;
+
+                        // Update language if provided
+                        if (data.language) {
+                            console.log('Updating language to:', data.language);
+                            const languageDropdown = row.querySelector('.language-dropdown');
+                            if (languageDropdown) {
+                                console.log('Current language:', languageDropdown.value);
+                                languageDropdown.value = data.language;
+                                console.log('New language:', languageDropdown.value);
+                                updated = true;
+                            } else {
+                                console.log('Language dropdown not found');
+                            }
+                        } else {
+                            console.log('No language in response');
+                        }
+
+                        // Update genre if provided
+                        if (data.genre) {
+                            console.log('Updating genre to:', data.genre);
+                            // Genre is now an input within cells[2] (the colspan cell)
+                            const genreInput = row.cells[2].querySelector('input[type="text"]');
+                            if (genreInput) {
+                                console.log('Current genre:', genreInput.value);
+                                genreInput.value = data.genre;
+                                console.log('New genre:', genreInput.value);
+                                updated = true;
+                            } else {
+                                console.log('Genre input not found');
+                            }
+                        } else {
+                            console.log('No genre in response');
+                        }
+
+                        // Mark the row as changed if any field was updated
+                        if (updated || data.image) {
+                            row.style.backgroundColor = '#e8f4f8'; // Soft blue matching app palette
+                            
+                            // Show the Save button
+                            const saveBtn = row.querySelector('.save-btn');
+                            if (saveBtn) {
+                                saveBtn.style.display = 'inline-block';
+                            }
+                        }
+
+                        // Success is visible from the updated fields and blue row - no alert needed
+                    } else {
+                        showAlert(data.message || {{ _('Artist not found on Spotify') | tojson }}, 'warning');
+                    }
+                })
+                .catch(error => {
+                    clearTimeout(timeoutId);
+                    console.error('Error fetching image from Spotify:', error);
+                    
+                    if (error.name === 'AbortError') {
+                        showAlert({{ _('Spotify request timed out. Please check your internet connection and try again.') | tojson }}, 'error');
+                    } else {
+                        showAlert(error.message || {{ _('Error fetching data from Spotify') | tojson }}, 'error');
+                    }
+                })
+                .finally(() => {
+                    button.disabled = false;
+                    button.innerHTML = originalText;
+                });
+        }
+
+        function zeroPopularity() {
+            showConfirmDanger(
+                {{ _('Are you sure you want to reset the popularity of all songs to zero ? ') | tojson }},
+                () => {
+                    fetch('/zero_popularity', {
+                        method: 'POST'
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            showAlert(data.message, 'success');
+                            fetchSongs(); // Refresh the table to show updated popularity
+                        })
+                        .catch(error => console.error('Error resetting popularity:', error));
+                },
+                null,
+                'Reset',
+                'Confirm Reset Popularity'
+            );
+        }
+
+        function removeDuplicates() {
+            showConfirmDanger(
+                {{ _('Are you sure you want to remove duplicate songs? This will keep only the first occurrence of each duplicate.') | tojson }},
+                () => {
+                    fetch('{% if tenant %}/{{ tenant.slug }}/remove_duplicates{% else %}/remove_duplicates{% endif %}', {
+                        method: 'POST'
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                showAlert(data.message, 'success');
+                                fetchSongs(); // Refresh the table
+                            } else {
+                                showAlert(data.message, 'error');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error removing duplicates:', error);
+                            showAlert({{ _('Error removing duplicates') | tojson }}, 'error');
+                        });
+                },
+                null,
+                {{ _('Remove Duplicates') | tojson }},
+                {{ _('Confirm Remove Duplicates') | tojson }}
+            );
+        }
+
+        function enlargeImage(src) {
+            const overlay = document.querySelector('.overlay');
+            const enlargedImage = document.getElementById('enlargedImage');
+            enlargedImage.src = src;
+            overlay.style.display = 'block';
+            enlargedImage.style.display = 'block';
+        }
+
+        function closeImage() {
+            const overlay = document.querySelector('.overlay');
+            const enlargedImage = document.getElementById('enlargedImage');
+            overlay.style.display = 'none';
+            enlargedImage.style.display = 'none';
+        }
+
+        function previewImage(event) {
+            const file = event.target.files[0];
+            const reader = new FileReader();
+            reader.onload = function () {
+                const imagePreview = document.getElementById('imagePreview');
+                imagePreview.src = reader.result;
+                imagePreview.style.display = 'block';
+            };
+            if (file) {
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function fetchSpotifyImage() {
+            const author = document.getElementById('newSongAuthor').value.trim();
+            if (!author) {
+                showAlert({{ _('Please enter the author name to fetch the image from Spotify') | tojson }}, 'warning');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('author', author);
+
+            // Show loading indicator
+            const fetchButton = event?.target || document.querySelector('button[onclick="fetchSpotifyImage()"]');
+            const originalText = fetchButton?.innerHTML;
+            if (fetchButton) {
+                fetchButton.disabled = true;
+                fetchButton.innerHTML = '⏳ ' + {{ _('Loading...') | tojson }};
+            }
+
+            // Add 15 second timeout for the fetch request
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+            fetch('/fetch_spotify_image', {
+                method: 'POST',
+                body: formData,
+                signal: controller.signal
+            })
+                .then(response => {
+                    clearTimeout(timeoutId);
+                    if (!response.ok) {
+                        return response.json().then(data => {
+                            throw new Error(data.message || `HTTP error ${response.status}`);
+                        }).catch(() => {
+                            throw new Error(`HTTP error ${response.status}`);
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Spotify fetch response:', data);
+                    if (data.message === 'Image fetched successfully') {
+                        const imagePreview = document.getElementById('imagePreview');
+                        imagePreview.src = getAuthorImageUrl(data.image);
+                        
+                        // Also populate genre if available
+                        if (data.genre) {
+                            console.log('Setting genre to:', data.genre);
+                            const genreInput = document.getElementById('newSongGenre');
+                            genreInput.value = data.genre;
+                            console.log('Genre input value is now:', genreInput.value);
+                        } else {
+                            console.log('No genre in response data');
+                        }
+                        
+                        // Also populate language if available
+                        if (data.language) {
+                            console.log('Setting language to:', data.language);
+                            const languageSelect = document.getElementById('languageSelect');
+                            languageSelect.value = data.language;
+                            console.log('Language select value is now:', languageSelect.value);
+                        } else {
+                            console.log('No language in response data');
+                        }
+                        
+                        // Success is visible from the updated image preview and fields - no alert needed
+                    } else {
+                        showAlert(data.message || {{ _('Artist not found on Spotify') | tojson }}, 'warning');
+                    }
+                })
+                .catch(error => {
+                    clearTimeout(timeoutId);
+                    console.error('Error fetching image from Spotify:', error);
+                    
+                    if (error.name === 'AbortError') {
+                        showAlert({{ _('Spotify request timed out. Please check your internet connection and try again.') | tojson }}, 'error');
+                    } else {
+                        showAlert(error.message || {{ _('Error fetching data from Spotify') | tojson }}, 'error');
+                    }
+                })
+                .finally(() => {
+                    if (fetchButton && originalText) {
+                        fetchButton.disabled = false;
+                        fetchButton.innerHTML = originalText;
+                    }
+                });
+        }
+        
+        // Function to update filter dropdowns with unique genre and playlist values
+        function updateFilters(songs) {
+            // Get unique genres and playlists
+            const genres = [...new Set(songs.map(s => s.genre).filter(g => g))].sort();
+            const playlists = [...new Set(songs.map(s => s.playlist).filter(p => p))].sort();
+            
+            // Update genre filter
+            const genreFilter = document.getElementById('genreFilter');
+            const currentGenre = genreFilter.value;
+            genreFilter.innerHTML = `<option value="">${translations.allGenres}</option>`;
+            genres.forEach(genre => {
+                const option = document.createElement('option');
+                option.value = genre;
+                option.textContent = genre;
+                if (genre === currentGenre) option.selected = true;
+                genreFilter.appendChild(option);
+            });
+            
+            // Update playlist filter
+            const playlistFilter = document.getElementById('playlistFilter');
+            const currentPlaylist = playlistFilter.value;
+            playlistFilter.innerHTML = `<option value="">${translations.allPlaylists}</option>`;
+            playlists.forEach(playlist => {
+                const option = document.createElement('option');
+                option.value = playlist;
+                option.textContent = playlist;
+                if (playlist === currentPlaylist) option.selected = true;
+                playlistFilter.appendChild(option);
+            });
+            
+            // Update playlist autocomplete datalist
+            const playlistOptions = document.getElementById('playlistOptions');
+            playlistOptions.innerHTML = '';
+            playlists.forEach(playlist => {
+                const option = document.createElement('option');
+                option.value = playlist;
+                playlistOptions.appendChild(option);
+            });
+        }
+
+        // Generate PDF function
+        function generatePDF() {
+            const button = document.getElementById('generatePdfBtn');
+            const originalText = button.innerHTML;
+            
+            // Disable button and show loading state
+            button.disabled = true;
+            button.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 5px; animation: spin 1s linear infinite;"><circle cx="12" cy="12" r="10"></circle></svg> {{ _("Generating PDF...") }}';
+            
+            // Create a temporary link to download the PDF
+            const pdfUrl = '{% if tenant %}/{{ tenant.slug }}/generate_pdf{% else %}/generate_pdf{% endif %}';
+            const link = document.createElement('a');
+            link.href = pdfUrl;
+            link.download = '';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // Show success message after a delay
+            setTimeout(() => {
+                button.disabled = false;
+                button.innerHTML = originalText;
+                showAlert({{ _("PDF generated successfully! Check your downloads folder.") | tojson }}, 'success', {{ _("Success") | tojson }});
+            }, 2000);
+        }
+
+        // Bulk fetch Spotify data for all songs
+        function bulkFetchSpotify() {
+            const button = document.getElementById('bulkFetchBtnSongs');
+            const originalText = button.innerHTML;
+            
+            // Disable button and show loading state
+            button.disabled = true;
+            button.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 5px; animation: spin 1s linear infinite;"><circle cx="12" cy="12" r="10"></circle></svg> {{ _("Starting bulk fetch...") }}';
+            
+            // Start the bulk fetch job
+            fetch('{% if tenant %}/{{ tenant.slug }}{% endif %}/bulk_fetch_spotify', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ batch_size: 100 })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.job_id) {
+                    // Start polling for job status
+                    pollBulkFetchStatus(data.job_id, button, originalText);
+                } else {
+                    button.disabled = false;
+                    button.innerHTML = originalText;
+                    showAlert('❌ Error: ' + (data.message || 'Failed to start bulk fetch'), 'error');
+                }
+            })
+            .catch(error => {
+                button.disabled = false;
+                button.innerHTML = originalText;
+                showAlert('❌ Error: ' + error.message, 'error');
+            });
+        }
+        
+        function pollBulkFetchStatus(jobId, button, originalText) {
+            const pollInterval = setInterval(() => {
+                fetch('{% if tenant %}/{{ tenant.slug }}{% endif %}/bulk_fetch_status/' + jobId)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (!data.success) {
+                            clearInterval(pollInterval);
+                            button.disabled = false;
+                            button.innerHTML = originalText;
+                            showAlert('❌ Error checking status', 'error');
+                            return;
+                        }
+                        
+                        const status = data.status;
+                        const progress = data.progress || 0;
+                        const currentSong = data.current_song || '';
+                        
+                        // Update button text with progress
+                        button.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 5px; animation: spin 1s linear infinite;"><circle cx="12" cy="12" r="10"></circle></svg> ${progress}% - ${currentSong || 'Processing...'}`;
+                        
+                        if (status === 'completed') {
+                            clearInterval(pollInterval);
+                            button.disabled = false;
+                            button.innerHTML = originalText;
+                            
+                            const stats = data.stats || {};
+                            showAlert(
+                                `✅ ${data.message || 'Bulk fetch completed!'}<br><br>` +
+                                `<strong>Images:</strong> ${stats.images_fetched || 0}<br>` +
+                                `<strong>Genres:</strong> ${stats.genres_added || 0}<br>` +
+                                `<strong>Languages:</strong> ${stats.languages_added || 0}<br>` +
+                                `<strong>Skipped:</strong> ${stats.skipped || 0}<br>` +
+                                `<strong>Errors:</strong> ${stats.errors || 0}`,
+                                'success'
+                            );
+                            
+                            // Reload after 2 seconds to show updated images
+                            setTimeout(() => location.reload(), 2000);
+                        } else if (status === 'error') {
+                            clearInterval(pollInterval);
+                            button.disabled = false;
+                            button.innerHTML = originalText;
+                            showAlert('❌ Error: ' + (data.error || 'Unknown error'), 'error');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error polling status:', error);
+                    });
+            }, 2000); // Poll every 2 seconds
+        }
+
+        // Add CSS animation for spinner
+        const style = document.createElement('style');
+        style.textContent = '@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }';
+        document.head.appendChild(style);
+    </script>
+    </div>
+</body>
+
+</html>

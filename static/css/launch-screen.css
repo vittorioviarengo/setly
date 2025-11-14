@@ -1,0 +1,225 @@
+body {
+  margin: 0;
+  background: black;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  overflow-x: hidden; /* Prevent horizontal overflow */
+}
+
+.submit-button {
+  background-color: #4CAF50; /* Green background */
+  color: white; /* White text */
+  border: none;
+  padding: 10px 20px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  margin: 4px 2px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.submit-button:disabled {
+  background-color: #ccc; /* Gray background */
+  color: #666; /* Dark gray text */
+  cursor: not-allowed; /* Cursor indicates button is disabled */
+}
+
+.container-center-horizontal {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+.launch-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  min-width: 320px; /* Minimum width for mobile devices */
+  width: 100%; /* Ensure it takes full width */
+  box-sizing: border-box; /* Include padding and border in element's total width and height */
+  padding: 0 10px; /* Add some padding to avoid touching the edges */
+}
+
+.setly-logo {
+  width: 150px;
+  margin: 10px 0;
+}
+
+.sergio-chiappa-piano {
+  width: 100%;
+  max-width: 500px; /* Ensure it doesn't exceed a maximum width */
+  height: auto; /* Maintain aspect ratio */
+  margin: 20px 0;
+}
+
+.form-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 500px;
+  box-sizing: border-box; /* Include padding and border in element's total width and height */
+}
+
+
+
+.input-field {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  margin: 10px 0;
+  box-sizing: border-box; /* Ensure padding and border are included in the element's total width and height */
+  font-family: var(--font-family-century_gothic-regular);
+  font-size: 18px;
+  font-weight: 400;
+  height: 30px;
+}
+
+.overlap-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center; /* Center the content vertically */
+  margin: 20px 0;
+  width: 100%;
+  max-width: 500px;
+  box-sizing: border-box; /* Include padding and border in element's total width and height */
+}
+
+.overlap-group1 {
+  background-color: #76D7E6; /* Set button color */
+  border-radius: 5px; /* Rounded corners */
+  padding: 10px 20px;
+  cursor: pointer;
+  width: 100%; /* Make the button width 100% */
+  text-align: center; /* Center the button text */
+  margin-top: 10px; /* Space between text field and button */
+}
+
+.text {
+  font-size: 2em;
+  color: white;
+  width: 100%;
+  text-align: center;
+}
+
+.text .span1 {
+  color: #76D7E6; /* Set the color of "Sergio Chiappa" */
+}
+
+.button-text {
+  font-size: 1.2em;
+  color: white;
+  margin: 0;
+}
+
+.rectangle-33 {
+  width: 100%; /* Full width of the container */
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+  margin: 10px 0;
+}
+
+.language-dropdown {
+  width: 100%;
+  padding-left: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  margin: 5px 0;
+  box-sizing: border-box; /* Ensure padding and border are included in the element's total width and height */
+  font-family: var(--font-family-century_gothic-regular);
+  font-size: 18px;
+  font-weight: 400;
+  height: 32px; /* Adjust height to match the input field */
+  background-color: white; /* Ensure background color matches the input field */
+  appearance: none; /* Remove default dropdown arrow */
+  -webkit-appearance: none; /* Remove default dropdown arrow in Safari */
+  -moz-appearance: none; /* Remove default dropdown arrow in Firefox */
+  background-image: url('/static/img/black-arrow-down-16.png'); /* Add custom dropdown arrow */
+  background-repeat: no-repeat;
+  background-position: right 10px center; /* Position the custom arrow */
+  background-size: 12px; /* Size of the custom arrow */
+}
+
+/* styleguide.css */
+/* Include any specific styles required from the styleguide.css here */
+
+/* globals.css */
+/* Include any specific styles required from the globals.css here */
+
+/* style.css (Figma/Anima) */
+.launch-screen .div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  ;
+  justify-content: center;
+  height: 100vh;
+  background-color: black; /* Set background color to black */
+  color: white;
+}
+
+.launch-screen .overlap {
+  position: relative;
+  text-align: center;
+}
+
+.launch-screen .setly-logo {
+  width: 150px;
+  margin-bottom: 10px;
+}
+
+.launch-screen .frame .overlap-group {
+  background-color: #eaeaea;
+  border-radius: 5px;
+  padding: 10px 20px;
+}
+
+.launch-screen .text {
+  font-size: 2em;
+  margin: 20px 0;
+  color: white;
+  text-align: center;
+}
+
+.launch-screen .text .span1 {
+  color: #76D7E6; /* Set the color of "Sergio Chiappa" */
+}
+
+
+
+.submit-button {
+  background-color: #76D7E6;
+  color: white;
+  cursor: pointer;
+  border: none;
+  width: 100%;
+  padding: 10px;
+  border-radius: 5px;
+  margin: 10px 0;
+  box-sizing: border-box; /* Ensure padding and border are included in the element's total width and height */
+  text-align: center;
+}
+
+.launch-screen .button-text {
+  font-size: 1.2em;
+  margin: 0;
+}
+
+/* Media query for smaller screens */
+@media (max-width: 320px) {
+  .launch-screen {
+    min-width: 100%; /* Ensure it doesn't go below 320px */
+    padding: 15px; /* Increase padding for better clickability */
+    font-size: 2em; /* Increase font size */
+  }
+}

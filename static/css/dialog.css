@@ -1,0 +1,190 @@
+/* Custom Dialog Box Styles */
+.app-dialog-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 10000;
+    align-items: center;
+    justify-content: center;
+    animation: dialogFadeIn 0.2s ease-out;
+}
+
+.app-dialog-overlay.active {
+    display: flex;
+}
+
+.app-dialog {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    max-width: 500px;
+    width: 90%;
+    max-height: 80vh;
+    overflow: hidden;
+    animation: dialogSlideIn 0.3s ease-out;
+}
+
+.app-dialog-header {
+    padding: 24px 24px 16px 24px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.app-dialog-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.app-dialog-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.app-dialog-icon.info {
+    background: #e3f2fd;
+    color: #1976d2;
+}
+
+.app-dialog-icon.success {
+    background: #e8f5e9;
+    color: #4caf50;
+}
+
+.app-dialog-icon.warning {
+    background: #fff3e0;
+    color: #ff9800;
+}
+
+.app-dialog-icon.error {
+    background: #ffebee;
+    color: #f44336;
+}
+
+.app-dialog-icon.question {
+    background: #f3e5f5;
+    color: #9c27b0;
+}
+
+.app-dialog-body {
+    padding: 24px;
+    color: #546e7a;
+    font-size: 15px;
+    line-height: 1.6;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.app-dialog-footer {
+    padding: 16px 24px;
+    background: #f5f5f5;
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+.app-dialog-btn {
+    padding: 10px 24px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 80px;
+}
+
+.app-dialog-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.app-dialog-btn:active {
+    transform: translateY(0);
+}
+
+.app-dialog-btn.primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.app-dialog-btn.secondary {
+    background: white;
+    color: #546e7a;
+    border: 1px solid #cfd8dc;
+}
+
+.app-dialog-btn.success {
+    background: linear-gradient(135deg, #4caf50 0%, #66bb6a 100%);
+    color: white;
+}
+
+.app-dialog-btn.danger {
+    background: linear-gradient(135deg, #f44336 0%, #e57373 100%);
+    color: white;
+}
+
+@keyframes dialogFadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes dialogSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Mobile responsive */
+@media (max-width: 600px) {
+    .app-dialog {
+        width: 95%;
+        max-width: none;
+    }
+    
+    .app-dialog-header {
+        padding: 20px 16px 12px 16px;
+    }
+    
+    .app-dialog-title {
+        font-size: 18px;
+    }
+    
+    .app-dialog-body {
+        padding: 20px 16px;
+        font-size: 14px;
+    }
+    
+    .app-dialog-footer {
+        padding: 12px 16px;
+        flex-direction: column-reverse;
+    }
+    
+    .app-dialog-btn {
+        width: 100%;
+    }
+}
+

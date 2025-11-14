@@ -1,0 +1,1018 @@
+/* screen - search-mobile */
+
+.search-mobile {
+  align-items: center;
+  background-color: #000000;
+  display: flex;
+  flex-direction: column;
+
+  overflow: visible;
+  width: 368px;
+  height: 100%;
+}
+
+.container-center-horizontal {
+  width: 100%; 
+  overflow: visible; 
+  height: 100%;
+}
+
+.top-bar {
+  align-items: center;
+  display: inline-flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-right: 1.81px;
+  margin-top: -7px;
+  padding: 4px 8px;
+  background-color: #000000;
+
+  position: sticky;
+  top: 0; 
+  z-index: 1000; 
+  width: 100%; 
+}
+
+
+.title-div {
+  display: flex;
+  align-items: center; /* Center items vertically */
+  justify-content: space-between; /* Space items around */
+  padding: 0 10px; /* Add some padding if needed */
+  background-color: #000000; /* Ensure background color matches the design */
+  position: relative; /* Ensure the menu is positioned relative to the title-div */
+  width: 100%;
+}
+
+.setly-logo-title {
+  height: 38px;
+  width: 49px;
+  object-fit: cover;
+  margin-left: 0px;
+}
+
+.title {
+  -webkit-text-stroke: 1px var(--black);
+  color: #00c2cb;
+  font-family: var(--font-family-century_gothic-bold);
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  letter-spacing: 1.80px;
+  line-height: normal;
+  text-align: center; /* Center text horizontally */
+  flex-grow: 1; /* Allow the title to grow and take available space */
+}
+
+.interface-hamburger-menu-color {
+  height: 24px;
+  width: 24px;
+  margin-left: auto; /* Push the hamburger menu to the far right */
+  cursor: pointer; /* Change cursor to pointer to indicate it's clickable */
+}
+
+.menu {
+  display: none; /* Hidden by default */
+  position: absolute;
+  top: 100%; /* Position below the title-div */
+  right: 0;
+  background-color: #333;
+  color: #fff;
+  padding: 10px;
+  border-radius: 5px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  width: 200px;
+}
+
+.menu a, .menu .menu-item {
+  display: block;
+  color: #fff;
+  text-decoration: none;
+  margin: 5px 0;
+  cursor: pointer; /* Indicate that menu items are clickable */
+  font-family: var(--font-family-century_gothic-regular);
+  font-size: 20px;
+}
+
+.menu.show {
+  display: block; /* Show menu when this class is added */
+}
+
+.menu a:hover, .menu .menu-item:hover {
+  text-decoration: underline;
+}
+
+.menu .menu-item.selected {
+  font-weight: bold;
+  background-color: #8bd4d8;
+
+}
+
+.menu-divider {
+  border-top: 1px solid #555;
+  margin: 10px 0;
+}
+
+.letters-dropdown {
+  width: 50px;
+  padding-left: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  margin: 5px 0;
+  box-sizing: border-box; /* Ensure padding and border are included in the element's total width and height */
+  font-family: var(--font-family-century_gothic-regular);
+  font-size: 12 px;
+  font-weight: 400;
+  height: 22px; /* Adjust height to match the input field */
+  background-color: white; /* Ensure background color matches the input field */
+  appearance: none; /* Remove default dropdown arrow */
+  -webkit-appearance: none; /* Remove default dropdown arrow in Safari */
+  -moz-appearance: none; /* Remove default dropdown arrow in Firefox */
+  background-image: url('/static/img/black-arrow-down-16.png'); /* Add custom dropdown arrow */
+  background-repeat: no-repeat;
+  background-position: right 10px center; /* Position the custom arrow */
+  background-size: 12px; /* Size of the custom arrow */
+}
+
+
+.search-mobile .search-bar {
+  height: 33px;
+  position: relative;
+  width: 100%;
+}
+
+.search-mobile .search-container {
+  align-items: center;
+  display: flex;
+  min-width: 340px;
+  width: 100%;
+}
+
+.search-mobile .search-div {
+  align-items: flex-start;
+  display: flex;
+  height: 33px;
+  overflow: hidden;
+  padding: 2.7px 0;
+  width: 285px;
+
+  
+}
+
+.search-mobile .search-box-div {
+  align-items: flex-start;
+  background-color: #d2d2d2;
+  border-radius: 5px;
+  display: flex;
+  gap: 1343px;
+  height: 28px;
+  overflow: hidden;
+  width: 340px;
+}
+
+.search-mobile .search-text {
+  align-self: center;
+  background-color: transparent;
+  border: 0;
+  color: #10111199;
+  font-family: var(--font-family-century_gothic-regular);
+  font-size: 16px;
+  font-weight: 400;
+  height: 18px;
+  letter-spacing: 0.58px;
+  line-height: normal;
+  margin-bottom: 2.83px;
+  margin-left: 8px;
+  padding: 0;
+  width: 235px;
+}
+
+.search-mobile .search-text::placeholder {
+  color: #00000099;
+  font-size: 16px;
+  font-weight: 400;
+  letter-spacing: 0.58px;
+  line-height: normal;
+}
+
+.search-mobile .cancel-search-image {
+  height: 16px;
+  margin-top: -394.42px;
+  width: 16px;
+}
+
+.search-mobile .cancel-div {
+  align-items: center;
+  background-color: #d9d9d9;
+  border-radius: 5px;
+  cursor: pointer;
+  display: flex;
+  height: 28px;
+  margin-bottom: 0.42px;
+  margin-left: 6px;
+  min-width: 31px;
+  padding: 0 3px;
+}
+
+.search-mobile .overlap-group-2 {
+  height: 24px;
+  position: relative;
+  width: 24px;
+}
+
+.search-mobile .cancel-image {
+  cursor: pointer;
+  height: 24px;
+  left: 0;
+  position: absolute;
+  top: 0;
+  width: 24px;
+}
+
+.search-mobile .interfaceadd-lg {
+  height: 22px;
+  left: 1px;
+  position: absolute;
+  top: 1px;
+  width: 22px;
+}
+
+.search-mobile .lens-div {
+  align-items: center;
+  background-color: #d9d9d9;
+  border-radius: 5px;
+  cursor: pointer;
+  display: flex;
+  height: 28px;
+  margin-bottom: 0.42px;
+  margin-left: 4px;
+  min-width: 31px;
+  padding: 0 3px;
+}
+
+.search-mobile .lens-image {
+  cursor: pointer;
+  height: 24px;
+  width: 24px;
+}
+
+.search-mobile .filter-div {
+  height: 23.29px;
+  position: relative;
+  width: 313.45px;
+  margin-left: auto; /* Pushes the filter-div to the right */
+}
+
+.search-mobile .flex-row {
+  align-items: flex-end;
+  display: flex;
+  justify-content: flex-end; /* Align content to the right */
+  min-width: 313px;
+  width: 100%; /* Ensure the container takes the full width */
+  padding: 0; /* Remove any padding */
+  margin: 0; /* Remove any margin */
+}
+
+.search-mobile .language {
+  color: var(--white);
+  font-family: var(--font-family-century_gothic-regular);
+  font-size: var(--font-size-m);
+  font-weight: 400;
+  letter-spacing: 0.72px;
+  line-height: normal;
+  margin-top: 0.29px;
+  min-height: 15px;
+  width: 90px;
+  align-self: center;
+}
+
+.search-mobile .all-button {
+  align-items: flex-start;
+  align-self: flex-start;
+  cursor: pointer;
+  display: flex;
+  margin-left: 6px;
+  min-width: 39px;
+}
+
+.search-mobile .overlap-group2 {
+  height: 23px;
+  margin-top: 0;
+  position: relative;
+  width: 37px;
+}
+
+.button-unselected {
+  border: 1px solid;
+  border-color: var(--white);
+  border-radius: 10px;
+  height: 23px;
+  left: 1px;
+  position: absolute;
+  top: 0;
+  width: 36px;
+}
+
+.search-mobile .all {
+  left: 0;
+  letter-spacing: 0.72px;
+  line-height: normal;
+  position: absolute;
+  text-align: center;
+  top: 4px;
+  white-space: nowrap;
+  width: 37px;
+}
+
+.search-mobile .italian-button {
+  align-items: flex-start;
+  cursor: pointer;
+  display: flex;
+  margin-left: 8px;
+  min-width: 84px;
+}
+
+.italian-button-1,
+.italian-button-2,
+.italian-button-3 {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 5px;
+  padding: 5px 10px;
+  border: 1px solid white;
+  border-radius: 5px;
+  background-color: #000;
+  /* Default state */
+}
+
+
+.search-mobile .overlap-group-3 {
+  height: 23px;
+  position: relative;
+  width: 78px;
+}
+
+.search-mobile .rectangle-37-2 {
+  border-color: var(--white);
+  width: 76px;
+}
+
+.search-mobile .overlap-group1 {
+  height: 23px;
+  position: relative;
+  width: 82px;
+}
+
+.rectangle-37-1 {
+  background-color: var(--teal);
+  border-color: #fdfeff;
+  width: 80px;
+}
+
+.search-mobile .language-1 {
+  width: 82px;
+}
+
+.search-mobile .english-button {
+  align-items: flex-start;
+  cursor: pointer;
+  display: flex;
+  margin-left: 7px;
+  min-width: 80px;
+}
+
+.search-mobile .overlap-group-3 {
+  height: 23px;
+  position: relative;
+  width: 78px;
+}
+
+.search-mobile .language-unselected {
+  border: 1px solid var(--white);
+  /* Combines border definition and uses the color from rectangle-37-2 */
+  border-radius: 10px;
+  width: 76px;
+  /* Width from rectangle-37-2 */
+  height: 23px;
+  /* Height from rectangle-37-3 */
+  position: absolute;
+  left: 2px;
+  top: 0;
+}
+
+.search-mobile .language-2 {
+  width: 78px;
+}
+
+.search-mobile .line-10 {
+  height: 2px;
+  margin-top: 6px;
+  object-fit: cover;
+  width: 368px;
+}
+
+.search-mobile .requests-div-old {
+  height: 179px;
+  margin-left: 3.0px;
+  margin-top: 17px;
+  padding: 1px 1px 1px 1px;
+  width: 365px;
+
+}
+
+
+.search-mobile .song-entry {
+  align-items: flex-end;
+  background-color: #001d1f;
+  border: 1px solid;
+  border-color: #050505;
+  border-radius: 10px;
+  display: flex;
+  height: 67px;
+  min-width: 353px;
+  padding: 7px 4px;
+}
+
+.search-mobile .author-image {
+  height: 52px;
+  object-fit: cover;
+  width: 50px;
+}
+
+.title-author {
+  align-items: flex-start;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-height: 50px;
+  width: 209px;
+  margin-left: 5.0px;
+}
+
+.song-title-style {
+  font-family: 'Century Gothic', sans-serif; /* Assuming Century Gothic is the desired font */
+  font-size: 16px; /* Size from centurygothic-bold-cararra-18px */
+  font-weight: bold; /* Bold style from centurygothic-bold-cararra-18px */
+  color: #C4C4C4; /* Color from centurygothic-bold-cararra-18px, replace with actual color code if different */
+  vertical-align: middle; /* Align text from valign-text-middle */
+}
+
+.song-name {
+  color: #efe8e8;
+  font-family: var(--font-family-century_gothic-bold);
+  font-size: var(--font-size-l);
+  font-weight: 700;
+  height: 24px;
+  letter-spacing: 1.08px;
+  line-height: normal;
+  width: 205px;
+  margin-left: 5.0px;
+}
+
+.author-name {
+  color: #8a9a9d;
+  font-family: var(--font-family-century_gothic-bold);
+  font-size: var(--font-size-m);
+  font-weight: 700;
+  height: 23px;
+  letter-spacing: 0.71px;
+  line-height: normal;
+  width: 201px;
+  margin-left: 5.0px;
+}
+
+.search-mobile .button {
+  align-items: flex-start;
+  align-self: center;
+  cursor: pointer;
+  display: inline-flex;
+  height: 23px;
+  margin-left: 3px;
+  margin-top: 6.0px;
+  position: relative;
+}
+
+.search-mobile .button-1 {
+  align-items: center;
+  background-color: var(--teal);
+  border-radius: 5px;
+  display: flex;
+  gap: 10px;
+  height: 21px;
+  justify-content: center;
+  padding: 12px 32px;
+  position: relative;
+  width: 74px;
+}
+
+.search-mobile .delete {
+  letter-spacing: 0;
+  line-height: 24px;
+  margin-bottom: -12.50px;
+  margin-left: -14.50px;
+  margin-right: -14.50px;
+  margin-top: -14.50px;
+  position: relative;
+  white-space: nowrap;
+  width: fit-content;
+}
+
+.search-mobile .song-entry-3 {
+  height: 67px;
+  margin-bottom: -7.00px;
+}
+
+.x-title {
+  color: var(--white);
+  font-family: var(--font-family-century_gothic-bold);
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  left: 0;
+  letter-spacing: 0;
+  line-height: normal;
+  position: relative;
+  top: 0;
+  align-self: left;
+  padding-top: 5px;
+
+}
+
+.search-mobile .songs-div {
+  align-items: flex-start;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-right: 5.0px;
+  margin-top: 12px;
+  min-height: 550px;
+  width: 353px;
+}
+
+.search-mobile .flex-row-1 {
+  align-items: flex-end;
+  display: flex;
+  height: 27px;
+  margin-right: 9.0px;
+  margin-top: -1px;
+  min-width: 330px;
+}
+
+.search-mobile .overlap-group10 {
+  align-self: flex-start;
+  height: 26px;
+  position: relative;
+  width: 212px;
+}
+
+
+
+.language-button {
+  cursor: pointer;
+  height: 22px;
+  padding: 5px 10px; /* Adjust padding to provide space around the text */
+  margin: 5px; /* Adjust margin if needed */
+  border-radius: 7px;
+  text-align: center;
+  border: 1px solid;
+  border-color: var(--white);
+  background-color: #000000; /* Default background */
+  color: rgb(250, 250, 250);
+  font-family: 'Century Gothic', sans-serif;
+  font-size: 12px;
+  display: inline-flex; /* Use inline-flex to allow the button to adjust to text width */
+  align-items: center; /* This aligns children vertically in the center */
+  justify-content: center;
+}
+
+.language-button-selected {
+  align-items: center; /* Ensure alignment is consistent */
+  height: 22px;
+  background-color: var(--teal);
+  border: 1px solid;
+  border-color: var(--white);
+  border-radius: 7px;
+  display: inline-flex; /* Use inline-flex to allow the button to adjust to text width */
+  padding: 5px 10px; /* Ensure padding is consistent */
+}
+
+.button-selected {
+  align-items: flex-start;
+  height: 22px;
+  background-color: var(--teal);
+  border: 1px solid;
+  border-color: var(--white);
+  border-radius: 10px;
+  display: flex;
+  height: 22px;
+  min-width: 67px;
+  padding: 2.9px 2.3px;
+}
+
+.search-mobile .english {
+  letter-spacing: 0.72px;
+  line-height: normal;
+  min-height: 13px;
+  text-align: center;
+  white-space: nowrap;
+  width: 61px;
+}
+
+
+
+.search-mobile .overlap-group8 {
+  align-items: flex-start;
+  border: 1px solid;
+  border-color: var(--white);
+  border-radius: 10px;
+  display: flex;
+  height: 23px;
+  min-width: 67px;
+  padding: 3.1px 2px;
+}
+
+.search-mobile .english-1 {
+  letter-spacing: 0.72px;
+  line-height: normal;
+  min-height: 14px;
+  text-align: center;
+  white-space: nowrap;
+  width: 61px;
+}
+
+.search-mobile .letters-dropdon {
+  align-items: flex-start;
+  cursor: pointer;
+  display: flex;
+  height: 23px;
+  margin-left: 8px;
+  position: relative;
+  width: 38px;
+}
+
+.search-mobile .button-3 {
+  align-items: center;
+  background-color: var(--teal);
+  border-radius: 7px;
+  cursor: pointer;
+  display: flex;
+  gap: 10px;
+  height: 21px;
+  justify-content: center;
+  padding: 12px 32px;
+  position: relative;
+  width: 38px;
+}
+
+.search-mobile .button-4 {
+  color: var(--alto);
+  font-family: var(--font-family-century_gothic-bold);
+  font-size: var(--font-size-m);
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 24px;
+  margin-bottom: -12.50px;
+  margin-left: -21.00px;
+  margin-right: -21.00px;
+  margin-top: -14.50px;
+  position: relative;
+  white-space: nowrap;
+  width: fit-content;
+}
+
+
+.search-mobile .song-list-container {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-right: 6.0px;
+  overflow: visible; 
+  position: relative;
+  width: 363px; 
+}
+
+.song-add-icon {
+  align-items: flex-start;
+  background-image: url(../img/music-music-note-2.svg);
+  background-size: 100% 100%;
+  cursor: pointer;
+  display: flex;
+  height: 24px;
+  left: 305px;
+  min-width: 24px;
+  padding: 0 5.0px;
+  position: absolute;
+  top: 22px;
+}
+
+
+
+
+.search-mobile .song-entry-5 {
+  position: relative;
+  width: 353px;
+}
+.song-container {
+  align-items: flex-end;
+  background-color: #000000;
+  border-radius: 10px;
+  display: flex;
+  gap: 7px;
+  height: 67px;
+  left: 0;
+  min-width: 353px;
+  padding: 6px 5px;
+  position: relative;
+  top: 0;
+  margin-right: -10.00px;
+  cursor: pointer;
+}
+
+.search-mobile .overlap-group {
+  align-items: flex-end;
+  background-color: var(--eerie-black);
+  border-radius: 10px;
+  display: flex;
+  height: 67px;
+  min-width: 353px;
+  padding: 6px 5px;
+}
+
+
+
+
+.search-mobile .button-2 {
+  align-items: flex-start;
+  align-self: center;
+  cursor: pointer;
+  display: inline-flex;
+  height: 23px;
+  margin-left: 3px;
+  margin-top: 8.0px;
+  position: relative;
+}
+
+.search-mobile .delete-1 {
+  letter-spacing: 0;
+  line-height: 24px;
+  margin-bottom: -12.50px;
+  margin-left: -19.00px;
+  margin-right: -19.00px;
+  margin-top: -14.50px;
+  position: relative;
+  white-space: nowrap;
+  width: fit-content;
+}
+
+.search-mobile .song-entry-4 {
+  height: 61px;
+  margin-bottom: -10.00px;
+  margin-right: -10.00px;
+}
+
+.search-mobile .overlap-group7 {
+  align-items: center;
+  background-color: var(--eerie-black);
+  border-radius: 10px;
+  display: flex;
+  height: 67px;
+  justify-content: flex-end;
+  min-width: 353px;
+}
+
+
+
+
+.sort-button {
+  padding: 5px 10px;
+  margin: 0 10px;
+  /* Adjust spacing between buttons */
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background-color: #fff;
+  cursor: pointer;
+  font-family: 'Century Gothic', sans-serif;
+  font-size: 12px;
+  color: #333;
+}
+
+.active-button {
+  background-color: #00c2cb;
+  /* Change color when active */
+  color: #fff;
+}
+
+
+
+.sorting-buttons {
+  display: flex;
+  align-items: center;
+  /* Align items vertically in the center */
+  justify-content: flex-end;
+  /* Align items to the right */
+  width: 100%;
+  /* Make the div take full width of its parent */
+  height: 26px;
+  border-color: #ccc;
+}
+
+.sort-button:hover {
+  background-color: #ddd;
+  /* Hover effect */
+}
+
+.sort-title {
+  letter-spacing: 0.72px;
+  line-height: normal;
+  text-align: center;
+  white-space: nowrap;
+  color: #fff;
+  padding: 0 10px;
+  font-family: var(--font-family-century_gothic-regular);
+  font-size: 12px;
+}
+
+
+.languge-selected {
+  background-color: var(--teal);
+  border: 1px solid #fdfeff;
+  border-radius: 10px;
+  width: 80px;
+  height: 23px;
+  position: absolute;
+  left: 2px;
+  top: 0;
+}
+
+.search-mobile .requests {
+  align-items: flex-start;
+  display: flex;
+}
+
+
+.remove-request-icon {
+  display: flex; /* Enable Flexbox */
+  align-items: center; /* Center vertically */
+  justify-content: center; /* Center horizontally */
+  align-self: center;
+  border: 2px solid;
+  border-color: #ffffff;
+  border-radius: 11.19px/10.71px;
+  cursor: pointer;
+  height: 21px;
+  margin-bottom: 4.58px;
+  min-width: 22px;
+  padding: 7.6px 4.5px;
+}
+
+.author-name-request {
+  color: #8a9a9d;
+  font-family: var(--font-family-century_gothic-bold);
+  font-size: 10px;
+  font-weight: 700;
+  height: 23px;
+  left: 0;
+  letter-spacing: 0.60px;
+  line-height: normal;
+  position: absolute;
+  top: 18px;
+  width: 201px;
+}
+
+.song-name-request {
+  color: #efe8e8;
+  font-family: var(--font-family-century_gothic-bold);
+  font-size: 12px;
+  font-weight: 700;
+  height: 24px;
+  left: 0;
+  letter-spacing: 0.84px;
+  line-height: normal;
+  position: absolute;
+  top: 0;
+  width: 205px;
+}
+.request-div .name-container-request {
+  height: 41px;
+  position: relative;
+  width: 205px;
+}
+
+
+.song-requests-vertical {
+  align-items: flex-start;
+  background-color: #1e1e1e;
+  border: 1px solid;
+  border-color: #050505;
+  border-radius: 5px;
+  display: flex;
+  gap: 89px;
+  height: 50px;
+  min-width: 353px;
+  padding: 3px 12px;
+}
+
+
+
+.requests-container {
+  overflow: hidden; /* Hide overflow */
+  transition: max-height 0.5s ease-out; /* Smooth transition for height changes */
+  margin-left: 2px;
+  margin-top: -1px;
+  position: relative;
+
+  justify-content: center; /* Centers horizontally */
+  align-items: center;
+  position: static; /* or 'static' if no positioning is needed */
+  width: 100%; /* Adjust as necessary */
+
+  height: auto;
+}
+
+
+.requests-list {
+  height: auto; /* Adjusts height based on content */
+  max-height: 340px; /* Maximum height */
+  overflow-y: auto; /* Allows scrolling within the div if content exceeds max-height */
+  transition: max-height 0.5s ease-out; /* Smooth transition for expanding and contracting */
+  flex-direction: column;
+  gap: 4px;
+  padding: 0px 0px;
+  position: relative;
+  width: 100%; /* Full width */
+
+}
+
+
+
+/* screen - welcome-div */
+
+.welcome-div {
+  align-items: center; /* Center vertically */
+  display: flex;
+  min-width: 341px;
+  height: auto; /* Allow height to adjust based on content */
+  margin-top: -1px;
+  position: relative;
+  width: 100%;
+}
+
+.welcome-rectangle {
+  background-color: #00858b;
+  border-radius: 5px;
+  height: 100%; /* Match the height of the parent */
+  position: absolute;
+  top: 0;
+  width: 100%;
+  z-index: 0; /* Ensure the rectangle is below the text */
+}
+
+.welcome-name {
+  color: #dbd9d9;
+  font-family: var(--font-family-century_gothic-regular);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 1.60px;
+  line-height: normal;
+  text-align: center;
+  overflow: hidden; /* Ensures that any overflow is hidden */
+  text-overflow: ellipsis; /* Adds ellipsis (...) if the text overflows */
+  padding: 4px 4px; /* Add some padding for better appearance */
+  flex-grow: 1; /* Allow the element to take available space */
+  z-index: 1; /* Ensure the text is above the rectangle */
+  display: flex; /* Use flexbox for the text */
+  align-items: center; /* Center text vertically */
+  justify-content: center; /* Center text horizontally */
+  background-color: transparent
+}
+
+.user-messages {
+  display: none; /* Initially hidden */
+  background-color: #104248; /* Example background color */
+  color: #fff; /* Text color */
+
+  font-family: var(--font-family-century_gothic-regular);
+  font-size: 14px;
+  
+
+  margin: 10px;
+
+  padding: 10px;
+  border-radius: 5px;
+  transition: max-height 0.5s ease-out, opacity 0.5s ease-out;
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  width: 100%; /* Ensure it takes full width */
+  height: auto; /* Allow height to adjust based on content */
+}
+
+.user-messages.show {
+  display: block;
+  max-height: 1000px; /* Set a large max-height to ensure it can expand */
+  opacity: 1;
+}
+
+.search-text {
+  color: #333; /* Darker text color */
+}

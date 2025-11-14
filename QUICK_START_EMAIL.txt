@@ -1,0 +1,76 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║                   📧  EMAIL SETUP - QUICK START (5 MIN)                    ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+✅ STEP 1: Generate Gmail App Password
+────────────────────────────────────────────────────────────────────────────
+1. Open: https://myaccount.google.com/apppasswords
+2. You might need to enable 2-Factor Authentication first
+3. Click "Generate" and select:
+   - App: Mail
+   - Device: Other (type "Musium")
+4. Copy the 16-character password (remove spaces)
+   Example: abcd efgh ijkl mnop → abcdefghijklmnop
+
+
+✅ STEP 2: Edit the .env file
+────────────────────────────────────────────────────────────────────────────
+Open the file: .env (in your project folder)
+
+Fill in these two lines:
+
+MAIL_USERNAME=your-email@gmail.com
+MAIL_PASSWORD=abcdefghijklmnop
+
+Example:
+MAIL_USERNAME=sergio.chiappa@gmail.com
+MAIL_PASSWORD=abcdefghijklmnop
+
+
+✅ STEP 3: Run the app
+────────────────────────────────────────────────────────────────────────────
+python3 app.py
+
+
+✅ STEP 4: Test it!
+────────────────────────────────────────────────────────────────────────────
+1. Go to http://127.0.0.1:5001/superadmin/login
+2. Create a new tenant
+3. Check "Send Invitation"
+4. Submit
+5. Check your email! 📬
+
+
+╔════════════════════════════════════════════════════════════════════════════╗
+║                            🔧  TROUBLESHOOTING                             ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+❌ Problem: Still see "Email not configured"
+✅ Solution: 
+   - Make sure you saved the .env file
+   - Restart the app after editing .env
+   - Check MAIL_USERNAME and MAIL_PASSWORD are filled in (no spaces)
+
+❌ Problem: "Authentication failed" error
+✅ Solution:
+   - You're using your regular password instead of App Password
+   - Go back to Step 1 and generate an App Password
+   - App Passwords look like: abcdefghijklmnop (16 lowercase letters)
+
+❌ Problem: Can't find "App Passwords" in Google
+✅ Solution:
+   - Enable 2-Factor Authentication first:
+     https://myaccount.google.com/security
+   - Then try again: https://myaccount.google.com/apppasswords
+
+
+Need help? Read SETUP_EMAIL.md for detailed instructions.
+
+
+
+
+
+
+
+
+

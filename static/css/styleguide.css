@@ -1,0 +1,48 @@
+:root { 
+  --alto: #dbdbdb;
+  --black: #000000;
+  --cararra: #efe8e8;
+  --eerie-black: #1e1e1ecf;
+  --regent-gray: #8a9a9d;
+  --teal: #00858b;
+  --white: #ffffff;
+ 
+  --font-size-l: 18px;
+  --font-size-m: 13px;
+  --font-size-s: 12px;
+  --font-size-xl: 20px;
+ 
+  --font-family-century_gothic-bold: "Century Gothic-Bold", Helvetica;
+  --font-family-century_gothic-regular: "Century Gothic-Regular", Helvetica;
+}
+.centurygothic-bold-cararra-18px {
+  color: var(--cararra);
+  font-family: var(--font-family-century_gothic-bold);
+  font-size: var(--font-size-l);
+  font-style: normal;
+  font-weight: 700;
+}
+
+.centurygothic-bold-regent-gray-13px {
+  color: var(--regent-gray);
+  font-family: var(--font-family-century_gothic-bold);
+  font-size: var(--font-size-m);
+  font-style: normal;
+  font-weight: 700;
+}
+
+.centurygothic-regular-normal-alto-12px {
+  color: var(--alto);
+  font-family: var(--font-family-century_gothic-regular);
+  font-size: var(--font-size-s);
+  font-style: normal;
+  font-weight: 400;
+}
+
+.centurygothic-regular-normal-white-12px {
+  color: var(--white);
+  font-family: var(--font-family-century_gothic-regular);
+  font-size: var(--font-size-s);
+  font-style: normal;
+  font-weight: 400;
+}

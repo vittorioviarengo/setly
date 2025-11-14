@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="{{ g.lang_code }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ tenant.name }} - QR Code</title>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename=favicon) }}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            gap: 1.5rem;
+        }
+
+        .language-selector {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .language-selector label {
+            font-weight: 600;
+            color: #2d3748;
+            font-size: 0.95rem;
+        }
+
+        .qr-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 3rem;
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .language-selector select {
+            padding: 0.5rem 1rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            background: white;
+            color: #2d3748;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .language-selector select:hover {
+            border-color: #667eea;
+        }
+
+        .language-selector select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .logo {
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 1.5rem;
+            border-radius: 50%;
+            object-fit: cover;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            color: #2d3748;
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: #718096;
+            margin-bottom: 2rem;
+        }
+
+        #qrcode {
+            margin: 2rem auto;
+            padding: 1.5rem;
+            background: #f7fafc;
+            border-radius: 12px;
+            display: inline-block;
+        }
+
+        .instructions {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            margin-top: 2rem;
+            text-align: left;
+        }
+
+        .instructions h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .instructions ol {
+            padding-left: 1.5rem;
+            line-height: 1.8;
+        }
+
+        .instructions li {
+            margin-bottom: 0.5rem;
+        }
+
+        .url {
+            background: rgba(255,255,255,0.2);
+            padding: 0.75rem;
+            border-radius: 8px;
+            margin: 1.5rem 0;
+            font-family: 'Courier New', monospace;
+            word-break: break-all;
+            text-align: center;
+        }
+
+        .print-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 1rem 3rem;
+            font-size: 1.1rem;
+            border-radius: 50px;
+            cursor: pointer;
+            margin-top: 2rem;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .print-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        @media print {
+            @page {
+                size: A4;
+                margin: 1cm;
+            }
+
+            body {
+                background: white;
+                padding: 0;
+                min-height: auto;
+            }
+
+            .qr-container {
+                box-shadow: none;
+                max-width: 100%;
+                page-break-inside: avoid;
+                padding: 1.5rem 2rem;
+                border-radius: 0;
+            }
+
+            .print-button,
+            .language-selector {
+                display: none;
+            }
+
+            .logo {
+                width: 60px;
+                height: 60px;
+                margin-bottom: 1rem;
+            }
+
+            h1 {
+                color: #000;
+                font-size: 2rem;
+                margin-bottom: 0.5rem;
+            }
+
+            .subtitle {
+                color: #333;
+                font-size: 1rem;
+                margin-bottom: 1.5rem;
+            }
+
+            #qrcode {
+                margin: 1rem 0;
+            }
+
+            #qrcode img {
+                width: 200px !important;
+                height: 200px !important;
+            }
+
+            .instructions {
+                background: #f7fafc;
+                color: #2d3748;
+                border: 2px solid #e2e8f0;
+                padding: 1rem 1.5rem;
+                margin-top: 1rem;
+            }
+
+            .instructions h2 {
+                font-size: 1.2rem;
+                margin-bottom: 0.75rem;
+            }
+
+            .instructions ol {
+                margin: 0.5rem 0;
+                padding-left: 1.5rem;
+            }
+
+            .instructions li {
+                margin-bottom: 0.4rem;
+                font-size: 0.9rem;
+            }
+
+            .url {
+                background: #f7fafc;
+                border: 1px solid #cbd5e0;
+                color: #2d3748;
+                padding: 0.5rem;
+                margin-top: 0.75rem;
+                font-size: 0.85rem;
+            }
+        }
+
+        @media screen and (max-width: 640px) {
+            .qr-container {
+                padding: 2rem 1.5rem;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .subtitle {
+                font-size: 1rem;
+            }
+
+            .instructions {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Language Selector (outside print area) -->
+    <div class="language-selector">
+        <label>🌍 {{ _('Language') }}:</label>
+        <select id="languageSelect" onchange="changeLanguage(this.value)">
+            <option value="it" {% if g.lang_code == 'it' %}selected{% endif %}>🇮🇹 Italiano</option>
+            <option value="en" {% if g.lang_code == 'en' %}selected{% endif %}>🇬🇧 English</option>
+            <option value="fr" {% if g.lang_code == 'fr' %}selected{% endif %}>🇫🇷 Français</option>
+            <option value="de" {% if g.lang_code == 'de' %}selected{% endif %}>🇩🇪 Deutsch</option>
+            <option value="es" {% if g.lang_code == 'es' %}selected{% endif %}>🇪🇸 Español</option>
+        </select>
+    </div>
+
+    <!-- Printable QR Code Container -->
+    <div class="qr-container">
+        {% if tenant.logo_image %}
+        <img src="/static/{{ tenant.logo_image }}" alt="{{ tenant.name }}" class="logo" onerror="this.style.display='none'">
+        {% endif %}
+        
+        <h1>{{ tenant.name }}</h1>
+        <p class="subtitle">{{ _('Scan to Request Your Favorite Songs') }}</p>
+        
+        <div id="qrcode"></div>
+        
+        <div class="instructions">
+            <h2>📱 {{ _('How to Use') }}</h2>
+            <ol>
+                <li>{{ _('Open your phone camera app') }}</li>
+                <li>{{ _('Point it at the QR code above') }}</li>
+                <li>{{ _('Tap the notification that appears') }}</li>
+                <li>{{ _('Browse and request your favorite songs!') }}</li>
+            </ol>
+            
+            <div class="url">
+                <strong>{{ _('Or visit:') }}</strong><br>
+                {{ qr_url }}
+            </div>
+        </div>
+        
+        <button onclick="window.print()" class="print-button">
+            🖨️ {{ _('Print QR Code') }}
+        </button>
+    </div>
+
+    <script>
+        // Generate QR code
+        new QRCode(document.getElementById("qrcode"), {
+            text: "{{ qr_url }}",
+            width: 256,
+            height: 256,
+            colorDark: "#000000",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.H
+        });
+
+        // Change language function
+        function changeLanguage(lang) {
+            const url = new URL(window.location.href);
+            url.searchParams.set('lang', lang);
+            window.location.href = url.toString();
+        }
+    </script>
+</body>
+</html>
+
