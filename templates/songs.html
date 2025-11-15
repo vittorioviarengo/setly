@@ -995,8 +995,8 @@
             button.disabled = true;
             button.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 5px; animation: spin 1s linear infinite;"><circle cx="12" cy="12" r="10"></circle></svg> {{ _("Processing... Please wait") }}';
             
-            // Show informative alert with animated progress bar
-            showAlert(
+            // Show informative alert with animated progress bar (no close button during loading)
+            const loadingDialog = showAlert(
                 '<strong>🎵 <span id="spotify-status">{{ _("Fetching data from Spotify...") }}</span></strong><br><br>' +
                 '<div style="width: 100%; background: #e0e0e0; border-radius: 10px; height: 20px; margin: 15px 0; overflow: hidden;">' +
                 '<div id="spotify-progress" style="width: 0%; height: 100%; background: linear-gradient(90deg, #1DB954, #1ed760); border-radius: 10px; transition: width 0.3s ease; animation: shimmer 1.5s infinite;"></div>' +
@@ -1011,6 +1011,14 @@
                 '</div>',
                 'info'
             );
+            
+            // Hide the OK button during loading
+            setTimeout(() => {
+                const okButton = document.querySelector('.app-dialog .dialog-button');
+                if (okButton) {
+                    okButton.style.display = 'none';
+                }
+            }, 100);
             
             // Add shimmer animation for progress bar
             if (!document.getElementById('shimmer-style')) {
