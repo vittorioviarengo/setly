@@ -673,6 +673,36 @@ def process_bulk_fetch_job(job_id, tenant_id, tenant_slug, batch_size):
         update_job_status(job_id, status='error', error=str(e))
         app.logger.error(f"Error in bulk fetch job {job_id}: {e}")
 
+@app.route('/<tenant_slug>/bulk_fetch_count', methods=['GET'])
+def tenant_bulk_fetch_count(tenant_slug):
+    """Count how many songs need data from Spotify."""
+    # Check if tenant admin is logged in
+    if not session.get('is_tenant_admin') or session.get('tenant_slug') != tenant_slug:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+    
+    conn = create_connection()
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM tenants WHERE slug = ? AND active = 1', (tenant_slug,))
+    tenant = cursor.fetchone()
+    
+    if not tenant:
+        conn.close()
+        return jsonify({'success': False, 'message': 'Tenant not found'}), 404
+    
+    tenant_id = tenant['id']
+    
+    # Count all songs (we'll check if they need data in the message)
+    cursor.execute('SELECT COUNT(*) as total FROM songs WHERE tenant_id = ?', (tenant_id,))
+    result = cursor.fetchone()
+    total_songs = result['total'] if result else 0
+    
+    conn.close()
+    
+    return jsonify({
+        'success': True,
+        'total_songs': total_songs
+    })
+
 @app.route('/<tenant_slug>/bulk_fetch_spotify', methods=['POST'])
 def tenant_bulk_fetch_spotify(tenant_slug):
     """Fetch images, genres, and languages from Spotify synchronously."""
@@ -699,6 +729,11 @@ def tenant_bulk_fetch_spotify(tenant_slug):
     batch_size = min(int(request_data.get('batch_size', 500)), 1000)
     
     try:
+        # First, count total songs that might need data
+        cursor.execute('SELECT COUNT(*) as total FROM songs WHERE tenant_id = ?', (tenant_id,))
+        total_result = cursor.fetchone()
+        total_in_db = total_result['total'] if total_result else 0
+        
         # Get all songs for this tenant that need data
         cursor.execute('''
             SELECT id, title, author, image, genre, language 
@@ -800,13 +835,22 @@ def tenant_bulk_fetch_spotify(tenant_slug):
         
         conn.close()
         
+        # Build message with info about remaining songs
         message = f"Processed {stats['total']} songs: {stats['images_fetched']} images, {stats['genres_added']} genres, {stats['languages_added']} languages"
+        
+        # Check if there are more songs to process
+        remaining = total_in_db - stats['total']
+        has_more = remaining > 0
+        
         app.logger.info(f"Bulk fetch completed for {tenant_slug}: {message}")
         
         return jsonify({
             'success': True,
             'message': message,
-            'stats': stats
+            'stats': stats,
+            'total_in_db': total_in_db,
+            'has_more': has_more,
+            'remaining': remaining
         })
         
     except Exception as e:

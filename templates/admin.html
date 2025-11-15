@@ -1149,20 +1149,30 @@
                 
                 if (data.success) {
                     const stats = data.stats || {};
-                    message.innerHTML = `<strong>✓ {{ _("Success") }}!</strong><br>` +
+                    let messageHtml = `<strong>✓ {{ _("Success") }}!</strong><br>` +
                         `{{ _("Total Processed") }}: ${stats.total}<br>` +
                         `{{ _("Images fetched") }}: ${stats.images_fetched}<br>` +
                         `{{ _("Genres added") }}: ${stats.genres_added}<br>` +
                         `{{ _("Languages added") }}: ${stats.languages_added}<br>` +
-                        `{{ _("Skipped") }}: ${stats.skipped} | {{ _("Errors") }}: ${stats.errors}<br><br>` +
-                        `<em>{{ _("Page will reload in 5 seconds...") }}</em>`;
+                        `{{ _("Skipped") }}: ${stats.skipped} | {{ _("Errors") }}: ${stats.errors}<br><br>`;
                     
-                    // Only auto-reload if not auto-triggered
-                    if (!autoTriggered) {
-                        setTimeout(() => {
-                            window.location.reload();
-                        }, 5000);
+                    // Check if there are more songs to process
+                    if (data.has_more && data.remaining > 0) {
+                        messageHtml += `<strong style="color: #ff9800;">⚠️ {{ _("There are") }} ${data.remaining} {{ _("more songs in the database") }}!</strong><br><br>` +
+                            `<button onclick="bulkFetchSpotify()" ` +
+                            `style="padding: 10px 20px; background: var(--primary-color); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">` +
+                            `{{ _("Continue with Next Batch") }}</button>`;
+                    } else {
+                        messageHtml += `<em>{{ _("Page will reload in 5 seconds...") }}</em>`;
+                        // Only auto-reload if not auto-triggered
+                        if (!autoTriggered) {
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 5000);
+                        }
                     }
+                    
+                    message.innerHTML = messageHtml;
                     
                     return { success: true, stats: stats };
                 } else {

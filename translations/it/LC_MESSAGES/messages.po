@@ -1317,3 +1317,15 @@ msgstr "Lingue aggiunte"
 
 msgid "Downloading images from Spotify... Please wait"
 msgstr "Scaricamento immagini da Spotify... Attendere prego"
+
+msgid "There are"
+msgstr "Ci sono ancora"
+
+msgid "more songs in the database"
+msgstr "altre canzoni nel database"
+
+msgid "Continue with Next Batch"
+msgstr "Continua con il Prossimo Gruppo"
+
+msgid "Done for Now"
+msgstr "Finito per Ora"
