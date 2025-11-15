@@ -995,6 +995,18 @@
             button.disabled = true;
             button.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 5px; animation: spin 1s linear infinite;"><circle cx="12" cy="12" r="10"></circle></svg> {{ _("Processing... Please wait") }}';
             
+            // Show informative alert immediately
+            showAlert(
+                '<strong>🎵 {{ _("Fetching data from Spotify...") }}</strong><br><br>' +
+                '{{ _("This process:") }}<br>' +
+                '• {{ _("Downloads artist images") }}<br>' +
+                '• {{ _("Fetches music genres") }}<br>' +
+                '• {{ _("Detects song languages") }}<br><br>' +
+                '<em>⏱️ {{ _("Estimated time: 30-60 seconds") }}</em><br><br>' +
+                '{{ _("Please keep this page open...") }}',
+                'info'
+            );
+            
             // Start the bulk fetch (synchronous request, should complete in 30-60 seconds)
             // Add a 3 minute timeout (conservative for PythonAnywhere)
             const controller = new AbortController();
@@ -1015,6 +1027,10 @@
             .then(data => {
                 button.disabled = false;
                 button.innerHTML = originalText;
+                
+                // Close the "processing" alert
+                const existingAlerts = document.querySelectorAll('.app-dialog');
+                existingAlerts.forEach(alert => alert.remove());
                 
                 if (data.success) {
                     const stats = data.stats || {};
@@ -1050,6 +1066,10 @@
                 clearTimeout(timeoutId); // Clear timeout on error
                 button.disabled = false;
                 button.innerHTML = originalText;
+                
+                // Close the "processing" alert
+                const existingAlerts = document.querySelectorAll('.app-dialog');
+                existingAlerts.forEach(alert => alert.remove());
                 
                 if (error.name === 'AbortError') {
                     showAlert(

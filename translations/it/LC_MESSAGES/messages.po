@@ -1335,3 +1335,24 @@ msgstr "Richiesta scaduta"
 
 msgid "This can happen with large databases. Try again to continue processing more songs."
 msgstr "Questo può accadere con database grandi. Riprova per continuare a processare altre canzoni."
+
+msgid "Fetching data from Spotify..."
+msgstr "Scaricamento dati da Spotify..."
+
+msgid "This process:"
+msgstr "Questo processo:"
+
+msgid "Downloads artist images"
+msgstr "Scarica immagini degli artisti"
+
+msgid "Fetches music genres"
+msgstr "Recupera generi musicali"
+
+msgid "Detects song languages"
+msgstr "Rileva lingue delle canzoni"
+
+msgid "Estimated time: 30-60 seconds"
+msgstr "Tempo stimato: 30-60 secondi"
+
+msgid "Please keep this page open..."
+msgstr "Mantieni questa pagina aperta..."
