@@ -996,14 +996,22 @@
             button.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 5px; animation: spin 1s linear infinite;"><circle cx="12" cy="12" r="10"></circle></svg> {{ _("Processing... Please wait") }}';
             
             // Start the bulk fetch (synchronous request, may take 1-2 minutes)
+            // Add a 5 minute timeout for PythonAnywhere
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 300000); // 5 minutes
+            
             fetch('{% if tenant %}/{{ tenant.slug }}{% endif %}/bulk_fetch_spotify', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ batch_size: 500 })
+                body: JSON.stringify({ batch_size: 200 }), // Reduced to 200 for faster processing
+                signal: controller.signal
             })
-            .then(response => response.json())
+            .then(response => {
+                clearTimeout(timeoutId); // Clear timeout on response
+                return response.json();
+            })
             .then(data => {
                 button.disabled = false;
                 button.innerHTML = originalText;
@@ -1039,9 +1047,19 @@
                 }
             })
             .catch(error => {
+                clearTimeout(timeoutId); // Clear timeout on error
                 button.disabled = false;
                 button.innerHTML = originalText;
-                showAlert('❌ Error: ' + error.message, 'error');
+                
+                if (error.name === 'AbortError') {
+                    showAlert(
+                        '⏱️ {{ _("Request timed out after 5 minutes") }}<br><br>' +
+                        '{{ _("This can happen with large databases. Try again to continue processing more songs.") }}',
+                        'error'
+                    );
+                } else {
+                    showAlert('❌ Error: ' + error.message, 'error');
+                }
             });
         }
 

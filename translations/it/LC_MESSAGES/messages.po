@@ -1329,3 +1329,9 @@ msgstr "Continua con il Prossimo Gruppo"
 
 msgid "Done for Now"
 msgstr "Finito per Ora"
+
+msgid "Request timed out after 5 minutes"
+msgstr "Richiesta scaduta dopo 5 minuti"
+
+msgid "This can happen with large databases. Try again to continue processing more songs."
+msgstr "Questo può accadere con database grandi. Riprova per continuare a processare altre canzoni."
