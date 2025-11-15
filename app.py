@@ -52,6 +52,29 @@ client_secret = "96c2357eea1e400e9921799f45581370"
 babel = Babel(app)
 
 # Context processor to make app_name available to all templates
+def get_system_setting(key, default=None, value_type=str):
+    """Get a system setting from the database."""
+    try:
+        conn = create_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT value FROM system_settings WHERE key = ?", (key,))
+        row = cursor.fetchone()
+        conn.close()
+        
+        if row:
+            value = row['value']
+            if value_type == int:
+                return int(value)
+            elif value_type == float:
+                return float(value)
+            elif value_type == bool:
+                return value.lower() in ('true', '1', 'yes')
+            return value
+        return default
+    except Exception as e:
+        app.logger.error(f"Error getting system setting {key}: {e}")
+        return default
+
 @app.context_processor
 def inject_app_settings():
     """Inject app-wide settings into all templates."""
@@ -724,9 +747,11 @@ def tenant_bulk_fetch_spotify(tenant_slug):
     
     tenant_id = tenant['id']
     
-    # Get max batch size from request (default 50 for PythonAnywhere timeout limits)
+    # Get max batch size from system settings (default 50 for PythonAnywhere timeout limits)
+    max_batch_size = get_system_setting('spotify_batch_size', default=50, value_type=int)
     request_data = request.json if request.json else {}
-    batch_size = min(int(request_data.get('batch_size', 50)), 100)
+    requested_batch_size = int(request_data.get('batch_size', max_batch_size))
+    batch_size = min(requested_batch_size, max_batch_size)
     
     try:
         # First, count total songs that might need data
