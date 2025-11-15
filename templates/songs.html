@@ -986,6 +986,31 @@
             }, 2000);
         }
 
+        // Helper functions for dialog buttons
+        window.closeDialogAndRefresh = function() {
+            const dialogs = document.querySelectorAll('.app-dialog');
+            dialogs.forEach(dialog => {
+                const overlay = dialog.parentElement;
+                if (overlay) overlay.remove();
+                else dialog.remove();
+            });
+            location.reload();
+        };
+        
+        window.closeDialogAndContinue = function() {
+            const dialogs = document.querySelectorAll('.app-dialog');
+            dialogs.forEach(dialog => {
+                const overlay = dialog.parentElement;
+                if (overlay) overlay.remove();
+                else dialog.remove();
+            });
+            location.reload();
+            setTimeout(() => {
+                const bulkBtn = document.getElementById('bulkFetchBtnSongs');
+                if (bulkBtn) bulkBtn.click();
+            }, 500);
+        };
+        
         // Bulk fetch Spotify data for all songs
         function bulkFetchSpotify() {
             const button = document.getElementById('bulkFetchBtnSongs');
@@ -1092,9 +1117,16 @@
                     loadingStyle.remove();
                 }
                 
-                // Close the "processing" alert
-                const existingAlerts = document.querySelectorAll('.app-dialog');
-                existingAlerts.forEach(alert => alert.remove());
+                // Close the "processing" alert AND overlay (remove everything)
+                const existingDialogs = document.querySelectorAll('.app-dialog');
+                existingDialogs.forEach(dialog => {
+                    const overlay = dialog.parentElement;
+                    if (overlay) {
+                        overlay.remove(); // Remove the entire overlay, not just the dialog
+                    } else {
+                        dialog.remove(); // Fallback if no parent
+                    }
+                });
                 
                 // Wait a moment before showing results
                 setTimeout(() => {
@@ -1110,41 +1142,32 @@
                         
                         // Check if there are more songs to process
                         if (data.has_more && data.remaining > 0) {
-                            messageHtml += `<strong style="color: var(--warning-color);">⚠️ {{ _("There are") }} ${data.remaining} {{ _("more songs in the database") }}!</strong><br><br>` +
-                                `<button onclick="location.reload(); setTimeout(() => document.getElementById('bulkFetchBtnSongs').click(), 500);" ` +
-                                `style="padding: 10px 20px; background: var(--primary-color); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; margin-right: 10px;">` +
+                            messageHtml += `<hr style="margin: 20px 0; border: 0; border-top: 1px solid #ddd;">` +
+                                `<strong style="color: var(--warning-color); font-size: 1.1em;">⚠️ {{ _("There are") }} ${data.remaining} {{ _("more songs in the database") }}!</strong><br><br>` +
+                                `<div style="margin-top: 15px;">` +
+                                `<button onclick="closeDialogAndContinue()" ` +
+                                `style="padding: 12px 24px; background: var(--primary-color); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; margin-right: 10px; font-size: 1em;">` +
                                 `{{ _("Continue with Next Batch") }}</button>` +
-                                `<button onclick="location.reload()" ` +
-                                `style="padding: 10px 20px; background: var(--secondary-color); color: white; border: none; border-radius: 6px; cursor: pointer;">` +
-                                `{{ _("Done for Now") }}</button>`;
+                                `<button onclick="closeDialogAndRefresh()" ` +
+                                `style="padding: 12px 24px; background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 1em;">` +
+                                `{{ _("Done for Now") }}</button>` +
+                                `</div>`;
                         } else {
-                            messageHtml += `<em>{{ _("Reloading page to show new images...") }}</em>`;
-                            // Auto-reload after 3 seconds if no more songs
-                            setTimeout(() => location.reload(), 3000);
+                            messageHtml += `<hr style="margin: 20px 0; border: 0; border-top: 1px solid #ddd;">` +
+                                `<strong style="color: #28a745; font-size: 1.1em;">🎉 {{ _("All done!") }}</strong><br><br>` +
+                                `<button onclick="closeDialogAndRefresh()" ` +
+                                `style="padding: 12px 24px; background: var(--primary-color); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 1em;">` +
+                                `{{ _("Close and Refresh") }}</button>`;
                         }
                         
-                        // Show success dialog and ensure page reloads on close
+                        // Show success dialog (no default buttons, we have custom ones in the message)
                         showAlert(messageHtml, 'success');
                         
-                        // Force page reload when dialog is closed
+                        // Hide the default dialog buttons since we have custom ones
                         setTimeout(() => {
-                            const dialogButtons = document.querySelectorAll('.app-dialog .dialog-button, .app-dialog button');
-                            dialogButtons.forEach(btn => {
-                                btn.textContent = '{{ _("Close") }}';
-                                btn.onclick = () => location.reload();
-                            });
-                            
-                            // Also reload if user clicks outside/ESC
-                            const dialog = document.querySelector('.app-dialog');
-                            if (dialog) {
-                                const overlay = dialog.parentElement;
-                                if (overlay) {
-                                    overlay.onclick = (e) => {
-                                        if (e.target === overlay) location.reload();
-                                    };
-                                }
-                            }
-                        }, 100);
+                            const defaultButtons = document.querySelectorAll('.app-dialog .dialog-button');
+                            defaultButtons.forEach(btn => btn.style.display = 'none');
+                        }, 50);
                     } else {
                         showAlert('❌ Error: ' + (data.message || 'Failed to fetch from Spotify'), 'error');
                     }
@@ -1166,9 +1189,16 @@
                     loadingStyle.remove();
                 }
                 
-                // Close the "processing" alert
-                const existingAlerts = document.querySelectorAll('.app-dialog');
-                existingAlerts.forEach(alert => alert.remove());
+                // Close the "processing" alert AND overlay (remove everything)
+                const existingDialogs = document.querySelectorAll('.app-dialog');
+                existingDialogs.forEach(dialog => {
+                    const overlay = dialog.parentElement;
+                    if (overlay) {
+                        overlay.remove(); // Remove the entire overlay, not just the dialog
+                    } else {
+                        dialog.remove(); // Fallback if no parent
+                    }
+                });
                 
                 if (error.name === 'AbortError') {
                     showAlert(

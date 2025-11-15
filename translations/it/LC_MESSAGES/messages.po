@@ -1378,5 +1378,11 @@ msgstr "Quasi finito..."
 msgid "Close"
 msgstr "Chiudi"
 
+msgid "All done!"
+msgstr "Tutto fatto!"
+
+msgid "Close and Refresh"
+msgstr "Chiudi e Ricarica"
+
 msgid "Reloading page to show new images..."
 msgstr "Ricaricamento pagina per mostrare le nuove immagini..."
