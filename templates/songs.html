@@ -1012,13 +1012,18 @@
                 'info'
             );
             
-            // Hide the OK button during loading
-            setTimeout(() => {
-                const okButton = document.querySelector('.app-dialog .dialog-button');
-                if (okButton) {
-                    okButton.style.display = 'none';
-                }
-            }, 100);
+            // Hide all dialog buttons during loading (more aggressive approach)
+            const hideButtons = setInterval(() => {
+                const dialogButtons = document.querySelectorAll('.app-dialog .dialog-button, .app-dialog button[type="button"]');
+                dialogButtons.forEach(btn => {
+                    if (btn.textContent.includes('OK') || btn.textContent.includes('ok')) {
+                        btn.style.display = 'none';
+                    }
+                });
+            }, 50);
+            
+            // Store interval to clear it later
+            window.spotifyButtonHider = hideButtons;
             
             // Add shimmer animation for progress bar
             if (!document.getElementById('shimmer-style')) {
@@ -1086,9 +1091,12 @@
                 button.disabled = false;
                 button.innerHTML = originalText;
                 
-                // Stop progress animation
+                // Stop progress animation and button hider
                 if (window.spotifyProgressInterval) {
                     clearInterval(window.spotifyProgressInterval);
+                }
+                if (window.spotifyButtonHider) {
+                    clearInterval(window.spotifyButtonHider);
                 }
                 
                 // Close the "processing" alert
@@ -1142,9 +1150,12 @@
                 button.disabled = false;
                 button.innerHTML = originalText;
                 
-                // Stop progress animation
+                // Stop progress animation and button hider
                 if (window.spotifyProgressInterval) {
                     clearInterval(window.spotifyProgressInterval);
+                }
+                if (window.spotifyButtonHider) {
+                    clearInterval(window.spotifyButtonHider);
                 }
                 
                 // Close the "processing" alert
