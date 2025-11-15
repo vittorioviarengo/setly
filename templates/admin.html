@@ -1113,14 +1113,17 @@
             
             // Disable button and show progress
             btn.disabled = true;
-            btnText.textContent = '{{ _("Starting...") }}';
+            btnText.textContent = '{{ _("Processing...") }}';
             progress.style.display = 'block';
             results.style.display = 'none';
+            counter.textContent = '{{ _("Please wait, this may take 30-60 seconds...") }}';
+            progressBar.style.width = '100%';
+            progressBar.style.animation = 'pulse 1.5s ease-in-out infinite';
             
             const tenantSlug = '{{ tenant.slug if tenant else "" }}';
             const startUrl = tenantSlug ? `/${tenantSlug}/bulk_fetch_spotify` : '/bulk_fetch_spotify';
             
-            // Start the background job
+            // Start the synchronous fetch
             return fetch(startUrl, {
                 method: 'POST',
                 headers: {
@@ -1139,87 +1142,30 @@
                 return response.json();
             })
             .then(data => {
-                if (!data.success || !data.job_id) {
-                    throw new Error(data.message || 'Failed to start bulk fetch job');
-                }
+                progress.style.display = 'none';
+                results.style.display = 'block';
+                btn.disabled = false;
+                btnText.textContent = '{{ _("Fetch Missing Data") }}';
                 
-                // Start polling for job status
-                const jobId = data.job_id;
-                const statusUrl = `/${tenantSlug}/bulk_fetch_status/${jobId}`;
-                
-                let pollCount = 0;
-                const maxPolls = 600; // 10 minutes (600 * 1 second)
-                
-                const pollStatus = setInterval(() => {
-                    pollCount++;
+                if (data.success) {
+                    const stats = data.stats || {};
+                    message.innerHTML = `<strong>✓ Success!</strong><br>` +
+                        `Images fetched: ${stats.images_fetched}<br>` +
+                        `Genres added: ${stats.genres_added}<br>` +
+                        `Languages added: ${stats.languages_added}<br>` +
+                        `Skipped: ${stats.skipped} | Errors: ${stats.errors}`;
                     
-                    if (pollCount > maxPolls) {
-                        clearInterval(pollStatus);
-                        progress.style.display = 'none';
-                        results.style.display = 'block';
-                        message.innerHTML = `<strong>⏱️ Job is taking longer than expected</strong><br>
-                            <button onclick="window.location.reload()" style="margin-top: 10px; padding: 8px 16px; background: var(--primary-color); color: white; border: none; border-radius: 4px; cursor: pointer;">
-                                Reload Page to Check Results
-                            </button>`;
-                        btn.disabled = false;
-                        btnText.textContent = '{{ _("Fetch Missing Data") }}';
-                        return;
+                    // Only auto-reload if not auto-triggered
+                    if (!autoTriggered) {
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 3000);
                     }
                     
-                    fetch(statusUrl)
-                        .then(r => r.json())
-                        .then(status => {
-                            if (status.success) {
-                                // Update progress bar and counter
-                                progressBar.style.width = status.progress + '%';
-                                counter.textContent = `Processing: ${status.progress}%`;
-                                if (status.current_song) {
-                                    counter.textContent += ` - ${status.current_song}`;
-                                }
-                                
-                                // Check if job is complete
-                                if (status.status === 'completed') {
-                                    clearInterval(pollStatus);
-                                    progress.style.display = 'none';
-                                    results.style.display = 'block';
-                                    
-                                    if (status.stats) {
-                                        message.innerHTML = `<strong>✓ Success!</strong><br>` +
-                                            `Images fetched: ${status.stats.images_fetched}<br>` +
-                                            `Genres added: ${status.stats.genres_added}<br>` +
-                                            `Languages added: ${status.stats.languages_added}<br>` +
-                                            `Skipped: ${status.stats.skipped} | Errors: ${status.stats.errors}`;
-                                    } else {
-                                        message.textContent = '✓ ' + (status.message || 'Bulk fetch completed!');
-                                    }
-                                    
-                                    // Only auto-reload if not auto-triggered
-                                    if (!autoTriggered) {
-                                        setTimeout(() => {
-                                            window.location.reload();
-                                        }, 3000);
-                                    }
-                                    
-                                    return { success: true, stats: status.stats };
-                                } else if (status.status === 'error') {
-                                    clearInterval(pollStatus);
-                                    progress.style.display = 'none';
-                                    results.style.display = 'block';
-                                    message.textContent = '❌ Error: ' + (status.error || 'Unknown error occurred');
-                                    btn.disabled = false;
-                                    btnText.textContent = '{{ _("Fetch Missing Data") }}';
-                                }
-                            }
-                        })
-                        .catch(err => {
-                            console.error('Error polling status:', err);
-                        });
-                }, 1000); // Poll every second
-                
-                return new Promise((resolve) => {
-                    // Return immediately, polling will continue in background
-                    resolve({ success: true, polling: true });
-                });
+                    return { success: true, stats: stats };
+                } else {
+                    throw new Error(data.message || 'Failed to fetch from Spotify');
+                }
             })
             .catch(error => {
                 progress.style.display = 'none';
@@ -1279,7 +1225,11 @@
                 progressDiv.style.display = 'block';
                 resultsDiv.style.display = 'none';
                 
-                // Step 3: Start bulk fetch job
+                // Step 3: Start bulk fetch (synchronous, may take 30-60 seconds)
+                counter.textContent = '{{ _("Downloading images from Spotify... Please wait") }}';
+                progressBar.style.width = '100%';
+                progressBar.style.animation = 'pulse 1.5s ease-in-out infinite';
+                
                 const tenantSlug = '{{ tenant.slug if tenant else "" }}';
                 const startUrl = `/${tenantSlug}/bulk_fetch_spotify`;
                 
@@ -1289,70 +1239,21 @@
                     body: JSON.stringify({})
                 });
                 
-                const startData = await startResponse.json();
+                const fetchData = await startResponse.json();
                 
-                if (!startData.success || !startData.job_id) {
-                    throw new Error(startData.message || 'Failed to start image download');
+                if (!fetchData.success) {
+                    throw new Error(fetchData.message || 'Failed to download images');
                 }
                 
-                // Step 4: Poll for job completion
-                const jobId = startData.job_id;
-                const statusUrl = `/${tenantSlug}/bulk_fetch_status/${jobId}`;
-                
-                const waitForCompletion = () => {
-                    return new Promise((resolve, reject) => {
-                        let pollCount = 0;
-                        const maxPolls = 600; // 10 minutes
-                        
-                        const pollStatus = setInterval(async () => {
-                            pollCount++;
-                            
-                            if (pollCount > maxPolls) {
-                                clearInterval(pollStatus);
-                                reject(new Error('Job timeout after 10 minutes'));
-                                return;
-                            }
-                            
-                            try {
-                                const statusResponse = await fetch(statusUrl);
-                                const status = await statusResponse.json();
-                                
-                                if (status.success) {
-                                    // Update progress
-                                    progressBar.style.width = status.progress + '%';
-                                    counter.textContent = `Scaricamento: ${status.progress}%`;
-                                    if (status.current_song) {
-                                        counter.textContent += ` - ${status.current_song}`;
-                                    }
-                                    
-                                    // Check completion
-                                    if (status.status === 'completed') {
-                                        clearInterval(pollStatus);
-                                        resolve(status);
-                                    } else if (status.status === 'error') {
-                                        clearInterval(pollStatus);
-                                        reject(new Error(status.error || 'Unknown error'));
-                                    }
-                                }
-                            } catch (err) {
-                                console.error('Polling error:', err);
-                            }
-                        }, 1000);
-                    });
-                };
-                
-                // Wait for completion
-                const finalStatus = await waitForCompletion();
-                
-                // Step 5: Show success and reload
+                // Step 4: Show success and reload
                 progressDiv.style.display = 'none';
                 resultsDiv.style.display = 'block';
                 
-                if (finalStatus.stats) {
+                if (fetchData.stats) {
                     resultMessage.innerHTML = `<strong style="color: var(--success-color);">✓ Completato!</strong><br>` +
-                        `Immagini scaricate: ${finalStatus.stats.images_fetched}<br>` +
-                        `Generi aggiunti: ${finalStatus.stats.genres_added}<br>` +
-                        `Lingue aggiunte: ${finalStatus.stats.languages_added}<br><br>` +
+                        `Immagini scaricate: ${fetchData.stats.images_fetched}<br>` +
+                        `Generi aggiunti: ${fetchData.stats.genres_added}<br>` +
+                        `Lingue aggiunte: ${fetchData.stats.languages_added}<br><br>` +
                         `Ricaricamento pagina...`;
                 } else {
                     resultMessage.innerHTML = '<span style="color: var(--success-color);">✓ Completato! Ricaricamento pagina...</span>';

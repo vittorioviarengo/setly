@@ -993,9 +993,9 @@
             
             // Disable button and show loading state
             button.disabled = true;
-            button.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 5px; animation: spin 1s linear infinite;"><circle cx="12" cy="12" r="10"></circle></svg> {{ _("Starting bulk fetch...") }}';
+            button.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 5px; animation: spin 1s linear infinite;"><circle cx="12" cy="12" r="10"></circle></svg> {{ _("Processing... Please wait") }}';
             
-            // Start the bulk fetch job
+            // Start the bulk fetch (synchronous request, may take 30-60 seconds)
             fetch('{% if tenant %}/{{ tenant.slug }}{% endif %}/bulk_fetch_spotify', {
                 method: 'POST',
                 headers: {
@@ -1005,13 +1005,25 @@
             })
             .then(response => response.json())
             .then(data => {
-                if (data.success && data.job_id) {
-                    // Start polling for job status
-                    pollBulkFetchStatus(data.job_id, button, originalText);
+                button.disabled = false;
+                button.innerHTML = originalText;
+                
+                if (data.success) {
+                    const stats = data.stats || {};
+                    showAlert(
+                        `✅ ${data.message || 'Bulk fetch completed!'}<br><br>` +
+                        `<strong>Images:</strong> ${stats.images_fetched || 0}<br>` +
+                        `<strong>Genres:</strong> ${stats.genres_added || 0}<br>` +
+                        `<strong>Languages:</strong> ${stats.languages_added || 0}<br>` +
+                        `<strong>Skipped:</strong> ${stats.skipped || 0}<br>` +
+                        `<strong>Errors:</strong> ${stats.errors || 0}`,
+                        'success'
+                    );
+                    
+                    // Reload after 2 seconds to show updated images
+                    setTimeout(() => location.reload(), 2000);
                 } else {
-                    button.disabled = false;
-                    button.innerHTML = originalText;
-                    showAlert('❌ Error: ' + (data.message || 'Failed to start bulk fetch'), 'error');
+                    showAlert('❌ Error: ' + (data.message || 'Failed to fetch from Spotify'), 'error');
                 }
             })
             .catch(error => {
@@ -1019,57 +1031,6 @@
                 button.innerHTML = originalText;
                 showAlert('❌ Error: ' + error.message, 'error');
             });
-        }
-        
-        function pollBulkFetchStatus(jobId, button, originalText) {
-            const pollInterval = setInterval(() => {
-                fetch('{% if tenant %}/{{ tenant.slug }}{% endif %}/bulk_fetch_status/' + jobId)
-                    .then(response => response.json())
-                    .then(data => {
-                        if (!data.success) {
-                            clearInterval(pollInterval);
-                            button.disabled = false;
-                            button.innerHTML = originalText;
-                            showAlert('❌ Error checking status', 'error');
-                            return;
-                        }
-                        
-                        const status = data.status;
-                        const progress = data.progress || 0;
-                        const currentSong = data.current_song || '';
-                        
-                        // Update button text with progress
-                        button.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 5px; animation: spin 1s linear infinite;"><circle cx="12" cy="12" r="10"></circle></svg> ${progress}% - ${currentSong || 'Processing...'}`;
-                        
-                        if (status === 'completed') {
-                            clearInterval(pollInterval);
-                            button.disabled = false;
-                            button.innerHTML = originalText;
-                            
-                            const stats = data.stats || {};
-                            showAlert(
-                                `✅ ${data.message || 'Bulk fetch completed!'}<br><br>` +
-                                `<strong>Images:</strong> ${stats.images_fetched || 0}<br>` +
-                                `<strong>Genres:</strong> ${stats.genres_added || 0}<br>` +
-                                `<strong>Languages:</strong> ${stats.languages_added || 0}<br>` +
-                                `<strong>Skipped:</strong> ${stats.skipped || 0}<br>` +
-                                `<strong>Errors:</strong> ${stats.errors || 0}`,
-                                'success'
-                            );
-                            
-                            // Reload after 2 seconds to show updated images
-                            setTimeout(() => location.reload(), 2000);
-                        } else if (status === 'error') {
-                            clearInterval(pollInterval);
-                            button.disabled = false;
-                            button.innerHTML = originalText;
-                            showAlert('❌ Error: ' + (data.error || 'Unknown error'), 'error');
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error polling status:', error);
-                    });
-            }, 2000); // Poll every 2 seconds
         }
 
         // Add CSS animation for spinner

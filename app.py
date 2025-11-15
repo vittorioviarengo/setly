@@ -675,9 +675,8 @@ def process_bulk_fetch_job(job_id, tenant_id, tenant_slug, batch_size):
 
 @app.route('/<tenant_slug>/bulk_fetch_spotify', methods=['POST'])
 def tenant_bulk_fetch_spotify(tenant_slug):
-    """Start bulk fetch images, genres, and languages from Spotify in the background."""
-    import uuid
-    import json
+    """Fetch images, genres, and languages from Spotify synchronously."""
+    import time
     
     # Check if tenant admin is logged in
     if not session.get('is_tenant_admin') or session.get('tenant_slug') != tenant_slug:
@@ -699,27 +698,121 @@ def tenant_bulk_fetch_spotify(tenant_slug):
     request_data = request.json if request.json else {}
     batch_size = min(int(request_data.get('batch_size', 50)), 100)
     
-    # Create a unique job ID
-    job_id = str(uuid.uuid4())
-    
-    # Initialize job status in DATABASE
-    cursor.execute('''
-        INSERT INTO background_jobs (job_id, tenant_id, status, progress, stats)
-        VALUES (?, ?, ?, ?, ?)
-    ''', (job_id, tenant_id, 'starting', 0, json.dumps({})))
-    conn.commit()
-    conn.close()
-    
-    # Start background thread
-    thread = threading.Thread(target=process_bulk_fetch_job, args=(job_id, tenant_id, tenant_slug, batch_size))
-    thread.daemon = True
-    thread.start()
-    
-    return jsonify({
-        'success': True,
-        'message': 'Bulk fetch started in background',
-        'job_id': job_id
-    })
+    try:
+        # Get all songs for this tenant that need data
+        cursor.execute('''
+            SELECT id, title, author, image, genre, language 
+            FROM songs 
+            WHERE tenant_id = ?
+            LIMIT ?
+        ''', (tenant_id, batch_size))
+        
+        songs = cursor.fetchall()
+        total_songs = len(songs)
+        
+        stats = {
+            'total': total_songs,
+            'images_fetched': 0,
+            'genres_added': 0,
+            'languages_added': 0,
+            'errors': 0,
+            'skipped': 0
+        }
+        
+        # Track unique artists to avoid duplicate API calls
+        processed_artists = {}
+        
+        for idx, song in enumerate(songs):
+            try:
+                # Check if song needs any data
+                needs_image = (not song['image'] or song['image'] == '' or 
+                              (song['image'] and (
+                                  'placeholder' in song['image'].lower() or 
+                                  song['image'].startswith('http') or
+                                  'setly' in song['image'].lower() or
+                                  'music-icon' in song['image'].lower() or
+                                  'default' in song['image'].lower()
+                              )))
+                
+                # If image field has a value, check if file actually exists on disk
+                if not needs_image and song['image']:
+                    import os
+                    image_path = os.path.join('static', 'tenants', tenant_slug, 'author_images', song['image'])
+                    if not os.path.exists(image_path):
+                        needs_image = True
+                
+                needs_genre = not song['genre'] or song['genre'] == ''
+                needs_language = not song['language'] or song['language'] in ['', 'unknown']
+                
+                if not (needs_image or needs_genre or needs_language):
+                    stats['skipped'] += 1
+                    continue
+                
+                # Check if we already processed this artist
+                artist_name = song['author']
+                if artist_name in processed_artists:
+                    artist_data = processed_artists[artist_name]
+                else:
+                    # Fetch from Spotify
+                    artist_data = get_spotify_image(artist_name)
+                    processed_artists[artist_name] = artist_data
+                    time.sleep(0.1)  # Small delay to avoid rate limiting
+                
+                if artist_data:
+                    updates = []
+                    params = []
+                    
+                    # Update image if needed
+                    if needs_image and artist_data.get('image_url'):
+                        normalized_artist = artist_name.lower().replace(' ', '_')
+                        filename = f"{normalized_artist}.jpg"
+                        saved_filename = download_image(artist_data['image_url'], filename, tenant_slug)
+                        if saved_filename:
+                            updates.append('image = ?')
+                            params.append(saved_filename)
+                            stats['images_fetched'] += 1
+                    
+                    # Update genre if needed
+                    if needs_genre and artist_data.get('genre'):
+                        updates.append('genre = ?')
+                        params.append(artist_data['genre'])
+                        stats['genres_added'] += 1
+                    
+                    # Update language if needed  
+                    if needs_language and artist_data.get('language'):
+                        updates.append('language = ?')
+                        params.append(artist_data['language'])
+                        stats['languages_added'] += 1
+                    
+                    # Perform update if we have changes
+                    if updates:
+                        params.append(song['id'])
+                        query = f"UPDATE songs SET {', '.join(updates)} WHERE id = ?"
+                        cursor.execute(query, tuple(params))
+                        conn.commit()
+                else:
+                    stats['errors'] += 1
+                    
+            except Exception as e:
+                app.logger.error(f"Error processing song {song['id']}: {e}")
+                stats['errors'] += 1
+                continue
+        
+        conn.close()
+        
+        message = f"Processed {stats['total']} songs: {stats['images_fetched']} images, {stats['genres_added']} genres, {stats['languages_added']} languages"
+        app.logger.info(f"Bulk fetch completed for {tenant_slug}: {message}")
+        
+        return jsonify({
+            'success': True,
+            'message': message,
+            'stats': stats
+        })
+        
+    except Exception as e:
+        conn.close()
+        app.logger.error(f"Error in bulk fetch for {tenant_slug}: {e}")
+        return jsonify({'success': False, 'message': str(e)}), 500
 
 @app.route('/<tenant_slug>/bulk_fetch_status/<job_id>', methods=['GET'])
 def tenant_bulk_fetch_status(tenant_slug, job_id):
