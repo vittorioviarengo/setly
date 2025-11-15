@@ -169,8 +169,12 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    showAlert('Favicon uploaded successfully!', 'success');
-                    setTimeout(() => location.reload(), 1500);
+                    // Update favicon preview and browser favicon
+                    const timestamp = new Date().getTime();
+                    document.getElementById('favicon-preview').src = `/static/${data.filename}?v=${timestamp}`;
+                    document.querySelector('link[rel="icon"]').href = `/static/${data.filename}?v=${timestamp}`;
+                    // Clear file input
+                    fileInput.value = '';
                 } else {
                     showAlert('Error: ' + data.message, 'error');
                 }
@@ -203,8 +207,11 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    showAlert('App icon uploaded successfully!', 'success');
-                    setTimeout(() => location.reload(), 1500);
+                    // Update app icon preview
+                    const timestamp = new Date().getTime();
+                    document.getElementById('app-icon-preview').src = `/static/${data.filename}?v=${timestamp}`;
+                    // Clear file input
+                    fileInput.value = '';
                 } else {
                     showAlert('Error: ' + data.message, 'error');
                 }
