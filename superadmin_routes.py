@@ -75,11 +75,11 @@ def login():
         
         conn = create_connection()
         cursor = conn.cursor()
-        cursor.execute('SELECT * FROM super_admins WHERE username = ?', (username,))
+        cursor.execute('SELECT * FROM super_admins WHERE email = ?', (username,))
         admin = cursor.fetchone()
         conn.close()
 
-        if admin and check_password_hash(admin['password'], password):
+        if admin and check_password_hash(admin['password_hash'], password):
             session['is_superadmin'] = True
             session['superadmin_id'] = admin['id']
             return redirect(url_for('superadmin.dashboard'))
