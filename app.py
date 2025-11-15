@@ -694,9 +694,9 @@ def tenant_bulk_fetch_spotify(tenant_slug):
     
     tenant_id = tenant['id']
     
-    # Get max batch size from request (default 50)
+    # Get max batch size from request (default 500)
     request_data = request.json if request.json else {}
-    batch_size = min(int(request_data.get('batch_size', 50)), 100)
+    batch_size = min(int(request_data.get('batch_size', 500)), 1000)
     
     try:
         # Get all songs for this tenant that need data

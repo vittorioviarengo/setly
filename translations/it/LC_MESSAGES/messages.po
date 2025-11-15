@@ -1296,3 +1296,24 @@ msgstr "Errore nell'aggiornamento delle informazioni artista"
 
 msgid "Save Artist Info"
 msgstr "Salva Informazioni Artista"
+
+msgid "Total Processed"
+msgstr "Totale Processate"
+
+msgid "Page will reload in 5 seconds..."
+msgstr "La pagina si ricaricherà tra 5 secondi..."
+
+msgid "Processing... Please wait"
+msgstr "Elaborazione... Attendere prego"
+
+msgid "Images fetched"
+msgstr "Immagini scaricate"
+
+msgid "Genres added"
+msgstr "Generi aggiunti"
+
+msgid "Languages added"
+msgstr "Lingue aggiunte"
+
+msgid "Downloading images from Spotify... Please wait"
+msgstr "Scaricamento immagini da Spotify... Attendere prego"

@@ -995,13 +995,13 @@
             button.disabled = true;
             button.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 5px; animation: spin 1s linear infinite;"><circle cx="12" cy="12" r="10"></circle></svg> {{ _("Processing... Please wait") }}';
             
-            // Start the bulk fetch (synchronous request, may take 30-60 seconds)
+            // Start the bulk fetch (synchronous request, may take 1-2 minutes)
             fetch('{% if tenant %}/{{ tenant.slug }}{% endif %}/bulk_fetch_spotify', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ batch_size: 100 })
+                body: JSON.stringify({ batch_size: 500 })
             })
             .then(response => response.json())
             .then(data => {
@@ -1012,16 +1012,18 @@
                     const stats = data.stats || {};
                     showAlert(
                         `✅ ${data.message || 'Bulk fetch completed!'}<br><br>` +
-                        `<strong>Images:</strong> ${stats.images_fetched || 0}<br>` +
-                        `<strong>Genres:</strong> ${stats.genres_added || 0}<br>` +
-                        `<strong>Languages:</strong> ${stats.languages_added || 0}<br>` +
-                        `<strong>Skipped:</strong> ${stats.skipped || 0}<br>` +
-                        `<strong>Errors:</strong> ${stats.errors || 0}`,
+                        `<strong>{{ _("Total Processed") }}:</strong> ${stats.total || 0}<br>` +
+                        `<strong>{{ _("Images") }}:</strong> ${stats.images_fetched || 0}<br>` +
+                        `<strong>{{ _("Genres") }}:</strong> ${stats.genres_added || 0}<br>` +
+                        `<strong>{{ _("Languages") }}:</strong> ${stats.languages_added || 0}<br>` +
+                        `<strong>{{ _("Skipped") }}:</strong> ${stats.skipped || 0}<br>` +
+                        `<strong>{{ _("Errors") }}:</strong> ${stats.errors || 0}<br><br>` +
+                        `<em>{{ _("Page will reload in 5 seconds...") }}</em>`,
                         'success'
                     );
                     
-                    // Reload after 2 seconds to show updated images
-                    setTimeout(() => location.reload(), 2000);
+                    // Reload after 5 seconds to give user time to read stats
+                    setTimeout(() => location.reload(), 5000);
                 } else {
                     showAlert('❌ Error: ' + (data.message || 'Failed to fetch from Spotify'), 'error');
                 }

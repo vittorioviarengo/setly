@@ -1149,17 +1149,19 @@
                 
                 if (data.success) {
                     const stats = data.stats || {};
-                    message.innerHTML = `<strong>✓ Success!</strong><br>` +
-                        `Images fetched: ${stats.images_fetched}<br>` +
-                        `Genres added: ${stats.genres_added}<br>` +
-                        `Languages added: ${stats.languages_added}<br>` +
-                        `Skipped: ${stats.skipped} | Errors: ${stats.errors}`;
+                    message.innerHTML = `<strong>✓ {{ _("Success") }}!</strong><br>` +
+                        `{{ _("Total Processed") }}: ${stats.total}<br>` +
+                        `{{ _("Images fetched") }}: ${stats.images_fetched}<br>` +
+                        `{{ _("Genres added") }}: ${stats.genres_added}<br>` +
+                        `{{ _("Languages added") }}: ${stats.languages_added}<br>` +
+                        `{{ _("Skipped") }}: ${stats.skipped} | {{ _("Errors") }}: ${stats.errors}<br><br>` +
+                        `<em>{{ _("Page will reload in 5 seconds...") }}</em>`;
                     
                     // Only auto-reload if not auto-triggered
                     if (!autoTriggered) {
                         setTimeout(() => {
                             window.location.reload();
-                        }, 3000);
+                        }, 5000);
                     }
                     
                     return { success: true, stats: stats };
