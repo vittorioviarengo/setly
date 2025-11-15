@@ -1374,3 +1374,9 @@ msgstr "Rilevamento lingue..."
 
 msgid "Almost done..."
 msgstr "Quasi finito..."
+
+msgid "Close"
+msgstr "Chiudi"
+
+msgid "Reloading page to show new images..."
+msgstr "Ricaricamento pagina per mostrare le nuove immagini..."

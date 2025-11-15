@@ -1117,12 +1117,21 @@
                                 `style="padding: 10px 20px; background: var(--secondary-color); color: white; border: none; border-radius: 6px; cursor: pointer;">` +
                                 `{{ _("Done for Now") }}</button>`;
                         } else {
-                            messageHtml += `<em>{{ _("Page will reload in 5 seconds...") }}</em>`;
-                            // Auto-reload after 5 seconds if no more songs
-                            setTimeout(() => location.reload(), 5000);
+                            messageHtml += `<em>{{ _("Reloading page to show new images...") }}</em>`;
+                            // Auto-reload after 3 seconds if no more songs
+                            setTimeout(() => location.reload(), 3000);
                         }
                         
                         showAlert(messageHtml, 'success');
+                        
+                        // Make sure the dialog shows a "Close" button that reloads the page
+                        setTimeout(() => {
+                            const dialogButtons = document.querySelectorAll('.app-dialog .dialog-button');
+                            dialogButtons.forEach(btn => {
+                                btn.textContent = '{{ _("Close") }}';
+                                btn.onclick = () => location.reload();
+                            });
+                        }, 100);
                     } else {
                         showAlert('❌ Error: ' + (data.message || 'Failed to fetch from Spotify'), 'error');
                     }
