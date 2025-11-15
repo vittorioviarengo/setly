@@ -520,10 +520,32 @@ def fetch_spotify_image():
 def process_bulk_fetch_job(job_id, tenant_id, tenant_slug, batch_size):
     """Background worker function to process bulk Spotify fetch."""
     import time
+    import json
+    
+    def update_job_status(job_id, **kwargs):
+        """Helper to update job status in database."""
+        try:
+            conn = create_connection()
+            cursor = conn.cursor()
+            
+            updates = []
+            params = []
+            for key, value in kwargs.items():
+                if key == 'stats':
+                    value = json.dumps(value)
+                updates.append(f"{key} = ?")
+                params.append(value)
+            
+            params.append(job_id)
+            query = f"UPDATE background_jobs SET {', '.join(updates)}, updated_at = CURRENT_TIMESTAMP WHERE job_id = ?"
+            cursor.execute(query, tuple(params))
+            conn.commit()
+            conn.close()
+        except Exception as e:
+            app.logger.error(f"Error updating job status: {e}")
     
     app.logger.info(f"Starting bulk fetch job {job_id} for tenant {tenant_slug}")
-    background_jobs[job_id]['status'] = 'processing'
-    background_jobs[job_id]['progress'] = 0
+    update_job_status(job_id, status='processing', progress=0)
     
     try:
         conn = create_connection()
@@ -549,7 +571,7 @@ def process_bulk_fetch_job(job_id, tenant_id, tenant_slug, batch_size):
             'skipped': 0
         }
         
-        background_jobs[job_id]['stats'] = stats
+        update_job_status(job_id, stats=stats)
         
         # Track unique artists to avoid duplicate API calls
         processed_artists = {}
@@ -557,8 +579,9 @@ def process_bulk_fetch_job(job_id, tenant_id, tenant_slug, batch_size):
         for idx, song in enumerate(songs):
             try:
                 # Update progress
-                background_jobs[job_id]['progress'] = int((idx / total_songs) * 100)
-                background_jobs[job_id]['current_song'] = f"{song['title']} - {song['author']}"
+                progress = int((idx / total_songs) * 100)
+                current_song = f"{song['title']} - {song['author']}"
+                update_job_status(job_id, progress=progress, current_song=current_song)
                 
                 # Check if song needs any data
                 # First check if image field is empty or has placeholder
@@ -642,23 +665,19 @@ def process_bulk_fetch_job(job_id, tenant_id, tenant_slug, batch_size):
         conn.close()
         
         # Mark job as complete
-        background_jobs[job_id]['status'] = 'completed'
-        background_jobs[job_id]['progress'] = 100
-        background_jobs[job_id]['stats'] = stats
-        
         message = f"Processed {stats['total']} songs: {stats['images_fetched']} images, {stats['genres_added']} genres, {stats['languages_added']} languages"
-        background_jobs[job_id]['message'] = message
+        update_job_status(job_id, status='completed', progress=100, stats=stats, message=message)
         app.logger.info(f"Bulk fetch job {job_id} completed: {message}")
         
     except Exception as e:
-        background_jobs[job_id]['status'] = 'error'
-        background_jobs[job_id]['error'] = str(e)
+        update_job_status(job_id, status='error', error=str(e))
         app.logger.error(f"Error in bulk fetch job {job_id}: {e}")
 
 @app.route('/<tenant_slug>/bulk_fetch_spotify', methods=['POST'])
 def tenant_bulk_fetch_spotify(tenant_slug):
     """Start bulk fetch images, genres, and languages from Spotify in the background."""
     import uuid
+    import json
     
     # Check if tenant admin is logged in
     if not session.get('is_tenant_admin') or session.get('tenant_slug') != tenant_slug:
@@ -669,9 +688,9 @@ def tenant_bulk_fetch_spotify(tenant_slug):
     cursor = conn.cursor()
     cursor.execute('SELECT * FROM tenants WHERE slug = ? AND active = 1', (tenant_slug,))
     tenant = cursor.fetchone()
-    conn.close()
     
     if not tenant:
+        conn.close()
         return jsonify({'success': False, 'message': 'Tenant not found'}), 404
     
     tenant_id = tenant['id']
@@ -683,15 +702,13 @@ def tenant_bulk_fetch_spotify(tenant_slug):
     # Create a unique job ID
     job_id = str(uuid.uuid4())
     
-    # Initialize job status
-    background_jobs[job_id] = {
-        'status': 'starting',
-        'progress': 0,
-        'stats': {},
-        'current_song': None,
-        'message': None,
-        'error': None
-    }
+    # Initialize job status in DATABASE
+    cursor.execute('''
+        INSERT INTO background_jobs (job_id, tenant_id, status, progress, stats)
+        VALUES (?, ?, ?, ?, ?)
+    ''', (job_id, tenant_id, 'starting', 0, json.dumps({})))
+    conn.commit()
+    conn.close()
     
     # Start background thread
     thread = threading.Thread(target=process_bulk_fetch_job, args=(job_id, tenant_id, tenant_slug, batch_size))
@@ -707,21 +724,28 @@ def tenant_bulk_fetch_spotify(tenant_slug):
 @app.route('/<tenant_slug>/bulk_fetch_status/<job_id>', methods=['GET'])
 def tenant_bulk_fetch_status(tenant_slug, job_id):
     """Check the status of a background bulk fetch job."""
+    import json
+    
     # Check if tenant admin is logged in
     if not session.get('is_tenant_admin') or session.get('tenant_slug') != tenant_slug:
         return jsonify({'success': False, 'message': 'Unauthorized'}), 403
     
-    if job_id not in background_jobs:
-        return jsonify({'success': False, 'message': 'Job not found'}), 404
+    # Read job status from DATABASE
+    conn = create_connection()
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM background_jobs WHERE job_id = ?', (job_id,))
+    job = cursor.fetchone()
+    conn.close()
     
-    job = background_jobs[job_id]
+    if not job:
+        return jsonify({'success': False, 'message': 'Job not found'}), 404
     
     return jsonify({
         'success': True,
         'status': job['status'],
         'progress': job['progress'],
         'current_song': job['current_song'],
-        'stats': job['stats'],
+        'stats': json.loads(job['stats']) if job['stats'] else {},
         'message': job['message'],
         'error': job['error']
     })
