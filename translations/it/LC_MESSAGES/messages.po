@@ -1356,3 +1356,21 @@ msgstr "Tempo stimato: 30-60 secondi"
 
 msgid "Please keep this page open..."
 msgstr "Mantieni questa pagina aperta..."
+
+msgid "Connecting to Spotify..."
+msgstr "Connessione a Spotify..."
+
+msgid "Fetching artist data..."
+msgstr "Recupero dati artisti..."
+
+msgid "Downloading images..."
+msgstr "Scaricamento immagini..."
+
+msgid "Processing genres..."
+msgstr "Elaborazione generi..."
+
+msgid "Detecting languages..."
+msgstr "Rilevamento lingue..."
+
+msgid "Almost done..."
+msgstr "Quasi finito..."
