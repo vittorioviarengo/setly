@@ -997,6 +997,9 @@
             
             // Show informative alert with animated progress bar (no close button during loading)
             const loadingDialog = showAlert(
+                '<style id="spotify-loading-style">' +
+                '.app-dialog .dialog-button, .app-dialog button { display: none !important; }' +
+                '</style>' +
                 '<strong>🎵 <span id="spotify-status">{{ _("Fetching data from Spotify...") }}</span></strong><br><br>' +
                 '<div style="width: 100%; background: #e0e0e0; border-radius: 10px; height: 20px; margin: 15px 0; overflow: hidden;">' +
                 '<div id="spotify-progress" style="width: 0%; height: 100%; background: linear-gradient(90deg, #1DB954, #1ed760); border-radius: 10px; transition: width 0.3s ease; animation: shimmer 1.5s infinite;"></div>' +
@@ -1011,19 +1014,6 @@
                 '</div>',
                 'info'
             );
-            
-            // Hide all dialog buttons during loading (more aggressive approach)
-            const hideButtons = setInterval(() => {
-                const dialogButtons = document.querySelectorAll('.app-dialog .dialog-button, .app-dialog button[type="button"]');
-                dialogButtons.forEach(btn => {
-                    if (btn.textContent.includes('OK') || btn.textContent.includes('ok')) {
-                        btn.style.display = 'none';
-                    }
-                });
-            }, 50);
-            
-            // Store interval to clear it later
-            window.spotifyButtonHider = hideButtons;
             
             // Add shimmer animation for progress bar
             if (!document.getElementById('shimmer-style')) {
@@ -1091,12 +1081,15 @@
                 button.disabled = false;
                 button.innerHTML = originalText;
                 
-                // Stop progress animation and button hider
+                // Stop progress animation
                 if (window.spotifyProgressInterval) {
                     clearInterval(window.spotifyProgressInterval);
                 }
-                if (window.spotifyButtonHider) {
-                    clearInterval(window.spotifyButtonHider);
+                
+                // Remove the button-hiding style
+                const loadingStyle = document.getElementById('spotify-loading-style');
+                if (loadingStyle) {
+                    loadingStyle.remove();
                 }
                 
                 // Close the "processing" alert
@@ -1130,15 +1123,27 @@
                             setTimeout(() => location.reload(), 3000);
                         }
                         
+                        // Show success dialog and ensure page reloads on close
                         showAlert(messageHtml, 'success');
                         
-                        // Make sure the dialog shows a "Close" button that reloads the page
+                        // Force page reload when dialog is closed
                         setTimeout(() => {
-                            const dialogButtons = document.querySelectorAll('.app-dialog .dialog-button');
+                            const dialogButtons = document.querySelectorAll('.app-dialog .dialog-button, .app-dialog button');
                             dialogButtons.forEach(btn => {
                                 btn.textContent = '{{ _("Close") }}';
                                 btn.onclick = () => location.reload();
                             });
+                            
+                            // Also reload if user clicks outside/ESC
+                            const dialog = document.querySelector('.app-dialog');
+                            if (dialog) {
+                                const overlay = dialog.parentElement;
+                                if (overlay) {
+                                    overlay.onclick = (e) => {
+                                        if (e.target === overlay) location.reload();
+                                    };
+                                }
+                            }
                         }, 100);
                     } else {
                         showAlert('❌ Error: ' + (data.message || 'Failed to fetch from Spotify'), 'error');
@@ -1150,12 +1155,15 @@
                 button.disabled = false;
                 button.innerHTML = originalText;
                 
-                // Stop progress animation and button hider
+                // Stop progress animation
                 if (window.spotifyProgressInterval) {
                     clearInterval(window.spotifyProgressInterval);
                 }
-                if (window.spotifyButtonHider) {
-                    clearInterval(window.spotifyButtonHider);
+                
+                // Remove the button-hiding style
+                const loadingStyle = document.getElementById('spotify-loading-style');
+                if (loadingStyle) {
+                    loadingStyle.remove();
                 }
                 
                 // Close the "processing" alert
