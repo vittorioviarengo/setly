@@ -93,26 +93,38 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label for="logo">Logo Image</label>
+                            {% if tenant and tenant.logo_image %}
+                            <div style="margin-bottom: 1rem;">
+                                <img src="{{ url_for('static', filename='tenants/' + tenant.slug + '/logos/' + tenant.logo_image) }}" 
+                                     alt="Current Logo" 
+                                     style="max-width: 200px; max-height: 200px; border: 1px solid var(--border-light); border-radius: 8px; padding: 8px; background: white;">
+                                <div><small>Current: {{ tenant.logo_image }}</small></div>
+                            </div>
+                            {% endif %}
                             <input type="file" id="logo" name="logo" accept="image/*" onchange="previewImage(this, 'logoPreview')">
                             <div id="logoPreview" style="margin-top: 1rem; display: none;">
                                 <img id="logoPreviewImg" src="" alt="Logo Preview" style="max-width: 200px; max-height: 200px; border: 1px solid var(--border-light); border-radius: 8px; padding: 8px;">
                             </div>
-                            {% if tenant and tenant.logo_image %}
-                            <small>Current: {{ tenant.logo_image }}</small>
-                            {% else %}
+                            {% if not tenant %}
                             <small>Small icon - 64x64px recommended</small>
                             {% endif %}
                         </div>
 
                         <div class="form-group">
                             <label for="banner">Welcome Banner Image</label>
+                            {% if tenant and tenant.banner_image %}
+                            <div style="margin-bottom: 1rem;">
+                                <img src="{{ url_for('static', filename='tenants/' + tenant.slug + '/images/' + tenant.banner_image) }}" 
+                                     alt="Current Banner" 
+                                     style="max-width: 100%; max-height: 200px; border: 1px solid var(--border-light); border-radius: 8px; background: white;">
+                                <div><small>Current: {{ tenant.banner_image }}</small></div>
+                            </div>
+                            {% endif %}
                             <input type="file" id="banner" name="banner" accept="image/*" onchange="previewImage(this, 'bannerPreview')">
                             <div id="bannerPreview" style="margin-top: 1rem; display: none;">
                                 <img id="bannerPreviewImg" src="" alt="Banner Preview" style="max-width: 100%; max-height: 200px; border: 1px solid var(--border-light); border-radius: 8px;">
                             </div>
-                            {% if tenant and tenant.banner_image %}
-                            <small>Current: {{ tenant.banner_image }}</small>
-                            {% else %}
+                            {% if not tenant %}
                             <small>Large banner - 1200x400px recommended</small>
                             {% endif %}
                         </div>
