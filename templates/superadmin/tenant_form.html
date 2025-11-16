@@ -95,7 +95,7 @@
                             <label for="logo">Logo Image</label>
                             {% if tenant and tenant.logo_image %}
                             <div style="margin-bottom: 1rem;">
-                                <img src="{{ url_for('static', filename='tenants/' + tenant.slug + '/logos/' + tenant.logo_image) }}" 
+                                <img src="{{ url_for('static', filename=tenant.logo_image) }}" 
                                      alt="Current Logo" 
                                      style="max-width: 200px; max-height: 200px; border: 1px solid var(--border-light); border-radius: 8px; padding: 8px; background: white;">
                                 <div><small>Current: {{ tenant.logo_image }}</small></div>
@@ -114,7 +114,7 @@
                             <label for="banner">Welcome Banner Image</label>
                             {% if tenant and tenant.banner_image %}
                             <div style="margin-bottom: 1rem;">
-                                <img src="{{ url_for('static', filename='tenants/' + tenant.slug + '/images/' + tenant.banner_image) }}" 
+                                <img src="{{ url_for('static', filename=tenant.banner_image) }}" 
                                      alt="Current Banner" 
                                      style="max-width: 100%; max-height: 200px; border: 1px solid var(--border-light); border-radius: 8px; background: white;">
                                 <div><small>Current: {{ tenant.banner_image }}</small></div>
