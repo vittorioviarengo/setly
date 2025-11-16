@@ -1096,33 +1096,37 @@
                 document.head.appendChild(shimmerStyle);
             }
             
-            // Animate progress bar smoothly (fake progress)
+            // Animate progress bar smoothly (fake progress, slower and better distributed)
             let progress = 0;
             const progressBar = document.getElementById('spotify-progress');
             const statusText = document.getElementById('spotify-status');
-            const messages = [
-                '{{ _("Connecting to Spotify...") }}',
-                '{{ _("Fetching artist data...") }}',
-                '{{ _("Downloading images...") }}',
-                '{{ _("Processing genres...") }}',
-                '{{ _("Detecting languages...") }}',
-                '{{ _("Almost done...") }}'
+            
+            // Define messages with specific progress thresholds (better distribution)
+            const progressSteps = [
+                { threshold: 0, message: '{{ _("Connecting to Spotify...") }}' },
+                { threshold: 15, message: '{{ _("Fetching artist data...") }}' },
+                { threshold: 35, message: '{{ _("Downloading images...") }}' },
+                { threshold: 55, message: '{{ _("Processing genres...") }}' },
+                { threshold: 75, message: '{{ _("Detecting languages...") }}' },
+                { threshold: 88, message: '{{ _("Almost done...") }}' }
             ];
-            let messageIndex = 0;
+            let currentStepIndex = 0;
             
             const progressInterval = setInterval(() => {
-                if (progress < 95) {
-                    progress += Math.random() * 10; // Random increments
-                    if (progress > 95) progress = 95; // Cap at 95%
+                if (progress < 92) {
+                    // Slower, smaller random increments (2-5% instead of 0-10%)
+                    progress += Math.random() * 3 + 2; // Between 2% and 5% per tick
+                    if (progress > 92) progress = 92; // Cap at 92% (not 95%, to stay longer before "Almost done")
                     progressBar.style.width = progress + '%';
                     
-                    // Change status message
-                    if (progress > (messageIndex + 1) * 15 && messageIndex < messages.length - 1) {
-                        messageIndex++;
-                        statusText.textContent = messages[messageIndex];
+                    // Change status message based on progress thresholds
+                    if (currentStepIndex < progressSteps.length - 1 && 
+                        progress >= progressSteps[currentStepIndex + 1].threshold) {
+                        currentStepIndex++;
+                        statusText.textContent = progressSteps[currentStepIndex].message;
                     }
                 }
-            }, 800);
+            }, 1500); // Slower interval: 1.5 seconds instead of 800ms
             
             // Store interval ID to clear it later
             window.spotifyProgressInterval = progressInterval;
@@ -1211,7 +1215,7 @@
                                         style="padding: 14px 28px; background: #6c757d; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 500; font-size: 1em; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: transform 0.2s;">
                                         {{ _("Done for Now") }}</button>
                                 </div>`;
-                    } else {
+                } else {
                         messageHtml += `
                                 <div style="background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%); padding: 20px; border-radius: 12px; margin-bottom: 20px; border-left: 4px solid #28a745;">
                                     <div style="display: flex; align-items: center; gap: 12px; justify-content: center;">
