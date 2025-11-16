@@ -294,9 +294,22 @@ def tenant_generate_pdf(tenant_slug):
         script_dir = os.path.join(os.path.dirname(__file__))
         script_path = os.path.join(script_dir, "generate_pdf.py")
         
-        # Call the Python script to generate the PDF with tenant_id using the same Python interpreter
+        # Find the correct Python interpreter
+        # On PythonAnywhere/WSGI, sys.executable might point to uwsgi, not python
+        python_executable = sys.executable
+        if 'uwsgi' in python_executable.lower() or not python_executable.endswith(('python', 'python3')):
+            # Try to find python from virtualenv first
+            venv_python = os.path.join(os.path.dirname(sys.executable), 'python3')
+            if os.path.exists(venv_python):
+                python_executable = venv_python
+            else:
+                # Fallback to system python3
+                python_executable = 'python3'
+        
+        # Call the Python script to generate the PDF with tenant_id
+        app.logger.info(f"Using Python executable: {python_executable}")
         result = subprocess.run(
-            [sys.executable, script_path, str(tenant_id)], 
+            [python_executable, script_path, str(tenant_id)], 
             check=True, 
             capture_output=True, 
             text=True, 
