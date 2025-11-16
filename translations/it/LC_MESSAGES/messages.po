@@ -1330,6 +1330,9 @@ msgstr "Continua con il Prossimo Gruppo"
 msgid "Done for Now"
 msgstr "Finito per Ora"
 
+msgid "Continue processing or save for later"
+msgstr "Continua l'elaborazione o salva per dopo"
+
 msgid "Request timed out"
 msgstr "Richiesta scaduta"
 

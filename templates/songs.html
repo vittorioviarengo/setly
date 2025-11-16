@@ -265,23 +265,23 @@
                 <div style="display: flex; gap: 8px; align-items: stretch;">
                     <!-- Image Column -->
                     <div style="flex: 1; display: flex; flex-direction: column; gap: 4px; min-width: 60px;">
-                        <div class="image-container">
+                <div class="image-container">
                             <img src="${authorImage}" alt="Author Image" width="50" onclick="enlargeImage('${authorImage}')" onerror="this.src='/static/img/music-music-note-2.svg'" style="cursor: pointer; border-radius: 4px;">
-                            <div class="button-container">
+                    <div class="button-container">
                                 <button onclick="triggerFileInput(this)" style="font-size: 11px; padding: 4px 8px;">${translations.editImage}</button>
-                                <input type="file" class="file-input" style="display: none;" onchange="uploadImage(event, '${song.id}', this)">
-                            </div>
-                        </div>
+                        <input type="file" class="file-input" style="display: none;" onchange="uploadImage(event, '${song.id}', this)">
+                    </div>
+                </div>
                     </div>
                     <!-- Language Column -->
                     <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
                         <select class="language-dropdown" onchange="markRowAsChanged(this)" style="width: 100%; padding: 6px;">
-                            <option value="en" ${song.language === 'en' ? 'selected' : ''}>English</option>
-                            <option value="it" ${song.language === 'it' ? 'selected' : ''}>Italian</option>
-                            <option value="es" ${song.language === 'es' ? 'selected' : ''}>Spanish</option>
-                            <option value="de" ${song.language === 'de' ? 'selected' : ''}>German</option>
-                            <option value="fr" ${song.language === 'fr' ? 'selected' : ''}>French</option>
-                        </select>
+                    <option value="en" ${song.language === 'en' ? 'selected' : ''}>English</option>
+                    <option value="it" ${song.language === 'it' ? 'selected' : ''}>Italian</option>
+                    <option value="es" ${song.language === 'es' ? 'selected' : ''}>Spanish</option>
+                    <option value="de" ${song.language === 'de' ? 'selected' : ''}>German</option>
+                    <option value="fr" ${song.language === 'fr' ? 'selected' : ''}>French</option>
+                </select>
                     </div>
                     <!-- Genre Column -->
                     <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
@@ -422,7 +422,7 @@
                 // Check if URL contains /tenants/ - extract from there if so (for consistency)
                 if (imageUrl.includes('/tenants/')) {
                     // Extract just the filename from tenant path
-                    imageFilename = imageUrl.split('/').pop();
+                imageFilename = imageUrl.split('/').pop();
                     console.log('Extracted filename from tenant path:', imageFilename);
                 } else if (imageUrl.includes('/author_images/')) {
                     // Extract just the filename from author_images path
@@ -485,14 +485,14 @@
             showConfirmDanger(
                 {{ _('Are you sure you want to delete this song ? ') | tojson }},
                 () => {
-                    fetch(`/delete_song/${id}`, {
-                        method: 'DELETE'
-                    })
-                        .then(response => response.json())
-                        .then(data => {
+                fetch(`/delete_song/${id}`, {
+                    method: 'DELETE'
+                })
+                    .then(response => response.json())
+                    .then(data => {
                             // Song disappears from list - no success alert needed
-                            fetchSongs(); // Refresh the table to show the updated list
-                        })
+                        fetchSongs(); // Refresh the table to show the updated list
+                    })
                         .catch(error => {
                             console.error('Error deleting song:', error);
                             showAlert('Error deleting song', 'error');
@@ -1052,7 +1052,7 @@
                 }, 1000);
             }
         });
-        
+
         // Bulk fetch Spotify data for all songs
         function bulkFetchSpotify() {
             const button = document.getElementById('bulkFetchBtnSongs');
@@ -1174,44 +1174,61 @@
                         // Update the existing dialog content
                         const stats = data.stats || {};
                     let messageHtml = `
-                        <div class="dialog-icon" style="font-size: 3em; margin-bottom: 1rem;">✅</div>
-                        <h3 style="margin: 0 0 1rem 0; color: var(--primary-color);">${data.message || 'Bulk fetch completed!'}</h3>
-                        <div style="text-align: left; margin: 1rem 0;">
-                            <strong>{{ _("Total Processed") }}:</strong> ${stats.total || 0}<br>
-                            <strong>{{ _("Images") }}:</strong> ${stats.images_fetched || 0}<br>
-                            <strong>{{ _("Genres") }}:</strong> ${stats.genres_added || 0}<br>
-                            <strong>{{ _("Languages") }}:</strong> ${stats.languages_added || 0}<br>
-                            <strong>{{ _("Skipped") }}:</strong> ${stats.skipped || 0}<br>
-                            <strong>{{ _("Errors") }}:</strong> ${stats.errors || 0}
-                        </div>
-                        <hr style="margin: 20px 0; border: 0; border-top: 1px solid #ddd;">`;
+                        <div style="padding: 20px; text-align: center;">
+                            <div class="dialog-icon" style="font-size: 3.5em; margin-bottom: 1.5rem;">✅</div>
+                            <h2 style="margin: 0 0 2rem 0; color: var(--primary-color); font-size: 1.5em; font-weight: 600;">${data.message || 'Bulk fetch completed!'}</h2>
+                            
+                            <div style="background: #f8f9fa; border-radius: 12px; padding: 20px; margin: 1.5rem 0; text-align: left;">
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 0.95em;">
+                                    <div><strong style="color: #495057;">{{ _("Total Processed") }}:</strong> <span style="color: #28a745; font-weight: 600;">${stats.total || 0}</span></div>
+                                    <div><strong style="color: #495057;">{{ _("Images") }}:</strong> <span style="color: #007bff; font-weight: 600;">${stats.images_fetched || 0}</span></div>
+                                    <div><strong style="color: #495057;">{{ _("Genres") }}:</strong> <span style="color: #17a2b8; font-weight: 600;">${stats.genres_added || 0}</span></div>
+                                    <div><strong style="color: #495057;">{{ _("Languages") }}:</strong> <span style="color: #6f42c1; font-weight: 600;">${stats.languages_added || 0}</span></div>
+                                    <div><strong style="color: #495057;">{{ _("Skipped") }}:</strong> <span style="color: #ffc107; font-weight: 600;">${stats.skipped || 0}</span></div>
+                                    <div><strong style="color: #495057;">{{ _("Errors") }}:</strong> <span style="color: #dc3545; font-weight: 600;">${stats.errors || 0}</span></div>
+                                </div>
+                            </div>
+                            <div style="margin-top: 1.5rem;">`
                     
                     // Check if there are more songs to process
                     if (data.has_more && data.remaining > 0) {
                         messageHtml += `
-                            <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin: 15px 0;">
-                                <strong style="color: #856404; font-size: 1.1em;">⚠️ {{ _("There are") }} ${data.remaining} {{ _("more songs in the database") }}!</strong>
-                            </div>
-                            <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: center;">
-                                <button onclick="window.closeDialogAndContinue()" 
-                                    id="continueButton"
-                                    style="padding: 12px 24px; background: var(--primary-color); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 1em;">
-                                    {{ _("Continue with Next Batch") }}</button>
-                                <button onclick="window.closeDialogAndRefresh()" 
-                                    style="padding: 12px 24px; background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 1em;">
-                                    {{ _("Done for Now") }}</button>
-                            </div>`;
+                                <div style="background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%); padding: 20px; border-radius: 12px; margin-bottom: 20px; border-left: 4px solid #ffc107;">
+                                    <div style="display: flex; align-items: center; gap: 12px;">
+                                        <span style="font-size: 2em;">⚠️</span>
+                                        <div>
+                                            <strong style="color: #856404; font-size: 1.15em; display: block; margin-bottom: 4px;">{{ _("There are") }} ${data.remaining} {{ _("more songs in the database") }}!</strong>
+                                            <span style="color: #856404; font-size: 0.9em;">{{ _("Continue processing or save for later") }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div style="display: flex; gap: 12px; justify-content: center; margin-top: 20px;">
+                                    <button onclick="window.closeDialogAndContinue()" 
+                                        id="continueButton"
+                                        style="padding: 14px 28px; background: linear-gradient(135deg, var(--primary-color) 0%, #0056b3 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 1em; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: transform 0.2s;">
+                                        {{ _("Continue with Next Batch") }}</button>
+                                    <button onclick="window.closeDialogAndRefresh()" 
+                                        style="padding: 14px 28px; background: #6c757d; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 500; font-size: 1em; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: transform 0.2s;">
+                                        {{ _("Done for Now") }}</button>
+                                </div>`;
                     } else {
                         messageHtml += `
-                            <div style="background: #d4edda; padding: 15px; border-radius: 8px; margin: 15px 0;">
-                                <strong style="color: #155724; font-size: 1.1em;">🎉 {{ _("All done!") }}</strong>
-                            </div>
-                            <div style="margin-top: 20px;">
-                                <button onclick="window.closeDialogAndRefresh()" 
-                                    style="padding: 12px 24px; background: var(--primary-color); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 1em;">
-                                    {{ _("Close and Refresh") }}</button>
-                            </div>`;
+                                <div style="background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%); padding: 20px; border-radius: 12px; margin-bottom: 20px; border-left: 4px solid #28a745;">
+                                    <div style="display: flex; align-items: center; gap: 12px; justify-content: center;">
+                                        <span style="font-size: 2em;">🎉</span>
+                                        <strong style="color: #155724; font-size: 1.2em;">{{ _("All done!") }}</strong>
+                                    </div>
+                                </div>
+                                <div style="margin-top: 20px;">
+                                    <button onclick="window.closeDialogAndRefresh()" 
+                                        style="padding: 14px 32px; background: linear-gradient(135deg, #28a745 0%, #218838 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 1em; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: transform 0.2s;">
+                                        {{ _("Close and Refresh") }}</button>
+                                </div>`;
                     }
+                    
+                    messageHtml += `
+                            </div>
+                        </div>`;
                     
                     // Completely replace the dialog content
                     existingDialog.innerHTML = messageHtml;
