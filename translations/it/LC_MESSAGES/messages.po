@@ -304,6 +304,12 @@ msgstr "Richieste in tempo reale"
 msgid "Songs Page Link"
 msgstr "Database delle canzoni"
 
+msgid "Audience Page"
+msgstr "Pagina Pubblico"
+
+msgid "Open audience page in new tab"
+msgstr "Apri pagina pubblico in una nuova scheda"
+
 msgid "Delete All Songs"
 msgstr "Elimina tutti i brani"
 

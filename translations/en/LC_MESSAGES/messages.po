@@ -305,6 +305,12 @@ msgstr "Live Requests"
 msgid "Songs Page Link"
 msgstr "Songs Database"
 
+msgid "Audience Page"
+msgstr "Audience Page"
+
+msgid "Open audience page in new tab"
+msgstr "Open audience page in new tab"
+
 msgid "Delete All Songs"
 msgstr "Delete All Songs"
 
