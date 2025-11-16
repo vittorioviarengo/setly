@@ -953,11 +953,8 @@ def reload_route():
 #--------------------------------------------- Main Functions  ---------------------------------------------
 @app.route("/")
 def index():
-    """Default index - redirect to super admin or show error"""
-    return render_template('error.html', 
-                         title='Invalid Access',
-                         message='Please use a valid tenant URL (e.g., /your-artist-name/) or access the super admin panel.',
-                         contact_email='admin@example.com')
+    """Default index - redirect to super admin login"""
+    return redirect(url_for('superadmin.login'))
 
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
