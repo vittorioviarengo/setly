@@ -1006,6 +1006,12 @@
         };
         
         window.closeDialogAndContinue = function() {
+            console.log('Continue button clicked');
+            
+            // Store flag to auto-continue after reload
+            sessionStorage.setItem('spotifyAutoContinue', 'true');
+            
+            // Close dialog
             const dialogs = document.querySelectorAll('.app-dialog');
             dialogs.forEach(dialog => {
                 const overlay = dialog.parentElement;
@@ -1015,17 +1021,29 @@
                     dialog.remove();
                 }
             });
+            
             // Re-enable body scrolling
             document.body.style.overflow = '';
             document.body.style.position = '';
             document.querySelectorAll('.dialog-overlay').forEach(el => el.remove());
             
+            // Reload page
             location.reload();
-            setTimeout(() => {
-                const bulkBtn = document.getElementById('bulkFetchBtnSongs');
-                if (bulkBtn) bulkBtn.click();
-            }, 500);
         };
+        
+        // Check if we should auto-continue Spotify fetch after page reload
+        window.addEventListener('DOMContentLoaded', function() {
+            if (sessionStorage.getItem('spotifyAutoContinue') === 'true') {
+                sessionStorage.removeItem('spotifyAutoContinue');
+                console.log('Auto-continuing Spotify fetch...');
+                setTimeout(() => {
+                    const bulkBtn = document.getElementById('bulkFetchBtnSongs');
+                    if (bulkBtn) {
+                        bulkBtn.click();
+                    }
+                }, 800);
+            }
+        });
         
         // Bulk fetch Spotify data for all songs
         function bulkFetchSpotify() {
@@ -1133,12 +1151,20 @@
                     loadingStyle.remove();
                 }
                 
-                // DON'T close the dialog - UPDATE it instead!
-                const existingDialog = document.querySelector('.app-dialog');
-                
-                if (existingDialog && data.success) {
-                    // Update the existing dialog content
-                    const stats = data.stats || {};
+                // Wait a moment to let the loading animation be visible (better UX)
+                setTimeout(() => {
+                    // DON'T close the dialog - UPDATE it instead!
+                    const existingDialog = document.querySelector('.app-dialog');
+                    
+                    if (existingDialog && data.success) {
+                        // Hide ALL existing buttons immediately
+                        existingDialog.querySelectorAll('button, .dialog-button').forEach(btn => {
+                            btn.style.display = 'none';
+                            btn.remove();
+                        });
+                        
+                        // Update the existing dialog content
+                        const stats = data.stats || {};
                     let messageHtml = `
                         <div class="dialog-icon" style="font-size: 3em; margin-bottom: 1rem;">✅</div>
                         <h3 style="margin: 0 0 1rem 0; color: var(--primary-color);">${data.message || 'Bulk fetch completed!'}</h3>
@@ -1190,9 +1216,13 @@
                     existingDialog.classList.remove('dialog-info', 'dialog-warning', 'dialog-error');
                     existingDialog.classList.add('dialog-success');
                     
-                    // Hide default buttons
-                    const defaultButtons = existingDialog.querySelectorAll('.dialog-button');
-                    defaultButtons.forEach(btn => btn.style.display = 'none');
+                    // Hide default buttons (again, to be extra sure)
+                    setTimeout(() => {
+                        existingDialog.querySelectorAll('.dialog-button').forEach(btn => {
+                            btn.style.display = 'none';
+                            btn.remove();
+                        });
+                    }, 100);
                     
                 } else if (!existingDialog || !data.success) {
                     // Fallback: close everything and show new dialog
@@ -1202,6 +1232,7 @@
                     
                     showAlert('❌ Error: ' + (data.message || 'Failed to fetch from Spotify'), 'error');
                 }
+            }, 1000); // 1 second delay to show loading animation
             })
             .catch(error => {
                 clearTimeout(timeoutId); // Clear timeout on error
