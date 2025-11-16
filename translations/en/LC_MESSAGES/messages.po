@@ -296,6 +296,12 @@ msgstr "Upload Songs File"
 msgid "Generate PDF"
 msgstr "Generate PDF"
 
+msgid "Generating PDF..."
+msgstr "Generating PDF..."
+
+msgid "Error generating PDF:"
+msgstr "Error generating PDF:"
+
 msgid "Admin Page Link"
 msgstr "Administration"
 

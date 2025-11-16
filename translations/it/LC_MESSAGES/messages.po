@@ -295,6 +295,12 @@ msgstr "Carica il file dei brani"
 msgid "Generate PDF"
 msgstr "Genera PDF"
 
+msgid "Generating PDF..."
+msgstr "Generazione PDF in corso..."
+
+msgid "Error generating PDF:"
+msgstr "Errore nella generazione del PDF:"
+
 msgid "Admin Page Link"
 msgstr "Amministrazione"
 
