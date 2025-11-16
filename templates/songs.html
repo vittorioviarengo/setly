@@ -1032,16 +1032,24 @@
         };
         
         // Check if we should auto-continue Spotify fetch after page reload
-        window.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOMContentLoaded - checking for auto-continue...');
+            console.log('sessionStorage value:', sessionStorage.getItem('spotifyAutoContinue'));
+            
             if (sessionStorage.getItem('spotifyAutoContinue') === 'true') {
                 sessionStorage.removeItem('spotifyAutoContinue');
-                console.log('Auto-continuing Spotify fetch...');
+                console.log('Auto-continuing Spotify fetch in 1 second...');
+                
                 setTimeout(() => {
                     const bulkBtn = document.getElementById('bulkFetchBtnSongs');
+                    console.log('Found bulk button:', bulkBtn);
                     if (bulkBtn) {
+                        console.log('Clicking bulk fetch button...');
                         bulkBtn.click();
+                    } else {
+                        console.error('Bulk fetch button not found!');
                     }
-                }, 800);
+                }, 1000);
             }
         });
         
@@ -1129,7 +1137,7 @@
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ batch_size: 50 }), // Small batch for PythonAnywhere reliability
+                body: JSON.stringify({}), // Let backend use system settings
                 signal: controller.signal
             })
             .then(response => {
@@ -1157,10 +1165,10 @@
                     const existingDialog = document.querySelector('.app-dialog');
                     
                     if (existingDialog && data.success) {
-                        // Hide ALL existing buttons immediately
-                        existingDialog.querySelectorAll('button, .dialog-button').forEach(btn => {
-                            btn.style.display = 'none';
-                            btn.remove();
+                        // Hide ALL existing buttons and footer immediately
+                        existingDialog.querySelectorAll('button, .dialog-button, .dialog-footer, .dialog-actions').forEach(el => {
+                            el.style.display = 'none';
+                            el.remove();
                         });
                         
                         // Update the existing dialog content
@@ -1185,10 +1193,11 @@
                                 <strong style="color: #856404; font-size: 1.1em;">⚠️ {{ _("There are") }} ${data.remaining} {{ _("more songs in the database") }}!</strong>
                             </div>
                             <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: center;">
-                                <button onclick="closeDialogAndContinue()" 
+                                <button onclick="window.closeDialogAndContinue()" 
+                                    id="continueButton"
                                     style="padding: 12px 24px; background: var(--primary-color); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 1em;">
                                     {{ _("Continue with Next Batch") }}</button>
-                                <button onclick="closeDialogAndRefresh()" 
+                                <button onclick="window.closeDialogAndRefresh()" 
                                     style="padding: 12px 24px; background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 1em;">
                                     {{ _("Done for Now") }}</button>
                             </div>`;
@@ -1198,31 +1207,30 @@
                                 <strong style="color: #155724; font-size: 1.1em;">🎉 {{ _("All done!") }}</strong>
                             </div>
                             <div style="margin-top: 20px;">
-                                <button onclick="closeDialogAndRefresh()" 
+                                <button onclick="window.closeDialogAndRefresh()" 
                                     style="padding: 12px 24px; background: var(--primary-color); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 1em;">
                                     {{ _("Close and Refresh") }}</button>
                             </div>`;
                     }
                     
-                    // Find the dialog content area and update it
-                    const dialogContent = existingDialog.querySelector('.dialog-content, p, div');
-                    if (dialogContent) {
-                        dialogContent.innerHTML = messageHtml;
-                    } else {
-                        existingDialog.innerHTML = messageHtml;
-                    }
+                    // Completely replace the dialog content
+                    existingDialog.innerHTML = messageHtml;
                     
                     // Change dialog type to success
                     existingDialog.classList.remove('dialog-info', 'dialog-warning', 'dialog-error');
                     existingDialog.classList.add('dialog-success');
                     
-                    // Hide default buttons (again, to be extra sure)
+                    // Aggressive cleanup: remove any remaining buttons or footers
                     setTimeout(() => {
-                        existingDialog.querySelectorAll('.dialog-button').forEach(btn => {
-                            btn.style.display = 'none';
-                            btn.remove();
-                        });
-                    }, 100);
+                        const parent = existingDialog.parentElement;
+                        if (parent) {
+                            parent.querySelectorAll('.dialog-button, .dialog-footer, .dialog-actions, button[class*="dialog"]').forEach(el => {
+                                if (!el.onclick || (!el.onclick.toString().includes('closeDialogAndContinue') && !el.onclick.toString().includes('closeDialogAndRefresh'))) {
+                                    el.remove();
+                                }
+                            });
+                        }
+                    }, 50);
                     
                 } else if (!existingDialog || !data.success) {
                     // Fallback: close everything and show new dialog
