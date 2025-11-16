@@ -991,9 +991,17 @@
             const dialogs = document.querySelectorAll('.app-dialog');
             dialogs.forEach(dialog => {
                 const overlay = dialog.parentElement;
-                if (overlay) overlay.remove();
-                else dialog.remove();
+                if (overlay && overlay.classList && overlay.classList.contains('dialog-overlay')) {
+                    overlay.remove();
+                } else {
+                    dialog.remove();
+                }
             });
+            // Re-enable body scrolling
+            document.body.style.overflow = '';
+            document.body.style.position = '';
+            document.querySelectorAll('.dialog-overlay').forEach(el => el.remove());
+            
             location.reload();
         };
         
@@ -1001,9 +1009,17 @@
             const dialogs = document.querySelectorAll('.app-dialog');
             dialogs.forEach(dialog => {
                 const overlay = dialog.parentElement;
-                if (overlay) overlay.remove();
-                else dialog.remove();
+                if (overlay && overlay.classList && overlay.classList.contains('dialog-overlay')) {
+                    overlay.remove();
+                } else {
+                    dialog.remove();
+                }
             });
+            // Re-enable body scrolling
+            document.body.style.overflow = '';
+            document.body.style.position = '';
+            document.querySelectorAll('.dialog-overlay').forEach(el => el.remove());
+            
             location.reload();
             setTimeout(() => {
                 const bulkBtn = document.getElementById('bulkFetchBtnSongs');
@@ -1121,18 +1137,27 @@
                 const existingDialogs = document.querySelectorAll('.app-dialog');
                 existingDialogs.forEach(dialog => {
                     const overlay = dialog.parentElement;
-                    if (overlay) {
+                    if (overlay && overlay.classList && overlay.classList.contains('dialog-overlay')) {
                         overlay.remove(); // Remove the entire overlay, not just the dialog
                     } else {
                         dialog.remove(); // Fallback if no parent
                     }
                 });
                 
-                // Wait a moment before showing results
+                // Make sure body scrolling is re-enabled
+                document.body.style.overflow = '';
+                document.body.style.position = '';
+                
+                // Remove any stray overlays
+                document.querySelectorAll('.dialog-overlay').forEach(el => el.remove());
+                
+                // Wait a moment before showing results (increased delay for reliability)
                 setTimeout(() => {
+                    console.log('Showing Spotify results dialog', data);
+                    
                     if (data.success) {
                         const stats = data.stats || {};
-                        let messageHtml = `✅ ${data.message || 'Bulk fetch completed!'}<br><br>` +
+                        let messageHtml = `✅ <strong>${data.message || 'Bulk fetch completed!'}</strong><br><br>` +
                             `<strong>{{ _("Total Processed") }}:</strong> ${stats.total || 0}<br>` +
                             `<strong>{{ _("Images") }}:</strong> ${stats.images_fetched || 0}<br>` +
                             `<strong>{{ _("Genres") }}:</strong> ${stats.genres_added || 0}<br>` +
@@ -1171,7 +1196,7 @@
                     } else {
                         showAlert('❌ Error: ' + (data.message || 'Failed to fetch from Spotify'), 'error');
                     }
-                }, 300);
+                }, 500);
             })
             .catch(error => {
                 clearTimeout(timeoutId); // Clear timeout on error
@@ -1193,12 +1218,19 @@
                 const existingDialogs = document.querySelectorAll('.app-dialog');
                 existingDialogs.forEach(dialog => {
                     const overlay = dialog.parentElement;
-                    if (overlay) {
+                    if (overlay && overlay.classList && overlay.classList.contains('dialog-overlay')) {
                         overlay.remove(); // Remove the entire overlay, not just the dialog
                     } else {
                         dialog.remove(); // Fallback if no parent
                     }
                 });
+                
+                // Make sure body scrolling is re-enabled
+                document.body.style.overflow = '';
+                document.body.style.position = '';
+                
+                // Remove any stray overlays
+                document.querySelectorAll('.dialog-overlay').forEach(el => el.remove());
                 
                 if (error.name === 'AbortError') {
                     showAlert(
