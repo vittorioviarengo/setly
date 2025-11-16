@@ -1133,70 +1133,75 @@
                     loadingStyle.remove();
                 }
                 
-                // Close the "processing" alert AND overlay (remove everything)
-                const existingDialogs = document.querySelectorAll('.app-dialog');
-                existingDialogs.forEach(dialog => {
-                    const overlay = dialog.parentElement;
-                    if (overlay && overlay.classList && overlay.classList.contains('dialog-overlay')) {
-                        overlay.remove(); // Remove the entire overlay, not just the dialog
-                    } else {
-                        dialog.remove(); // Fallback if no parent
-                    }
-                });
+                // DON'T close the dialog - UPDATE it instead!
+                const existingDialog = document.querySelector('.app-dialog');
                 
-                // Make sure body scrolling is re-enabled
-                document.body.style.overflow = '';
-                document.body.style.position = '';
-                
-                // Remove any stray overlays
-                document.querySelectorAll('.dialog-overlay').forEach(el => el.remove());
-                
-                // Wait a moment before showing results (increased delay for reliability)
-                setTimeout(() => {
-                    console.log('Showing Spotify results dialog', data);
+                if (existingDialog && data.success) {
+                    // Update the existing dialog content
+                    const stats = data.stats || {};
+                    let messageHtml = `
+                        <div class="dialog-icon" style="font-size: 3em; margin-bottom: 1rem;">✅</div>
+                        <h3 style="margin: 0 0 1rem 0; color: var(--primary-color);">${data.message || 'Bulk fetch completed!'}</h3>
+                        <div style="text-align: left; margin: 1rem 0;">
+                            <strong>{{ _("Total Processed") }}:</strong> ${stats.total || 0}<br>
+                            <strong>{{ _("Images") }}:</strong> ${stats.images_fetched || 0}<br>
+                            <strong>{{ _("Genres") }}:</strong> ${stats.genres_added || 0}<br>
+                            <strong>{{ _("Languages") }}:</strong> ${stats.languages_added || 0}<br>
+                            <strong>{{ _("Skipped") }}:</strong> ${stats.skipped || 0}<br>
+                            <strong>{{ _("Errors") }}:</strong> ${stats.errors || 0}
+                        </div>
+                        <hr style="margin: 20px 0; border: 0; border-top: 1px solid #ddd;">`;
                     
-                    if (data.success) {
-                        const stats = data.stats || {};
-                        let messageHtml = `✅ <strong>${data.message || 'Bulk fetch completed!'}</strong><br><br>` +
-                            `<strong>{{ _("Total Processed") }}:</strong> ${stats.total || 0}<br>` +
-                            `<strong>{{ _("Images") }}:</strong> ${stats.images_fetched || 0}<br>` +
-                            `<strong>{{ _("Genres") }}:</strong> ${stats.genres_added || 0}<br>` +
-                            `<strong>{{ _("Languages") }}:</strong> ${stats.languages_added || 0}<br>` +
-                            `<strong>{{ _("Skipped") }}:</strong> ${stats.skipped || 0}<br>` +
-                            `<strong>{{ _("Errors") }}:</strong> ${stats.errors || 0}<br><br>`;
-                        
-                        // Check if there are more songs to process
-                        if (data.has_more && data.remaining > 0) {
-                            messageHtml += `<hr style="margin: 20px 0; border: 0; border-top: 1px solid #ddd;">` +
-                                `<strong style="color: var(--warning-color); font-size: 1.1em;">⚠️ {{ _("There are") }} ${data.remaining} {{ _("more songs in the database") }}!</strong><br><br>` +
-                                `<div style="margin-top: 15px;">` +
-                                `<button onclick="closeDialogAndContinue()" ` +
-                                `style="padding: 12px 24px; background: var(--primary-color); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; margin-right: 10px; font-size: 1em;">` +
-                                `{{ _("Continue with Next Batch") }}</button>` +
-                                `<button onclick="closeDialogAndRefresh()" ` +
-                                `style="padding: 12px 24px; background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 1em;">` +
-                                `{{ _("Done for Now") }}</button>` +
-                                `</div>`;
-                        } else {
-                            messageHtml += `<hr style="margin: 20px 0; border: 0; border-top: 1px solid #ddd;">` +
-                                `<strong style="color: #28a745; font-size: 1.1em;">🎉 {{ _("All done!") }}</strong><br><br>` +
-                                `<button onclick="closeDialogAndRefresh()" ` +
-                                `style="padding: 12px 24px; background: var(--primary-color); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 1em;">` +
-                                `{{ _("Close and Refresh") }}</button>`;
-                        }
-                        
-                        // Show success dialog (no default buttons, we have custom ones in the message)
-                        showAlert(messageHtml, 'success');
-                        
-                        // Hide the default dialog buttons since we have custom ones
-                        setTimeout(() => {
-                            const defaultButtons = document.querySelectorAll('.app-dialog .dialog-button');
-                            defaultButtons.forEach(btn => btn.style.display = 'none');
-                        }, 50);
+                    // Check if there are more songs to process
+                    if (data.has_more && data.remaining > 0) {
+                        messageHtml += `
+                            <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                                <strong style="color: #856404; font-size: 1.1em;">⚠️ {{ _("There are") }} ${data.remaining} {{ _("more songs in the database") }}!</strong>
+                            </div>
+                            <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: center;">
+                                <button onclick="closeDialogAndContinue()" 
+                                    style="padding: 12px 24px; background: var(--primary-color); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 1em;">
+                                    {{ _("Continue with Next Batch") }}</button>
+                                <button onclick="closeDialogAndRefresh()" 
+                                    style="padding: 12px 24px; background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 1em;">
+                                    {{ _("Done for Now") }}</button>
+                            </div>`;
                     } else {
-                        showAlert('❌ Error: ' + (data.message || 'Failed to fetch from Spotify'), 'error');
+                        messageHtml += `
+                            <div style="background: #d4edda; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                                <strong style="color: #155724; font-size: 1.1em;">🎉 {{ _("All done!") }}</strong>
+                            </div>
+                            <div style="margin-top: 20px;">
+                                <button onclick="closeDialogAndRefresh()" 
+                                    style="padding: 12px 24px; background: var(--primary-color); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 1em;">
+                                    {{ _("Close and Refresh") }}</button>
+                            </div>`;
                     }
-                }, 500);
+                    
+                    // Find the dialog content area and update it
+                    const dialogContent = existingDialog.querySelector('.dialog-content, p, div');
+                    if (dialogContent) {
+                        dialogContent.innerHTML = messageHtml;
+                    } else {
+                        existingDialog.innerHTML = messageHtml;
+                    }
+                    
+                    // Change dialog type to success
+                    existingDialog.classList.remove('dialog-info', 'dialog-warning', 'dialog-error');
+                    existingDialog.classList.add('dialog-success');
+                    
+                    // Hide default buttons
+                    const defaultButtons = existingDialog.querySelectorAll('.dialog-button');
+                    defaultButtons.forEach(btn => btn.style.display = 'none');
+                    
+                } else if (!existingDialog || !data.success) {
+                    // Fallback: close everything and show new dialog
+                    document.querySelectorAll('.dialog-overlay').forEach(el => el.remove());
+                    document.body.style.overflow = '';
+                    document.body.style.position = '';
+                    
+                    showAlert('❌ Error: ' + (data.message || 'Failed to fetch from Spotify'), 'error');
+                }
             })
             .catch(error => {
                 clearTimeout(timeoutId); // Clear timeout on error
