@@ -625,6 +625,24 @@ msgstr "Forgot Password"
 msgid "Forgot Password?"
 msgstr "Forgot Password?"
 
+msgid "Password reset email sent! Check your inbox."
+msgstr "Password reset email sent! Check your inbox."
+
+msgid "Email system not configured. Your reset link is shown below."
+msgstr "Email system not configured. Your reset link is shown below."
+
+msgid "If that email is registered, a password reset link has been sent."
+msgstr "If that email is registered, a password reset link has been sent."
+
+msgid "Password Reset Link"
+msgstr "Password Reset Link"
+
+msgid "Copy"
+msgstr "Copy"
+
+msgid "Copied!"
+msgstr "Copied!"
+
 msgid "Enter your email address and we'll send you a link to reset your password."
 msgstr "Enter your email address and we'll send you a link to reset your password."
 

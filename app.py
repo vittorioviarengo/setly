@@ -1114,6 +1114,9 @@ def tenant_login(tenant_slug):
             except (KeyError, IndexError):
                 session['language'] = 'en'
             
+            # Clear reset link if present
+            session.pop('reset_link', None)
+            
             # Update last login time
             cursor.execute('UPDATE tenants SET last_login_at = CURRENT_TIMESTAMP WHERE id = ?', (tenant['id'],))
             conn.commit()
@@ -1213,15 +1216,19 @@ Music Request System
 """
                     
                     mail.send(msg)
-                    flash('Password reset email sent! Check your inbox.')
+                    flash(_('Password reset email sent! Check your inbox.'), 'success')
                 except Exception as e:
                     print(f"Error sending reset email: {e}")
-                    flash('Email system not configured. Please contact support.')
+                    # Store the reset link in session to display it properly on login page
+                    session['reset_link'] = f'/{tenant_slug}/reset-password/{reset_token}'
+                    flash(_('Email system not configured. Your reset link is shown below.'), 'info')
             else:
-                flash(f'Password reset link (email not configured): /{tenant_slug}/reset-password/{reset_token}')
+                # Store the reset link in session to display it properly on login page
+                session['reset_link'] = f'/{tenant_slug}/reset-password/{reset_token}'
+                flash(_('Email system not configured. Your reset link is shown below.'), 'info')
         else:
             # Don't reveal if email exists or not (security best practice)
-            flash('If that email is registered, a password reset link has been sent.')
+            flash(_('If that email is registered, a password reset link has been sent.'), 'success')
         
         conn.close()
         return redirect(url_for('tenant_login', tenant_slug=tenant_slug))
@@ -1234,6 +1241,9 @@ def tenant_reset_password(tenant_slug, token):
     """Tenant reset password page - set new password with token."""
     from utils.password_utils import is_token_valid
     from werkzeug.security import generate_password_hash
+    
+    # Clear reset link from session since user is using it now
+    session.pop('reset_link', None)
     
     conn = create_connection()
     cursor = conn.cursor()

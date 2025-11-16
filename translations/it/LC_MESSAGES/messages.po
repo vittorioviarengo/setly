@@ -631,6 +631,24 @@ msgstr "Password Dimenticata"
 msgid "Forgot Password?"
 msgstr "Password Dimenticata?"
 
+msgid "Password reset email sent! Check your inbox."
+msgstr "Email di ripristino inviata! Controlla la tua casella di posta."
+
+msgid "Email system not configured. Your reset link is shown below."
+msgstr "Sistema email non configurato. Il tuo link di ripristino è mostrato qui sotto."
+
+msgid "If that email is registered, a password reset link has been sent."
+msgstr "Se questa email è registrata, ti è stato inviato un link di ripristino password."
+
+msgid "Password Reset Link"
+msgstr "Link di Ripristino Password"
+
+msgid "Copy"
+msgstr "Copia"
+
+msgid "Copied!"
+msgstr "Copiato!"
+
 msgid "Enter your email address and we'll send you a link to reset your password."
 msgstr "Inserisci il tuo indirizzo email e ti invieremo un link per reimpostare la password."
 
