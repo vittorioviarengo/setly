@@ -1242,6 +1242,70 @@ def delete_all_songs_global():
     
     return redirect(url_for('superadmin.dashboard'))
 
+@superadmin.route('/superadmin/tenant/<int:id>/impersonate')
+@superadmin_required
+def impersonate_tenant(id):
+    """Impersonate a tenant - login as them without password."""
+    conn = create_connection()
+    cursor = conn.cursor()
+    
+    try:
+        # Get tenant details
+        cursor.execute('SELECT * FROM tenants WHERE id = ? AND active = 1', (id,))
+        tenant = cursor.fetchone()
+        
+        if not tenant:
+            flash('Tenant not found or inactive', 'error')
+            return redirect(url_for('superadmin.tenants'))
+        
+        # Store original superadmin session info before impersonating
+        session['original_superadmin_id'] = session.get('superadmin_id')
+        session['is_impersonating'] = True
+        session['impersonated_tenant_name'] = tenant['name']
+        
+        # Set tenant session as if they logged in normally
+        session['is_tenant_admin'] = True
+        session['tenant_id'] = tenant['id']
+        session['tenant_slug'] = tenant['slug']
+        session['language'] = tenant['preferred_language'] if tenant['preferred_language'] else 'en'
+        
+        # Remove superadmin flag during impersonation
+        session.pop('is_superadmin', None)
+        
+        flash(f'Now impersonating {tenant["name"]}', 'info')
+        return redirect(url_for('tenant_admin', tenant_slug=tenant['slug']))
+        
+    except Exception as e:
+        flash(f'Error impersonating tenant: {str(e)}', 'error')
+        return redirect(url_for('superadmin.tenants'))
+    finally:
+        conn.close()
+
+@superadmin.route('/superadmin/exit_impersonation')
+def exit_impersonation():
+    """Exit impersonation mode and return to superadmin."""
+    if not session.get('is_impersonating'):
+        return redirect(url_for('superadmin.dashboard'))
+    
+    # Get the original superadmin ID
+    superadmin_id = session.get('original_superadmin_id')
+    impersonated_name = session.get('impersonated_tenant_name', 'tenant')
+    
+    # Clear tenant session
+    session.pop('is_tenant_admin', None)
+    session.pop('tenant_id', None)
+    session.pop('tenant_slug', None)
+    session.pop('is_impersonating', None)
+    session.pop('impersonated_tenant_name', None)
+    session.pop('original_superadmin_id', None)
+    
+    # Restore superadmin session
+    session['is_superadmin'] = True
+    session['superadmin_id'] = superadmin_id
+    
+    flash(f'Exited impersonation of {impersonated_name}', 'success')
+    return redirect(url_for('superadmin.dashboard'))
+
 @superadmin.route('/superadmin/logout')
 def logout():
     session.pop('is_superadmin', None)

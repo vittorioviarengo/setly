@@ -41,6 +41,13 @@
                         <td>{{ tenant.last_login_at if tenant.last_login_at else 'Never' }}</td>
                         <td class="actions">
                             <a href="{{ url_for('superadmin.edit_tenant', id=tenant.id) }}" class="button small">Edit</a>
+                            <a href="{{ url_for('superadmin.impersonate_tenant', id=tenant.id) }}" class="button small" style="background: #9b59b6; color: white;" title="Login as this tenant">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle;">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="12" cy="7" r="4"></circle>
+                                </svg>
+                                Impersonate
+                            </a>
                             <button onclick="copySetupLink({{ tenant.id }}, '{{ tenant.slug }}')" class="button small success" title="Copy setup link to clipboard">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle;">
                                     <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>

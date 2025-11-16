@@ -1,3 +1,18 @@
+{% if session.get('is_impersonating') %}
+<div class="impersonation-banner">
+    <div class="impersonation-content">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 8px;">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+        </svg>
+        <strong>Impersonating:</strong> {{ session.get('impersonated_tenant_name', 'Tenant') }}
+        <a href="{{ url_for('superadmin.exit_impersonation') }}" class="exit-impersonation-btn">
+            Exit Impersonation
+        </a>
+    </div>
+</div>
+{% endif %}
+
 <nav class="tenant-nav">
     <ul>
         {% if tenant %}
