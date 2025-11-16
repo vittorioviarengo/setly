@@ -760,6 +760,47 @@ def delete_tenant(id):
     finally:
         conn.close()
 
+@superadmin.route('/superadmin/tenant/<int:id>/get_setup_link', methods=['POST'])
+@superadmin_required
+def get_setup_link(id):
+    """Generate a new setup token and return the setup link (no email sent)."""
+    from utils.password_utils import generate_reset_token, get_token_expiry
+    
+    conn = create_connection()
+    cursor = conn.cursor()
+    try:
+        # Get tenant details
+        cursor.execute('SELECT * FROM tenants WHERE id = ?', (id,))
+        tenant = cursor.fetchone()
+        if not tenant:
+            return jsonify({'success': False, 'message': 'Tenant not found'})
+        
+        # Generate new setup token
+        reset_token = generate_reset_token()
+        token_expiry = get_token_expiry(hours=24)
+        
+        # Update tenant with new token
+        cursor.execute('''
+            UPDATE tenants 
+            SET reset_token = ?, reset_token_expiry = ?
+            WHERE id = ?
+        ''', (reset_token, token_expiry, id))
+        conn.commit()
+        
+        # Build setup URL
+        setup_url = request.url_root + tenant['slug'] + '/reset-password/' + reset_token
+        
+        return jsonify({
+            'success': True, 
+            'setup_url': setup_url,
+            'tenant_slug': tenant['slug'],
+            'tenant_email': tenant['email']
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)})
+    finally:
+        conn.close()
+
 @superadmin.route('/superadmin/tenant/<int:id>/invite', methods=['POST'])
 @superadmin_required
 def invite_tenant(id):

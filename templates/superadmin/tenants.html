@@ -41,6 +41,13 @@
                         <td>{{ tenant.last_login_at if tenant.last_login_at else 'Never' }}</td>
                         <td class="actions">
                             <a href="{{ url_for('superadmin.edit_tenant', id=tenant.id) }}" class="button small">Edit</a>
+                            <button onclick="copySetupLink({{ tenant.id }}, '{{ tenant.slug }}')" class="button small success" title="Copy setup link to clipboard">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle;">
+                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                </svg>
+                                Copy Link
+                            </button>
                             <button onclick="inviteTenant({{ tenant.id }})" class="button small info">Invite</button>
                             <button onclick="toggleTenant({{ tenant.id }}, {{ tenant.active|tojson }})" class="button small {% if tenant.active %}warning{% else %}success{% endif %}">
                                 {{ 'Deactivate' if tenant.active else 'Activate' }}
@@ -76,6 +83,35 @@
                 });
             });
         });
+
+        function copySetupLink(id, slug) {
+            // Generate a new setup token and copy the link
+            fetch('/superadmin/tenant/' + id + '/get_setup_link', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const setupLink = data.setup_url;
+                    
+                    // Copy to clipboard
+                    navigator.clipboard.writeText(setupLink).then(() => {
+                        alert('✅ Setup link copied to clipboard!\n\nLink: ' + setupLink + '\n\nShare this with the tenant to set their password.');
+                    }).catch(err => {
+                        // Fallback if clipboard API fails
+                        prompt('Copy this setup link:', setupLink);
+                    });
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                alert('Error: ' + error.message);
+            });
+        }
 
         function inviteTenant(id) {
             if (confirm('Send invitation email to this tenant?')) {
