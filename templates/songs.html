@@ -1255,12 +1255,18 @@
                     if (data.has_more && data.remaining > 0) {
                         messageHtml += `
                                 <div style="background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%); padding: 20px; border-radius: 12px; margin-bottom: 30px; border-left: 4px solid #ffc107;">
-                                    <div style="display: flex; align-items: center; gap: 12px;">
+                                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
                                         <span style="font-size: 2em;">⚠️</span>
                                         <div>
                                             <strong style="color: #856404; font-size: 1.15em; display: block; margin-bottom: 4px;">{{ _("There are") }} ${data.remaining} {{ _("more songs in the database") }}!</strong>
                                             <span style="color: #856404; font-size: 0.9em;">{{ _("Continue processing or save for later") }}</span>
                                         </div>
+                                    </div>
+                                    <div style="background: rgba(255,255,255,0.7); padding: 12px; border-radius: 8px; font-size: 0.9em; color: #856404;">
+                                        <strong>📊 {{ _("Still needed:") }}</strong><br>
+                                        {{ _("Missing images:") }} <strong>${data.remaining_images || 0}</strong> |
+                                        {{ _("Missing genres:") }} <strong>${data.remaining_genres || 0}</strong> |
+                                        {{ _("Missing languages:") }} <strong>${data.remaining_languages || 0}</strong>
                                     </div>
                                 </div>
                                 <div style="display: flex; gap: 12px; justify-content: center; margin-top: 0; padding-bottom: 20px;">

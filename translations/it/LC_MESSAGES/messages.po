@@ -1443,3 +1443,6 @@ msgstr "Processeremo fino a"
 
 msgid "songs per batch"
 msgstr "canzoni per batch"
+
+msgid "Still needed:"
+msgstr "Ancora necessario:"
