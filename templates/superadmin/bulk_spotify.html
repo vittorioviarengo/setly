@@ -352,8 +352,17 @@
         async function startBulkFetch() {
             if (isProcessing) return;
             
+            // Save checkbox state BEFORE reloading (to preserve user selection)
+            const selectedIds = Array.from(document.querySelectorAll('.tenant-checkbox:checked'))
+                .map(cb => parseInt(cb.dataset.tenantId));
+            
             // Load latest status first
             await loadTenantStatus();
+            
+            // Restore checkbox state AFTER reloading
+            document.querySelectorAll('.tenant-checkbox').forEach(cb => {
+                cb.checked = selectedIds.includes(parseInt(cb.dataset.tenantId));
+            });
             
             // Get only selected tenants
             const selectedTenants = getSelectedTenants();
