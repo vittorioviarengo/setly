@@ -1324,6 +1324,9 @@ def bulk_spotify_status():
     """Get status of all tenants for bulk Spotify fetch."""
     import os
     
+    # Get absolute path to the app directory
+    app_dir = os.path.dirname(os.path.abspath(__file__))
+    
     conn = create_connection()
     cursor = conn.cursor()
     
@@ -1355,9 +1358,9 @@ def bulk_spotify_status():
                               'default' in song['image'].lower()
                           )))
             
-            # Check if image file actually exists on disk
+            # Check if image file actually exists on disk (use absolute path)
             if not needs_image and song['image']:
-                image_path = os.path.join('static', 'tenants', tenant['slug'], 'author_images', song['image'])
+                image_path = os.path.join(app_dir, 'static', 'tenants', tenant['slug'], 'author_images', song['image'])
                 if not os.path.exists(image_path):
                     needs_image = True
             
@@ -1397,7 +1400,11 @@ def bulk_spotify_status():
 def bulk_spotify_process():
     """Process Spotify data for a single tenant (called repeatedly)."""
     import time
+    import os
     from app import get_spotify_image, download_image
+    
+    # Get absolute path to the app directory
+    app_dir = os.path.dirname(os.path.abspath(__file__))
     
     data = request.json
     tenant_id = data.get('tenant_id')
@@ -1450,10 +1457,9 @@ def bulk_spotify_process():
                                   'default' in song['image'].lower()
                               )))
                 
-                # Check if file exists
+                # Check if file exists (use absolute path)
                 if not needs_image and song['image']:
-                    import os
-                    image_path = os.path.join('static', 'tenants', tenant_slug, 'author_images', song['image'])
+                    image_path = os.path.join(app_dir, 'static', 'tenants', tenant_slug, 'author_images', song['image'])
                     if not os.path.exists(image_path):
                         needs_image = True
                 

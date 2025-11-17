@@ -739,6 +739,9 @@ def tenant_bulk_fetch_count(tenant_slug):
     
     tenant_id = tenant['id']
     
+    # Get absolute path to the app directory
+    app_dir = os.path.dirname(os.path.abspath(__file__))
+    
     # Get all songs for this tenant
     cursor.execute('''
         SELECT id, image, genre, language 
@@ -763,9 +766,9 @@ def tenant_bulk_fetch_count(tenant_slug):
                           'default' in song['image'].lower()
                       )))
         
-        # Check if image file actually exists on disk
+        # Check if image file actually exists on disk (use absolute path)
         if not needs_image and song['image']:
-            image_path = os.path.join('static', 'tenants', tenant_slug, 'author_images', song['image'])
+            image_path = os.path.join(app_dir, 'static', 'tenants', tenant_slug, 'author_images', song['image'])
             if not os.path.exists(image_path):
                 needs_image = True
         
@@ -796,6 +799,7 @@ def tenant_bulk_fetch_count(tenant_slug):
 def tenant_bulk_fetch_spotify(tenant_slug):
     """Fetch images, genres, and languages from Spotify synchronously."""
     import time
+    import os
     
     # Check if tenant admin is logged in
     if not session.get('is_tenant_admin') or session.get('tenant_slug') != tenant_slug:
@@ -812,6 +816,9 @@ def tenant_bulk_fetch_spotify(tenant_slug):
         return jsonify({'success': False, 'message': 'Tenant not found'}), 404
     
     tenant_id = tenant['id']
+    
+    # Get absolute path to the app directory
+    app_dir = os.path.dirname(os.path.abspath(__file__))
     
     # Get max batch size from system settings (default 50 for PythonAnywhere timeout limits)
     max_batch_size = get_system_setting('spotify_batch_size', default=50, value_type=int)
@@ -862,8 +869,7 @@ def tenant_bulk_fetch_spotify(tenant_slug):
                 
                 # If image field has a value, check if file actually exists on disk
                 if not needs_image and song['image']:
-                    import os
-                    image_path = os.path.join('static', 'tenants', tenant_slug, 'author_images', song['image'])
+                    image_path = os.path.join(app_dir, 'static', 'tenants', tenant_slug, 'author_images', song['image'])
                     if not os.path.exists(image_path):
                         needs_image = True
                 
