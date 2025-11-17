@@ -140,7 +140,8 @@
 
     <h2>{{ _('Song Database') }}</h2>
     <div class="filter-container" style="margin-bottom: 1rem;">
-        <input type="text" width="300" id="searchInput" onkeyup="filterTable()" placeholder="{{ _('Search for songs') }}">
+        <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="{{ _('Search for songs') }}" 
+               style="width: 400px; padding: 12px 15px; font-size: 16px; border: 2px solid var(--primary-color); border-radius: 6px;">
         <select id="genreFilter" onchange="filterTable()" style="margin-left: 10px;">
             <option value="">{{ _('All Genres') }}</option>
         </select>
