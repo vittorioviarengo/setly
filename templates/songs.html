@@ -1237,10 +1237,10 @@
                     let messageHtml = `
                         <div style="padding: 20px 20px 30px 20px; text-align: center;">
                             <div class="dialog-icon" style="font-size: 3.5em; margin-bottom: 1.5rem;">✅</div>
-                            <h2 style="margin: 0 0 2rem 0; color: var(--primary-color); font-size: 1.5em; font-weight: 600;">${data.message || 'Bulk fetch completed!'}</h2>
+                            <h2 style="margin: 0 0 1rem 0; color: var(--primary-color); font-size: 1.3em; font-weight: 600;">${data.message || 'Bulk fetch completed!'}</h2>
                             
-                            <div style="background: #f8f9fa; border-radius: 12px; padding: 20px; margin: 1.5rem 0; text-align: left;">
-                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 0.95em;">
+                            <div style="background: #f8f9fa; border-radius: 8px; padding: 14px 16px; margin: 1rem 0; text-align: left;">
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.9em;">
                                     <div><strong style="color: #495057;">{{ _("Total Processed") }}:</strong> <span style="color: #28a745; font-weight: 600;">${stats.total || 0}</span></div>
                                     <div><strong style="color: #495057;">{{ _("Images") }}:</strong> <span style="color: #007bff; font-weight: 600;">${stats.images_fetched || 0}</span></div>
                                     <div><strong style="color: #495057;">{{ _("Genres") }}:</strong> <span style="color: #17a2b8; font-weight: 600;">${stats.genres_added || 0}</span></div>
@@ -1254,42 +1254,42 @@
                     // Check if there are more songs to process
                     if (data.has_more && data.remaining > 0) {
                         messageHtml += `
-                                <div style="background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%); padding: 20px; border-radius: 12px; margin-bottom: 30px; border-left: 4px solid #ffc107;">
-                                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
-                                        <span style="font-size: 2em;">⚠️</span>
+                                <div style="background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%); padding: 14px 16px; border-radius: 8px; margin-bottom: 16px; border-left: 4px solid #ffc107;">
+                                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                                        <span style="font-size: 1.8em;">⚠️</span>
                                         <div>
                                             <strong style="color: #856404; font-size: 1.15em; display: block; margin-bottom: 4px;">{{ _("There are") }} ${data.remaining} {{ _("more songs in the database") }}!</strong>
                                             <span style="color: #856404; font-size: 0.9em;">{{ _("Continue processing or save for later") }}</span>
                                         </div>
                                     </div>
-                                    <div style="background: rgba(255,255,255,0.7); padding: 12px; border-radius: 8px; font-size: 0.9em; color: #856404; word-wrap: break-word; overflow-wrap: break-word;">
+                                    <div style="background: rgba(255,255,255,0.7); padding: 10px 12px; border-radius: 6px; font-size: 0.88em; color: #856404; word-wrap: break-word; overflow-wrap: break-word; line-height: 1.6;">
                                         <strong>📊 {{ _("Still needed:") }}</strong><br>
                                         {{ _("Missing images:") }} <strong>${data.remaining_images || 0}</strong><br>
                                         {{ _("Missing genres:") }} <strong>${data.remaining_genres || 0}</strong><br>
                                         {{ _("Missing languages:") }} <strong>${data.remaining_languages || 0}</strong>
                                     </div>
                                 </div>
-                                <div style="position: sticky; bottom: 0; background: white; padding: 16px 24px; margin: 20px -24px -12px -24px; border-top: 2px solid #e0e0e0; z-index: 10; box-shadow: 0 -4px 12px rgba(0,0,0,0.1);">
-                                    <div style="padding: 12px; background: rgba(102, 126, 234, 0.05); border-radius: 8px; border: 2px solid var(--primary-color); margin-bottom: 16px;">
-                                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 0.95em;">
+                                <div style="position: sticky; bottom: 0; background: white; padding: 12px 20px; margin: 16px -24px -12px -24px; border-top: 2px solid #e0e0e0; z-index: 10; box-shadow: 0 -4px 12px rgba(0,0,0,0.08);">
+                                    <div style="padding: 10px; background: rgba(102, 126, 234, 0.05); border-radius: 6px; border: 1.5px solid var(--primary-color); margin-bottom: 12px;">
+                                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.9em;">
                                             <input type="checkbox" id="autoContinueCheckbox" checked 
-                                                style="width: 18px; height: 18px; cursor: pointer; accent-color: var(--primary-color);">
+                                                style="width: 16px; height: 16px; cursor: pointer; accent-color: var(--primary-color);">
                                             <span style="font-weight: 500;">
                                                 {{ _("Auto-continue to next batch") }} 
-                                                <span style="color: #28a745;">({{ _("recommended") }})</span>
+                                                <span style="color: #28a745; font-size: 0.95em;">({{ _("recommended") }})</span>
                                             </span>
                                         </label>
-                                        <div id="autoContinueCountdown" style="margin-top: 8px; text-align: center; font-size: 0.9em; color: #666; display: none;">
+                                        <div id="autoContinueCountdown" style="margin-top: 6px; text-align: center; font-size: 0.88em; color: #666; display: none;">
                                             {{ _("Continuing in") }} <strong id="countdownSeconds">3</strong> {{ _("seconds...") }}
                                         </div>
                                     </div>
-                                    <div style="display: flex; gap: 12px; justify-content: center;">
+                                    <div style="display: flex; gap: 10px; justify-content: center;">
                                         <button onclick="window.closeDialogAndContinue()" 
                                             id="continueButton"
-                                            style="padding: 12px 24px; background: linear-gradient(135deg, var(--primary-color) 0%, #0056b3 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 1em; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: transform 0.2s;">
+                                            style="padding: 10px 20px; background: linear-gradient(135deg, var(--primary-color) 0%, #0056b3 100%); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95em; box-shadow: 0 3px 6px rgba(0,0,0,0.1); transition: transform 0.2s;">
                                             {{ _("Continue with Next Batch") }}</button>
                                         <button onclick="window.closeDialogAndRefresh()" 
-                                            style="padding: 12px 24px; background: #6c757d; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 500; font-size: 1em; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: transform 0.2s;">
+                                            style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; font-size: 0.95em; box-shadow: 0 3px 6px rgba(0,0,0,0.1); transition: transform 0.2s;">
                                             {{ _("Done for Now") }}</button>
                                     </div>
                                 </div>`;
