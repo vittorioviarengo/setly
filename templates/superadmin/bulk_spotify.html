@@ -366,34 +366,63 @@
                     continue;
                 }
                 
-                // Process this tenant
-                updateTenantStatus(tenant.id, 'processing', 'Fetching from Spotify...', 50);
+                // Process this tenant with LOOP until all songs done
+                updateTenantStatus(tenant.id, 'processing', 'Fetching from Spotify...', 10);
                 
-                try {
-                    const response = await fetch('{{ url_for("superadmin.bulk_spotify_process") }}', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            tenant_id: tenant.id,
-                            batch_size: batchSize
-                        })
-                    });
+                let tenantTotalImages = 0;
+                let tenantTotalGenres = 0;
+                let tenantTotalLanguages = 0;
+                let batchCount = 0;
+                
+                // INNER LOOP: Keep processing batches for this tenant
+                while (!shouldStop) {
+                    batchCount++;
+                    const progressPct = Math.min(batchCount * 10, 90); // Fake progress
+                    updateTenantStatus(tenant.id, 'processing', `Batch ${batchCount}...`, progressPct);
                     
-                    const result = await response.json();
-                    
-                    if (result.success) {
-                        const stats = result.stats;
-                        globalStats.imagesFetched += stats.images_fetched;
-                        globalStats.genresAdded += stats.genres_added;
-                        globalStats.languagesAdded += stats.languages_added;
+                    try {
+                        const response = await fetch('{{ url_for("superadmin.bulk_spotify_process") }}', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                tenant_id: tenant.id,
+                                batch_size: batchSize
+                            })
+                        });
                         
-                        const msg = `✓ ${stats.images_fetched} images, ${stats.genres_added} genres, ${stats.languages_added} languages`;
-                        updateTenantStatus(tenant.id, 'completed', msg, 100);
-                    } else {
-                        updateTenantStatus(tenant.id, 'error', 'Error: ' + result.message, 0);
+                        const result = await response.json();
+                        
+                        if (result.success) {
+                            const stats = result.stats;
+                            tenantTotalImages += stats.images_fetched;
+                            tenantTotalGenres += stats.genres_added;
+                            tenantTotalLanguages += stats.languages_added;
+                            
+                            // If no songs were processed, we're done with this tenant
+                            if (stats.total === 0) {
+                                break;
+                            }
+                            
+                            // Small delay between batches
+                            await new Promise(resolve => setTimeout(resolve, 2000));
+                        } else {
+                            updateTenantStatus(tenant.id, 'error', 'Error: ' + result.message, 0);
+                            break;
+                        }
+                    } catch (error) {
+                        updateTenantStatus(tenant.id, 'error', 'Error: ' + error.message, 0);
+                        break;
                     }
-                } catch (error) {
-                    updateTenantStatus(tenant.id, 'error', 'Error: ' + error.message, 0);
+                }
+                
+                // Tenant complete - update final stats
+                if (!shouldStop) {
+                    globalStats.imagesFetched += tenantTotalImages;
+                    globalStats.genresAdded += tenantTotalGenres;
+                    globalStats.languagesAdded += tenantTotalLanguages;
+                    
+                    const msg = `✓ Total: ${tenantTotalImages} images, ${tenantTotalGenres} genres, ${tenantTotalLanguages} languages (${batchCount} batches)`;
+                    updateTenantStatus(tenant.id, 'completed', msg, 100);
                 }
                 
                 globalStats.processed++;
