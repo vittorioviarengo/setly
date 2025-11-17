@@ -832,8 +832,10 @@ def tenant_bulk_fetch_spotify(tenant_slug):
         total_result = cursor.fetchone()
         total_in_db = total_result['total'] if total_result else 0
         
-        # Get songs that actually need data (not just first N songs)
-        # This query finds songs missing images, genres, or languages
+        # Get more songs than batch_size to compensate for skips
+        # Many songs match the query but get skipped (e.g., already have images, Spotify returns no genre, etc.)
+        # Fetch 5x the batch size to ensure we actually process ~batch_size songs with missing data
+        extended_batch = batch_size * 5
         cursor.execute('''
             SELECT id, title, author, image, genre, language 
             FROM songs 
@@ -849,7 +851,7 @@ def tenant_bulk_fetch_spotify(tenant_slug):
                 language IS NULL OR language = '' OR language = 'unknown'
             )
             LIMIT ?
-        ''', (tenant_id, batch_size))
+        ''', (tenant_id, extended_batch))
         
         songs = cursor.fetchall()
         total_songs = len(songs)
