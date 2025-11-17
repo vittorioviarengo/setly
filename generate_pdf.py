@@ -11,6 +11,15 @@ import sys
 import os
 import qrcode
 from io import BytesIO
+import logging
+
+# Configure logging to stderr (captured by Flask logs)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s: PDF_GEN: %(message)s',
+    stream=sys.stderr
+)
+logger = logging.getLogger(__name__)
 
 # Get the absolute path of the script directory
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -86,16 +95,26 @@ def add_background(canvas, doc, tenant_info):
         # Try tenant's banner first
         if tenant_info and tenant_info.get('banner_image'):
             tenant_image = os.path.join(SCRIPT_DIR, 'static', tenant_info['banner_image'])
+            logger.info(f"Looking for tenant banner at: {tenant_image}")
             if os.path.exists(tenant_image):
                 image_path = tenant_image
+                logger.info(f"✓ Tenant banner found")
+            else:
+                logger.warning(f"✗ Tenant banner NOT found at: {tenant_image}")
         
         # Fallback to default image if tenant image doesn't exist
-        if not image_path and os.path.exists(default_image):
-            image_path = default_image
+        if not image_path:
+            logger.info(f"Trying default image at: {default_image}")
+            if os.path.exists(default_image):
+                image_path = default_image
+                logger.info(f"✓ Default image found")
+            else:
+                logger.warning(f"✗ Default image NOT found")
         
         # Try to load and draw the image
         if image_path:
             try:
+                logger.info(f"Loading image: {image_path}")
                 # Load the image
                 img = Image(image_path)
                 
@@ -109,11 +128,13 @@ def add_background(canvas, doc, tenant_info):
                 
                 # Draw the image at the top of the page
                 canvas.drawImage(image_path, 0, page_height - draw_height, width=draw_width, height=draw_height, mask='auto')
+                logger.info(f"✓ Image drawn successfully")
             except Exception as e:
-                print(f"Warning: Could not load image {image_path}: {e}")
+                logger.error(f"✗ Could not load/draw image {image_path}: {e}")
                 draw_height = 200  # Default height if image fails to load
         else:
             # No image available, use simple gradient background
+            logger.warning("No image available, using black background only")
             draw_height = 200
         
         # Add the text in Gothic font, white color, 30 points, centered
@@ -317,8 +338,16 @@ def generate_pdf(output_path, tenant_id):
 if __name__ == "__main__":
     # Default to tenant_id=1 (Sergio) if run standalone
     tenant_id = int(sys.argv[1]) if len(sys.argv) > 1 else 1
+    logger.info(f"========== Starting PDF generation for tenant_id={tenant_id} ==========")
     tenant_info = get_tenant_info(tenant_id)
+    if tenant_info:
+        logger.info(f"Tenant info: name={tenant_info['name']}, slug={tenant_info['slug']}")
+        logger.info(f"Banner: {tenant_info.get('banner_image', 'None')}")
+        logger.info(f"Logo: {tenant_info.get('logo_image', 'None')}")
+    else:
+        logger.error(f"Tenant with ID {tenant_id} not found!")
     tenant_name = tenant_info['name'] if tenant_info else 'Artist'
     output_filename = f"{tenant_name} Repertorio.pdf"
     generate_pdf(output_filename, tenant_id)
+    logger.info(f"========== PDF generation completed: {output_filename} ==========")
 
