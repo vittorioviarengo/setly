@@ -1205,7 +1205,7 @@
                         // Update the existing dialog content
                         const stats = data.stats || {};
                     let messageHtml = `
-                        <div style="padding: 20px; text-align: center;">
+                        <div style="padding: 20px 20px 30px 20px; text-align: center;">
                             <div class="dialog-icon" style="font-size: 3.5em; margin-bottom: 1.5rem;">✅</div>
                             <h2 style="margin: 0 0 2rem 0; color: var(--primary-color); font-size: 1.5em; font-weight: 600;">${data.message || 'Bulk fetch completed!'}</h2>
                             
@@ -1233,7 +1233,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div style="display: flex; gap: 12px; justify-content: center; margin-top: 0; padding-bottom: 10px;">
+                                <div style="display: flex; gap: 12px; justify-content: center; margin-top: 0; padding-bottom: 20px;">
                                     <button onclick="window.closeDialogAndContinue()" 
                                         id="continueButton"
                                         style="padding: 14px 28px; background: linear-gradient(135deg, var(--primary-color) 0%, #0056b3 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 1em; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: transform 0.2s;">
@@ -1244,13 +1244,13 @@
                                 </div>`;
                 } else {
                         messageHtml += `
-                                <div style="background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%); padding: 20px; border-radius: 12px; margin-bottom: 20px; border-left: 4px solid #28a745;">
+                                <div style="background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%); padding: 20px; border-radius: 12px; margin-bottom: 30px; border-left: 4px solid #28a745;">
                                     <div style="display: flex; align-items: center; gap: 12px; justify-content: center;">
                                         <span style="font-size: 2em;">🎉</span>
                                         <strong style="color: #155724; font-size: 1.2em;">{{ _("All done!") }}</strong>
                                     </div>
                                 </div>
-                                <div style="margin-top: 20px;">
+                                <div style="margin-top: 0; padding-bottom: 20px;">
                                     <button onclick="window.closeDialogAndRefresh()" 
                                         style="padding: 14px 32px; background: linear-gradient(135deg, #28a745 0%, #218838 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 1em; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: transform 0.2s;">
                                         {{ _("Close and Refresh") }}</button>
