@@ -1311,3 +1311,216 @@ def logout():
     session.pop('is_superadmin', None)
     session.pop('superadmin_id', None)
     return redirect(url_for('superadmin.login'))
+
+@superadmin.route('/superadmin/bulk_spotify')
+@superadmin_required
+def bulk_spotify():
+    """Page for superadmin to bulk fetch Spotify data for all tenants."""
+    return render_template('superadmin/bulk_spotify.html')
+
+@superadmin.route('/superadmin/bulk_spotify_status', methods=['GET'])
+@superadmin_required
+def bulk_spotify_status():
+    """Get status of all tenants for bulk Spotify fetch."""
+    import os
+    
+    conn = create_connection()
+    cursor = conn.cursor()
+    
+    # Get all active tenants
+    cursor.execute('SELECT id, name, slug FROM tenants WHERE active = 1 ORDER BY name')
+    tenants = cursor.fetchall()
+    
+    tenant_stats = []
+    for tenant in tenants:
+        # Count what needs to be fetched for this tenant
+        cursor.execute('''
+            SELECT id, image, genre, language 
+            FROM songs 
+            WHERE tenant_id = ?
+        ''', (tenant['id'],))
+        songs = cursor.fetchall()
+        
+        missing_images = 0
+        missing_genres = 0
+        missing_languages = 0
+        
+        for song in songs:
+            needs_image = (not song['image'] or song['image'] == '' or 
+                          (song['image'] and (
+                              'placeholder' in song['image'].lower() or 
+                              song['image'].startswith('http') or
+                              'setly' in song['image'].lower() or
+                              'music-icon' in song['image'].lower() or
+                              'default' in song['image'].lower()
+                          )))
+            
+            # Check if image file actually exists on disk
+            if not needs_image and song['image']:
+                image_path = os.path.join('static', 'tenants', tenant['slug'], 'author_images', song['image'])
+                if not os.path.exists(image_path):
+                    needs_image = True
+            
+            needs_genre = not song['genre'] or song['genre'] == ''
+            needs_language = not song['language'] or song['language'] in ['', 'unknown']
+            
+            if needs_image:
+                missing_images += 1
+            if needs_genre:
+                missing_genres += 1
+            if needs_language:
+                missing_languages += 1
+        
+        total_songs = len(songs)
+        needs_processing = missing_images > 0 or missing_genres > 0 or missing_languages > 0
+        
+        tenant_stats.append({
+            'id': tenant['id'],
+            'name': tenant['name'],
+            'slug': tenant['slug'],
+            'total_songs': total_songs,
+            'missing_images': missing_images,
+            'missing_genres': missing_genres,
+            'missing_languages': missing_languages,
+            'needs_processing': needs_processing
+        })
+    
+    conn.close()
+    
+    return jsonify({
+        'success': True,
+        'tenants': tenant_stats
+    })
+
+@superadmin.route('/superadmin/bulk_spotify_process', methods=['POST'])
+@superadmin_required
+def bulk_spotify_process():
+    """Process Spotify data for a single tenant (called repeatedly)."""
+    import time
+    from app import get_spotify_image, download_image
+    
+    data = request.json
+    tenant_id = data.get('tenant_id')
+    batch_size = data.get('batch_size', 20)  # Smaller batch for superadmin to avoid timeouts
+    
+    conn = create_connection()
+    cursor = conn.cursor()
+    
+    # Get tenant info
+    cursor.execute('SELECT * FROM tenants WHERE id = ? AND active = 1', (tenant_id,))
+    tenant = cursor.fetchone()
+    
+    if not tenant:
+        conn.close()
+        return jsonify({'success': False, 'message': 'Tenant not found'}), 404
+    
+    tenant_slug = tenant['slug']
+    
+    try:
+        # Get songs that need data
+        cursor.execute('''
+            SELECT id, title, author, image, genre, language 
+            FROM songs 
+            WHERE tenant_id = ?
+            LIMIT ?
+        ''', (tenant_id, batch_size))
+        
+        songs = cursor.fetchall()
+        
+        stats = {
+            'total': len(songs),
+            'images_fetched': 0,
+            'genres_added': 0,
+            'languages_added': 0,
+            'errors': 0,
+            'skipped': 0
+        }
+        
+        processed_artists = {}
+        
+        for song in songs:
+            try:
+                # Check if song needs any data
+                needs_image = (not song['image'] or song['image'] == '' or 
+                              (song['image'] and (
+                                  'placeholder' in song['image'].lower() or 
+                                  song['image'].startswith('http') or
+                                  'setly' in song['image'].lower() or
+                                  'music-icon' in song['image'].lower() or
+                                  'default' in song['image'].lower()
+                              )))
+                
+                # Check if file exists
+                if not needs_image and song['image']:
+                    import os
+                    image_path = os.path.join('static', 'tenants', tenant_slug, 'author_images', song['image'])
+                    if not os.path.exists(image_path):
+                        needs_image = True
+                
+                needs_genre = not song['genre'] or song['genre'] == ''
+                needs_language = not song['language'] or song['language'] in ['', 'unknown']
+                
+                if not (needs_image or needs_genre or needs_language):
+                    stats['skipped'] += 1
+                    continue
+                
+                # Get artist data
+                artist_name = song['author']
+                if artist_name in processed_artists:
+                    artist_data = processed_artists[artist_name]
+                else:
+                    artist_data = get_spotify_image(artist_name)
+                    processed_artists[artist_name] = artist_data
+                    time.sleep(0.15)  # Longer delay for superadmin to be extra safe
+                
+                if artist_data:
+                    updates = []
+                    params = []
+                    
+                    # Update image
+                    if needs_image and artist_data.get('image_url'):
+                        normalized_artist = artist_name.lower().replace(' ', '_')
+                        filename = f"{normalized_artist}.jpg"
+                        saved_filename = download_image(artist_data['image_url'], filename, tenant_slug)
+                        if saved_filename:
+                            updates.append('image = ?')
+                            params.append(saved_filename)
+                            stats['images_fetched'] += 1
+                    
+                    # Update genre
+                    if needs_genre and artist_data.get('genre'):
+                        updates.append('genre = ?')
+                        params.append(artist_data['genre'])
+                        stats['genres_added'] += 1
+                    
+                    # Update language
+                    if needs_language and artist_data.get('language'):
+                        updates.append('language = ?')
+                        params.append(artist_data['language'])
+                        stats['languages_added'] += 1
+                    
+                    if updates:
+                        params.append(song['id'])
+                        query = f"UPDATE songs SET {', '.join(updates)} WHERE id = ?"
+                        cursor.execute(query, tuple(params))
+                        conn.commit()
+                else:
+                    stats['errors'] += 1
+                    
+            except Exception as e:
+                app.logger.error(f"Error processing song {song['id']} for tenant {tenant_id}: {e}")
+                stats['errors'] += 1
+                continue
+        
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'tenant_name': tenant['name'],
+            'stats': stats
+        })
+        
+    except Exception as e:
+        conn.close()
+        app.logger.error(f"Error in superadmin bulk Spotify for tenant {tenant_id}: {e}")
+        return jsonify({'success': False, 'message': str(e)}), 500

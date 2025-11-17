@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bulk Spotify Fetch - Superadmin</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='superadmin.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dialog.css') }}">
+    <style>
+        .tenant-list {
+            display: grid;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .tenant-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .tenant-card.processing {
+            border-left: 4px solid #1DB954;
+            background: linear-gradient(90deg, #e8f5e9 0%, white 100%);
+        }
+        
+        .tenant-card.completed {
+            opacity: 0.7;
+            border-left: 4px solid #28a745;
+        }
+        
+        .tenant-card.error {
+            border-left: 4px solid #f44336;
+        }
+        
+        .tenant-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .tenant-name {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .tenant-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .stat-box {
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 1.5em;
+            font-weight: 700;
+            color: #667eea;
+        }
+        
+        .stat-label {
+            font-size: 0.85em;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #1DB954 0%, #1ed760 100%);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        
+        .status-message {
+            font-size: 0.9em;
+            color: #6c757d;
+            margin-top: 10px;
+        }
+        
+        .control-panel {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .control-row {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .control-label {
+            font-weight: 600;
+            color: #2c3e50;
+            min-width: 150px;
+        }
+        
+        .control-input {
+            padding: 10px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 1em;
+            width: 100px;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .btn-stop {
+            background: linear-gradient(135deg, #f44336 0%, #e57373 100%);
+            color: white;
+        }
+        
+        .summary-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .summary-stat {
+            text-align: center;
+        }
+        
+        .summary-value {
+            font-size: 2em;
+            font-weight: 700;
+        }
+        
+        .summary-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-content">
+            <div class="navbar-left">
+                <h1 class="navbar-logo">Setly</h1>
+                <span class="navbar-subtitle">Superadmin</span>
+            </div>
+            <div class="navbar-right">
+                <a href="{{ url_for('superadmin.dashboard') }}" class="nav-link">Dashboard</a>
+                <a href="{{ url_for('superadmin.tenants') }}" class="nav-link">Tenants</a>
+                <a href="{{ url_for('superadmin.bulk_spotify') }}" class="nav-link">🎵 Bulk Spotify</a>
+                <a href="{{ url_for('superadmin.settings') }}" class="nav-link">Settings</a>
+                <a href="{{ url_for('superadmin.logout') }}" class="nav-link">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="page-header">
+            <h1>🎵 Bulk Spotify Data Fetch</h1>
+            <p>Download artist images, genres, and language info for all tenants</p>
+        </div>
+
+        <div class="summary-box" id="summaryBox">
+            <h2>📊 Overall Progress</h2>
+            <div class="summary-stats">
+                <div class="summary-stat">
+                    <div class="summary-value" id="totalTenants">-</div>
+                    <div class="summary-label">Total Tenants</div>
+                </div>
+                <div class="summary-stat">
+                    <div class="summary-value" id="tenantsProcessed">0</div>
+                    <div class="summary-label">Completed</div>
+                </div>
+                <div class="summary-stat">
+                    <div class="summary-value" id="totalImages">-</div>
+                    <div class="summary-label">Total Images Needed</div>
+                </div>
+                <div class="summary-stat">
+                    <div class="summary-value" id="imagesFetched">0</div>
+                    <div class="summary-label">Images Downloaded</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="control-panel">
+            <div class="control-row">
+                <div class="control-label">Batch Size per Tenant:</div>
+                <input type="number" id="batchSize" class="control-input" value="20" min="5" max="50">
+                <small style="color: #6c757d;">(Smaller = safer on PythonAnywhere)</small>
+            </div>
+            <div class="control-row">
+                <div class="control-label">Delay Between Tenants:</div>
+                <input type="number" id="tenantDelay" class="control-input" value="5" min="1" max="30">
+                <small style="color: #6c757d;">seconds</small>
+            </div>
+            <div class="control-row">
+                <button id="startBtn" class="btn btn-primary" onclick="startBulkFetch()">
+                    🚀 Start Bulk Fetch
+                </button>
+                <button id="stopBtn" class="btn btn-stop" onclick="stopBulkFetch()" style="display: none;">
+                    ⏸️ Stop Processing
+                </button>
+            </div>
+        </div>
+
+        <div class="tenant-list" id="tenantList">
+            <p style="text-align: center; color: #6c757d;">Click "Start Bulk Fetch" to begin...</p>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='dialog.js') }}"></script>
+    <script>
+        let isProcessing = false;
+        let shouldStop = false;
+        let tenantsData = [];
+        let globalStats = {
+            processed: 0,
+            imagesFetched: 0,
+            genresAdded: 0,
+            languagesAdded: 0
+        };
+
+        async function loadTenantStatus() {
+            try {
+                const response = await fetch('{{ url_for("superadmin.bulk_spotify_status") }}');
+                const data = await response.json();
+                
+                if (data.success) {
+                    tenantsData = data.tenants;
+                    renderTenants();
+                    updateSummary();
+                }
+            } catch (error) {
+                console.error('Error loading tenant status:', error);
+                showAlert('Error loading tenant data: ' + error.message, 'error');
+            }
+        }
+
+        function renderTenants() {
+            const listEl = document.getElementById('tenantList');
+            
+            if (tenantsData.length === 0) {
+                listEl.innerHTML = '<p style="text-align: center; color: #6c757d;">No tenants found.</p>';
+                return;
+            }
+            
+            listEl.innerHTML = tenantsData.map(tenant => `
+                <div class="tenant-card" id="tenant-${tenant.id}">
+                    <div class="tenant-header">
+                        <div class="tenant-name">${tenant.name} (${tenant.slug})</div>
+                        <span class="badge" id="badge-${tenant.id}">Pending</span>
+                    </div>
+                    <div class="tenant-stats">
+                        <div class="stat-box">
+                            <div class="stat-value">${tenant.total_songs}</div>
+                            <div class="stat-label">Total Songs</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value">${tenant.missing_images}</div>
+                            <div class="stat-label">Need Images</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value">${tenant.missing_genres}</div>
+                            <div class="stat-label">Need Genres</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value">${tenant.missing_languages}</div>
+                            <div class="stat-label">Need Languages</div>
+                        </div>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress-${tenant.id}"></div>
+                    </div>
+                    <div class="status-message" id="status-${tenant.id}">Waiting...</div>
+                </div>
+            `).join('');
+        }
+
+        function updateSummary() {
+            document.getElementById('totalTenants').textContent = tenantsData.length;
+            document.getElementById('tenantsProcessed').textContent = globalStats.processed;
+            
+            const totalImages = tenantsData.reduce((sum, t) => sum + t.missing_images, 0);
+            document.getElementById('totalImages').textContent = totalImages;
+            document.getElementById('imagesFetched').textContent = globalStats.imagesFetched;
+        }
+
+        async function startBulkFetch() {
+            if (isProcessing) return;
+            
+            // Load latest status first
+            await loadTenantStatus();
+            
+            isProcessing = true;
+            shouldStop = false;
+            globalStats = { processed: 0, imagesFetched: 0, genresAdded: 0, languagesAdded: 0 };
+            
+            document.getElementById('startBtn').style.display = 'none';
+            document.getElementById('stopBtn').style.display = 'inline-block';
+            document.getElementById('batchSize').disabled = true;
+            document.getElementById('tenantDelay').disabled = true;
+            
+            const batchSize = parseInt(document.getElementById('batchSize').value);
+            const tenantDelay = parseInt(document.getElementById('tenantDelay').value) * 1000;
+            
+            for (const tenant of tenantsData) {
+                if (shouldStop) {
+                    showAlert('Processing stopped by user', 'info');
+                    break;
+                }
+                
+                // Skip if no data needed
+                if (!tenant.needs_processing) {
+                    updateTenantStatus(tenant.id, 'completed', 'No data needed', 100);
+                    globalStats.processed++;
+                    updateSummary();
+                    continue;
+                }
+                
+                // Process this tenant
+                updateTenantStatus(tenant.id, 'processing', 'Fetching from Spotify...', 50);
+                
+                try {
+                    const response = await fetch('{{ url_for("superadmin.bulk_spotify_process") }}', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            tenant_id: tenant.id,
+                            batch_size: batchSize
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        const stats = result.stats;
+                        globalStats.imagesFetched += stats.images_fetched;
+                        globalStats.genresAdded += stats.genres_added;
+                        globalStats.languagesAdded += stats.languages_added;
+                        
+                        const msg = `✓ ${stats.images_fetched} images, ${stats.genres_added} genres, ${stats.languages_added} languages`;
+                        updateTenantStatus(tenant.id, 'completed', msg, 100);
+                    } else {
+                        updateTenantStatus(tenant.id, 'error', 'Error: ' + result.message, 0);
+                    }
+                } catch (error) {
+                    updateTenantStatus(tenant.id, 'error', 'Error: ' + error.message, 0);
+                }
+                
+                globalStats.processed++;
+                updateSummary();
+                
+                // Wait before next tenant
+                if (shouldStop) break;
+                await new Promise(resolve => setTimeout(resolve, tenantDelay));
+            }
+            
+            isProcessing = false;
+            document.getElementById('startBtn').style.display = 'inline-block';
+            document.getElementById('stopBtn').style.display = 'none';
+            document.getElementById('batchSize').disabled = false;
+            document.getElementById('tenantDelay').disabled = false;
+            
+            if (!shouldStop) {
+                showAlert('✅ Bulk fetch completed!<br>Images: ' + globalStats.imagesFetched + 
+                         ', Genres: ' + globalStats.genresAdded + 
+                         ', Languages: ' + globalStats.languagesAdded, 'success');
+            }
+        }
+
+        function stopBulkFetch() {
+            shouldStop = true;
+            document.getElementById('stopBtn').disabled = true;
+            document.getElementById('stopBtn').textContent = 'Stopping...';
+        }
+
+        function updateTenantStatus(tenantId, status, message, progress) {
+            const card = document.getElementById(`tenant-${tenantId}`);
+            const badge = document.getElementById(`badge-${tenantId}`);
+            const statusMsg = document.getElementById(`status-${tenantId}`);
+            const progressBar = document.getElementById(`progress-${tenantId}`);
+            
+            if (!card) return;
+            
+            card.className = 'tenant-card ' + status;
+            
+            if (status === 'processing') {
+                badge.textContent = '⚡ Processing';
+                badge.style.background = '#1DB954';
+                badge.style.color = 'white';
+            } else if (status === 'completed') {
+                badge.textContent = '✓ Done';
+                badge.style.background = '#28a745';
+                badge.style.color = 'white';
+            } else if (status === 'error') {
+                badge.textContent = '✗ Error';
+                badge.style.background = '#f44336';
+                badge.style.color = 'white';
+            }
+            
+            statusMsg.textContent = message;
+            if (progressBar) {
+                progressBar.style.width = progress + '%';
+            }
+        }
+
+        // Load tenant status on page load
+        loadTenantStatus();
+    </script>
+</body>
+</html>
+

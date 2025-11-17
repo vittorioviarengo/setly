@@ -721,7 +721,9 @@ def process_bulk_fetch_job(job_id, tenant_id, tenant_slug, batch_size):
 
 @app.route('/<tenant_slug>/bulk_fetch_count', methods=['GET'])
 def tenant_bulk_fetch_count(tenant_slug):
-    """Count how many songs need data from Spotify."""
+    """Count how many songs need data from Spotify - includes physical file check."""
+    import os
+    
     # Check if tenant admin is logged in
     if not session.get('is_tenant_admin') or session.get('tenant_slug') != tenant_slug:
         return jsonify({'success': False, 'message': 'Unauthorized'}), 403
@@ -737,39 +739,57 @@ def tenant_bulk_fetch_count(tenant_slug):
     
     tenant_id = tenant['id']
     
-    # Count songs by what they're missing
+    # Get all songs for this tenant
     cursor.execute('''
-        SELECT 
-            COUNT(*) as total,
-            SUM(CASE WHEN (image IS NULL OR image = '' OR 
-                          image LIKE '%placeholder%' OR image LIKE 'http%' OR
-                          image LIKE '%setly%' OR image LIKE '%music-icon%' OR 
-                          image LIKE '%default%') THEN 1 ELSE 0 END) as missing_images,
-            SUM(CASE WHEN (genre IS NULL OR genre = '') THEN 1 ELSE 0 END) as missing_genres,
-            SUM(CASE WHEN (language IS NULL OR language = '' OR language = 'unknown') THEN 1 ELSE 0 END) as missing_languages
+        SELECT id, image, genre, language 
         FROM songs 
-        WHERE tenant_id = ? 
-        AND (
-            image IS NULL OR image = '' OR
-            image LIKE '%placeholder%' OR
-            image LIKE 'http%' OR
-            image LIKE '%setly%' OR
-            image LIKE '%music-icon%' OR
-            image LIKE '%default%' OR
-            genre IS NULL OR genre = '' OR
-            language IS NULL OR language = '' OR language = 'unknown'
-        )
+        WHERE tenant_id = ?
     ''', (tenant_id,))
-    result = cursor.fetchone()
+    songs = cursor.fetchall()
+    
+    # Count what's actually missing (including physical file check)
+    missing_images = 0
+    missing_genres = 0
+    missing_languages = 0
+    total_needing_data = 0
+    
+    for song in songs:
+        needs_image = (not song['image'] or song['image'] == '' or 
+                      (song['image'] and (
+                          'placeholder' in song['image'].lower() or 
+                          song['image'].startswith('http') or
+                          'setly' in song['image'].lower() or
+                          'music-icon' in song['image'].lower() or
+                          'default' in song['image'].lower()
+                      )))
+        
+        # Check if image file actually exists on disk
+        if not needs_image and song['image']:
+            image_path = os.path.join('static', 'tenants', tenant_slug, 'author_images', song['image'])
+            if not os.path.exists(image_path):
+                needs_image = True
+        
+        needs_genre = not song['genre'] or song['genre'] == ''
+        needs_language = not song['language'] or song['language'] in ['', 'unknown']
+        
+        if needs_image:
+            missing_images += 1
+        if needs_genre:
+            missing_genres += 1
+        if needs_language:
+            missing_languages += 1
+        
+        if needs_image or needs_genre or needs_language:
+            total_needing_data += 1
     
     conn.close()
     
     return jsonify({
         'success': True,
-        'total_songs': result['total'] if result else 0,
-        'missing_images': result['missing_images'] if result else 0,
-        'missing_genres': result['missing_genres'] if result else 0,
-        'missing_languages': result['missing_languages'] if result else 0
+        'total_songs': total_needing_data,
+        'missing_images': missing_images,
+        'missing_genres': missing_genres,
+        'missing_languages': missing_languages
     })
 
 @app.route('/<tenant_slug>/bulk_fetch_spotify', methods=['POST'])
