@@ -266,22 +266,22 @@ def generate_pdf(output_path, tenant_id):
     elements.append(PageBreak())  # Move to page 2 for intro text
     
     intro_text = f"""
-    <strong>Italiano:</strong><br/>
-    Goditi una selezione delle canzoni preferite di {tenant_name}. Rendi questa serata ancora più speciale richiedendo o dedicando una canzone a una persona cara scannerizzando il codice qui sotto.<br/><br/><br/>
+    <b><font size="15">Italiano:</font></b><br/>
+    <font size="13">Goditi una selezione delle canzoni preferite di {tenant_name}. Rendi questa serata ancora più speciale richiedendo o dedicando una canzone a una persona cara scannerizzando il codice qui sotto.</font><br/><br/><br/><br/>
 
-    <strong>English:</strong><br/>
-    Enjoy a selection of {tenant_name}'s favorite songs. Make this evening more special by requesting or dedicating a song to a loved one by scanning the code below.<br/><br/><br/>
+    <b><font size="15">English:</font></b><br/>
+    <font size="13">Enjoy a selection of {tenant_name}'s favorite songs. Make this evening more special by requesting or dedicating a song to a loved one by scanning the code below.</font><br/><br/><br/><br/>
     
-    <strong>Français:</strong><br/>
-    Profitez d'une sélection des chansons préférées de {tenant_name}. Rendez cette soirée encore plus spéciale en demandant ou en dédiant une chanson à un être cher en scannant le code ci-dessous.<br/><br/><br/>
+    <b><font size="15">Français:</font></b><br/>
+    <font size="13">Profitez d'une sélection des chansons préférées de {tenant_name}. Rendez cette soirée encore plus spéciale en demandant ou en dédiant une chanson à un être cher en scannant le code ci-dessous.</font><br/><br/><br/><br/>
 
-    <strong>Deutsch:</strong><br/>
-    Genießen Sie eine Auswahl von {tenant_name}'s Lieblingsliedern. Machen Sie diesen Abend noch besonderer, indem Sie ein Lied für einen geliebten Menschen anfordern oder widmen, indem Sie den untenstehenden Code scannen.<br/><br/><br/>
+    <b><font size="15">Deutsch:</font></b><br/>
+    <font size="13">Genießen Sie eine Auswahl von {tenant_name}'s Lieblingsliedern. Machen Sie diesen Abend noch besonderer, indem Sie ein Lied für einen geliebten Menschen anfordern oder widmen, indem Sie den untenstehenden Code scannen.</font><br/><br/><br/><br/>
 
-    <strong>Español:</strong><br/>
-    Disfrute de una selección de las canciones favoritas de {tenant_name}. Haga esta noche aún más especial solicitando o dedicando una canción a un ser querido escaneando el código a continuación.
+    <b><font size="15">Español:</font></b><br/>
+    <font size="13">Disfrute de una selección de las canciones favoritas de {tenant_name}. Haga esta noche aún más especial solicitando o dedicando una canción a un ser querido escaneando el código a continuación.</font>
     """
-    intro_style = ParagraphStyle(name='IntroStyle', fontName='Gothic', fontSize=14, textColor=colors.black, alignment=1, leading=12)
+    intro_style = ParagraphStyle(name='IntroStyle', fontName='Gothic', fontSize=14, textColor=colors.black, alignment=1, leading=20, spaceBefore=5, spaceAfter=10)
     intro_paragraph = Paragraph(intro_text, intro_style)
 
     elements.append(intro_paragraph)
