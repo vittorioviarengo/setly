@@ -85,8 +85,9 @@
     color: #546e7a;
     font-size: 14px;
     line-height: 1.4;
-    max-height: 500px;
+    max-height: 75vh;
     overflow-y: auto;
+    overflow-x: hidden;
 }
 
 .app-dialog-footer {
