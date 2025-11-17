@@ -187,21 +187,7 @@
     </style>
 </head>
 <body>
-    <nav class="navbar">
-        <div class="navbar-content">
-            <div class="navbar-left">
-                <h1 class="navbar-logo">Setly</h1>
-                <span class="navbar-subtitle">Superadmin</span>
-            </div>
-            <div class="navbar-right">
-                <a href="{{ url_for('superadmin.dashboard') }}" class="nav-link">Dashboard</a>
-                <a href="{{ url_for('superadmin.tenants') }}" class="nav-link">Tenants</a>
-                <a href="{{ url_for('superadmin.bulk_spotify') }}" class="nav-link">🎵 Bulk Spotify</a>
-                <a href="{{ url_for('superadmin.settings') }}" class="nav-link">Settings</a>
-                <a href="{{ url_for('superadmin.logout') }}" class="nav-link">Logout</a>
-            </div>
-        </div>
-    </nav>
+    {% include 'superadmin/nav.html' %}
 
     <div class="container">
         <div class="page-header">
