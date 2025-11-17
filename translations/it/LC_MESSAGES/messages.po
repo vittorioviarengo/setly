@@ -1419,3 +1419,27 @@ msgstr "Chiudi e Ricarica"
 
 msgid "Reloading page to show new images..."
 msgstr "Ricaricamento pagina per mostrare le nuove immagini..."
+
+msgid "Checking songs..."
+msgstr "Controllo canzoni..."
+
+msgid "Songs to process:"
+msgstr "Canzoni da processare:"
+
+msgid "Total songs:"
+msgstr "Totale canzoni:"
+
+msgid "Missing images:"
+msgstr "Immagini mancanti:"
+
+msgid "Missing genres:"
+msgstr "Generi mancanti:"
+
+msgid "Missing languages:"
+msgstr "Lingue mancanti:"
+
+msgid "Processing up to"
+msgstr "Processeremo fino a"
+
+msgid "songs per batch"
+msgstr "canzoni per batch"

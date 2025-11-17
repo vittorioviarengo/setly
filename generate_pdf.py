@@ -180,24 +180,21 @@ def add_footer(canvas, doc, tenant_info):
     canvas.restoreState()
 
 def add_qr_code_message(elements, tenant_info, base_url="http://localhost:5001"):
-    # Create an empty paragraph for spacing
-    empty_paragraph = Paragraph("<br/><br/>", ParagraphStyle(name='EmptySpace'))
-    
-    # Add the message
+    # Add the message (more compact)
     message_text = "You can also request your favorite songs<br/>By scanning this QR code"
-    message_style = ParagraphStyle(name='MessageStyle', fontName='Gothic', fontSize=14, textColor=colors.black, alignment=1)
+    message_style = ParagraphStyle(name='MessageStyle', fontName='Gothic', fontSize=12, textColor=colors.black, alignment=1, spaceBefore=0, spaceAfter=4)
     message_paragraph = Paragraph(message_text, message_style)
     
     # Generate QR code dynamically for this tenant
     tenant_slug = tenant_info['slug'] if tenant_info and tenant_info.get('slug') else 'default'
     qr_url = f"{base_url}/{tenant_slug}"
     
-    # Create QR code
+    # Create QR code (smaller version)
     qr = qrcode.QRCode(
         version=1,
         error_correction=qrcode.constants.ERROR_CORRECT_L,
-        box_size=10,
-        border=4,
+        box_size=8,  # Reduced from 10
+        border=3,    # Reduced from 4
     )
     qr.add_data(qr_url)
     qr.make(fit=True)
@@ -210,10 +207,10 @@ def add_qr_code_message(elements, tenant_info, base_url="http://localhost:5001")
     qr_img.save(img_buffer, format='PNG')
     img_buffer.seek(0)
     
-    # Create reportlab Image from bytes
+    # Create reportlab Image from bytes (smaller size)
     qr_code_image = Image(img_buffer)
-    qr_code_image.drawHeight = 2 * inch  # Adjust the height as needed
-    qr_code_image.drawWidth = 2 * inch   # Adjust the width as needed
+    qr_code_image.drawHeight = 1.5 * inch  # Reduced from 2 inch
+    qr_code_image.drawWidth = 1.5 * inch   # Reduced from 2 inch
     qr_code_image.hAlign = 'CENTER'
     
     # Create a table with the QR code message and image
@@ -265,26 +262,28 @@ def generate_pdf(output_path, tenant_id):
     # Page 1: Cover page (drawn by onFirstPage callback - no content needed)
     elements.append(PageBreak())  # Move to page 2 for intro text
     
+    # Compact intro text with reduced spacing to fit on one page with QR code
     intro_text = f"""
-    <b><font size="15">Italiano:</font></b><br/>
-    <font size="13">Goditi una selezione delle canzoni preferite di {tenant_name}. Rendi questa serata ancora più speciale richiedendo o dedicando una canzone a una persona cara scannerizzando il codice qui sotto.</font><br/><br/><br/><br/>
+    <b><font size="13">Italiano:</font></b><br/>
+    <font size="10">Goditi una selezione delle canzoni preferite di {tenant_name}. Rendi questa serata ancora più speciale richiedendo o dedicando una canzone a una persona cara scannerizzando il codice qui sotto.</font><br/><br/>
 
-    <b><font size="15">English:</font></b><br/>
-    <font size="13">Enjoy a selection of {tenant_name}'s favorite songs. Make this evening more special by requesting or dedicating a song to a loved one by scanning the code below.</font><br/><br/><br/><br/>
+    <b><font size="13">English:</font></b><br/>
+    <font size="10">Enjoy a selection of {tenant_name}'s favorite songs. Make this evening more special by requesting or dedicating a song to a loved one by scanning the code below.</font><br/><br/>
     
-    <b><font size="15">Français:</font></b><br/>
-    <font size="13">Profitez d'une sélection des chansons préférées de {tenant_name}. Rendez cette soirée encore plus spéciale en demandant ou en dédiant une chanson à un être cher en scannant le code ci-dessous.</font><br/><br/><br/><br/>
+    <b><font size="13">Français:</font></b><br/>
+    <font size="10">Profitez d'une sélection des chansons préférées de {tenant_name}. Rendez cette soirée encore plus spéciale en demandant ou en dédiant une chanson à un être cher en scannant le code ci-dessous.</font><br/><br/>
 
-    <b><font size="15">Deutsch:</font></b><br/>
-    <font size="13">Genießen Sie eine Auswahl von {tenant_name}'s Lieblingsliedern. Machen Sie diesen Abend noch besonderer, indem Sie ein Lied für einen geliebten Menschen anfordern oder widmen, indem Sie den untenstehenden Code scannen.</font><br/><br/><br/><br/>
+    <b><font size="13">Deutsch:</font></b><br/>
+    <font size="10">Genießen Sie eine Auswahl von {tenant_name}'s Lieblingsliedern. Machen Sie diesen Abend noch besonderer, indem Sie ein Lied für einen geliebten Menschen anfordern oder widmen, indem Sie den untenstehenden Code scannen.</font><br/><br/>
 
-    <b><font size="15">Español:</font></b><br/>
-    <font size="13">Disfrute de una selección de las canciones favoritas de {tenant_name}. Haga esta noche aún más especial solicitando o dedicando una canción a un ser querido escaneando el código a continuación.</font>
+    <b><font size="13">Español:</font></b><br/>
+    <font size="10">Disfrute de una selección de las canciones favoritas de {tenant_name}. Haga esta noche aún más especial solicitando o dedicando una canción a un ser querido escaneando el código a continuación.</font>
     """
-    intro_style = ParagraphStyle(name='IntroStyle', fontName='Gothic', fontSize=14, textColor=colors.black, alignment=1, leading=20, spaceBefore=5, spaceAfter=10)
+    intro_style = ParagraphStyle(name='IntroStyle', fontName='Gothic', fontSize=11, textColor=colors.black, alignment=1, leading=14, spaceBefore=0, spaceAfter=8)
     intro_paragraph = Paragraph(intro_text, intro_style)
 
     elements.append(intro_paragraph)
+    elements.append(Spacer(1, 0.2*inch))  # Small spacer before QR code
     add_qr_code_message(elements, tenant_info, app_url)
 
     # Prepare data for the table on the third page

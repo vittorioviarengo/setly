@@ -737,10 +737,16 @@ def tenant_bulk_fetch_count(tenant_slug):
     
     tenant_id = tenant['id']
     
-    # Count only songs that actually need data (missing image, genre, or language)
-    # This matches the same logic used in the bulk fetch
+    # Count songs by what they're missing
     cursor.execute('''
-        SELECT COUNT(*) as total 
+        SELECT 
+            COUNT(*) as total,
+            SUM(CASE WHEN (image IS NULL OR image = '' OR 
+                          image LIKE '%placeholder%' OR image LIKE 'http%' OR
+                          image LIKE '%setly%' OR image LIKE '%music-icon%' OR 
+                          image LIKE '%default%') THEN 1 ELSE 0 END) as missing_images,
+            SUM(CASE WHEN (genre IS NULL OR genre = '') THEN 1 ELSE 0 END) as missing_genres,
+            SUM(CASE WHEN (language IS NULL OR language = '' OR language = 'unknown') THEN 1 ELSE 0 END) as missing_languages
         FROM songs 
         WHERE tenant_id = ? 
         AND (
@@ -755,13 +761,15 @@ def tenant_bulk_fetch_count(tenant_slug):
         )
     ''', (tenant_id,))
     result = cursor.fetchone()
-    total_songs = result['total'] if result else 0
     
     conn.close()
     
     return jsonify({
         'success': True,
-        'total_songs': total_songs
+        'total_songs': result['total'] if result else 0,
+        'missing_images': result['missing_images'] if result else 0,
+        'missing_genres': result['missing_genres'] if result else 0,
+        'missing_languages': result['missing_languages'] if result else 0
     })
 
 @app.route('/<tenant_slug>/bulk_fetch_spotify', methods=['POST'])

@@ -1081,12 +1081,46 @@
         });
 
         // Bulk fetch Spotify data for all songs
-        function bulkFetchSpotify() {
+        async function bulkFetchSpotify() {
             const button = document.getElementById('bulkFetchBtnSongs');
             const originalText = button.innerHTML;
             
             // Disable button and show loading state
             button.disabled = true;
+            button.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 5px; animation: spin 1s linear infinite;"><circle cx="12" cy="12" r="10"></circle></svg> {{ _("Checking songs...") }}';
+            
+            // First, fetch count details
+            let countDetails = null;
+            try {
+                const countResponse = await fetch('{{ url_for("tenant_bulk_fetch_count", tenant_slug=tenant.slug) }}');
+                if (countResponse.ok) {
+                    countDetails = await countResponse.json();
+                }
+            } catch (err) {
+                console.error('Error fetching count:', err);
+            }
+            
+            // Build details message
+            let detailsHtml = '{{ _("This process:") }}<br>' +
+                '• {{ _("Downloads artist images") }}<br>' +
+                '• {{ _("Fetches music genres") }}<br>' +
+                '• {{ _("Detects song languages") }}<br><br>';
+            
+            if (countDetails && countDetails.total_songs > 0) {
+                detailsHtml += '<div style="background: #f0f8ff; padding: 12px; border-radius: 8px; margin: 10px 0; border-left: 4px solid #1DB954;">' +
+                    '<strong>📊 {{ _("Songs to process:") }}</strong><br>' +
+                    '{{ _("Total songs:") }} <strong>' + countDetails.total_songs + '</strong><br>' +
+                    '{{ _("Missing images:") }} <strong>' + countDetails.missing_images + '</strong><br>' +
+                    '{{ _("Missing genres:") }} <strong>' + countDetails.missing_genres + '</strong><br>' +
+                    '{{ _("Missing languages:") }} <strong>' + countDetails.missing_languages + '</strong><br><br>' +
+                    '<em style="color: #666;">⚡ {{ _("Processing up to") }} <strong>50 {{ _("songs per batch") }}</strong></em>' +
+                    '</div><br>';
+            }
+            
+            detailsHtml += '<em>⏱️ {{ _("Estimated time: 30-60 seconds") }}</em><br><br>' +
+                '{{ _("Please keep this page open...") }}';
+            
+            // Update button text
             button.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 5px; animation: spin 1s linear infinite;"><circle cx="12" cy="12" r="10"></circle></svg> {{ _("Processing... Please wait") }}';
             
             // Show informative alert with animated progress bar (no close button during loading)
@@ -1099,12 +1133,7 @@
                 '<div id="spotify-progress" style="width: 0%; height: 100%; background: linear-gradient(90deg, #1DB954, #1ed760); border-radius: 10px; transition: width 0.3s ease; animation: shimmer 1.5s infinite;"></div>' +
                 '</div>' +
                 '<div id="spotify-details" style="font-size: 0.9em; color: #666;">' +
-                '{{ _("This process:") }}<br>' +
-                '• {{ _("Downloads artist images") }}<br>' +
-                '• {{ _("Fetches music genres") }}<br>' +
-                '• {{ _("Detects song languages") }}<br><br>' +
-                '<em>⏱️ {{ _("Estimated time: 30-60 seconds") }}</em><br><br>' +
-                '{{ _("Please keep this page open...") }}' +
+                detailsHtml +
                 '</div>',
                 'info'
             );
