@@ -230,10 +230,8 @@ def add_qr_code_message(elements, tenant_info, base_url="http://localhost:5001")
         ('BOTTOMPADDING', (0, 1), (-1, 1), 12),  # Add padding below the QR code image
     ]))
     
-    # Add the empty paragraph, table, and another empty paragraph to the elements
-    elements.append(empty_paragraph)
+    # Add the QR code table to the elements
     elements.append(table)
-    elements.append(empty_paragraph)
 
 def generate_pdf(output_path, tenant_id):
     # Fetch tenant info and songs data
