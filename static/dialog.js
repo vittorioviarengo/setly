@@ -165,39 +165,55 @@ class AppDialog {
     show(options) {
         const { title, message, icon, iconClass, buttons } = options;
         
+        // Ensure dialog is in DOM (defensive check)
+        if (!this.dialog || !this.dialog.parentNode) {
+            console.error('Dialog not initialized or not in DOM. Re-initializing...');
+            this.init();
+        }
+        
         // Set title
         const titleElement = this.dialog.querySelector('.app-dialog-title-text');
-        titleElement.textContent = title;
+        if (titleElement) {
+            titleElement.textContent = title;
+        }
         
         // Set icon
         const iconElement = this.dialog.querySelector('.app-dialog-icon');
-        iconElement.textContent = icon;
-        iconElement.className = `app-dialog-icon ${iconClass}`;
+        if (iconElement) {
+            iconElement.textContent = icon;
+            iconElement.className = `app-dialog-icon ${iconClass}`;
+        }
         
         // Set message
         const bodyElement = this.dialog.querySelector('.app-dialog-body');
-        bodyElement.innerHTML = message;
+        if (bodyElement) {
+            bodyElement.innerHTML = message;
+        }
         
         // Set buttons
         const footerElement = this.dialog.querySelector('.app-dialog-footer');
-        footerElement.innerHTML = '';
-        
-        buttons.forEach((button, index) => {
-            const btn = document.createElement('button');
-            btn.className = `app-dialog-btn ${button.class}`;
-            btn.textContent = button.text;
-            btn.onclick = button.callback;
+        if (footerElement) {
+            footerElement.innerHTML = '';
             
-            // Focus first primary button
-            if (button.class.includes('primary') && index === buttons.length - 1) {
-                setTimeout(() => btn.focus(), 100);
-            }
-            
-            footerElement.appendChild(btn);
-        });
+            buttons.forEach((button, index) => {
+                const btn = document.createElement('button');
+                btn.className = `app-dialog-btn ${button.class}`;
+                btn.textContent = button.text;
+                btn.onclick = button.callback;
+                
+                // Focus first primary button
+                if (button.class.includes('primary') && index === buttons.length - 1) {
+                    setTimeout(() => btn.focus(), 100);
+                }
+                
+                footerElement.appendChild(btn);
+            });
+        }
         
         // Show overlay
-        this.overlay.classList.add('active');
+        if (this.overlay) {
+            this.overlay.classList.add('active');
+        }
         document.body.style.overflow = 'hidden';
     }
 
