@@ -1424,11 +1424,21 @@ def bulk_spotify_process():
     tenant_slug = tenant['slug']
     
     try:
-        # Get songs that need data
+        # Get songs that actually need data (with DB-level filtering)
         cursor.execute('''
             SELECT id, title, author, image, genre, language 
             FROM songs 
             WHERE tenant_id = ?
+            AND (
+                image IS NULL OR image = '' OR
+                image LIKE '%placeholder%' OR
+                image LIKE 'http%' OR
+                image LIKE '%setly%' OR
+                image LIKE '%music-icon%' OR
+                image LIKE '%default%' OR
+                genre IS NULL OR genre = '' OR
+                language IS NULL OR language = '' OR language = 'unknown'
+            )
             LIMIT ?
         ''', (tenant_id, batch_size))
         

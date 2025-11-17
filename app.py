@@ -832,11 +832,22 @@ def tenant_bulk_fetch_spotify(tenant_slug):
         total_result = cursor.fetchone()
         total_in_db = total_result['total'] if total_result else 0
         
-        # Get all songs for this tenant that need data
+        # Get songs that actually need data (not just first N songs)
+        # This query finds songs missing images, genres, or languages
         cursor.execute('''
             SELECT id, title, author, image, genre, language 
             FROM songs 
             WHERE tenant_id = ?
+            AND (
+                image IS NULL OR image = '' OR
+                image LIKE '%placeholder%' OR
+                image LIKE 'http%' OR
+                image LIKE '%setly%' OR
+                image LIKE '%music-icon%' OR
+                image LIKE '%default%' OR
+                genre IS NULL OR genre = '' OR
+                language IS NULL OR language = '' OR language = 'unknown'
+            )
             LIMIT ?
         ''', (tenant_id, batch_size))
         
