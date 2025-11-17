@@ -1446,3 +1446,15 @@ msgstr "canzoni per batch"
 
 msgid "Still needed:"
 msgstr "Ancora necessario:"
+
+msgid "Auto-continue to next batch"
+msgstr "Continua automaticamente al prossimo batch"
+
+msgid "recommended"
+msgstr "consigliato"
+
+msgid "Continuing in"
+msgstr "Continuo tra"
+
+msgid "seconds..."
+msgstr "secondi..."

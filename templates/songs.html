@@ -1269,6 +1269,19 @@
                                         {{ _("Missing languages:") }} <strong>${data.remaining_languages || 0}</strong>
                                     </div>
                                 </div>
+                                <div style="margin: 20px 0; padding: 15px; background: rgba(255,255,255,0.8); border-radius: 8px; border: 2px solid var(--primary-color);">
+                                    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 1em;">
+                                        <input type="checkbox" id="autoContinueCheckbox" checked 
+                                            style="width: 20px; height: 20px; cursor: pointer;">
+                                        <span style="font-weight: 500;">
+                                            {{ _("Auto-continue to next batch") }} 
+                                            <span style="color: #28a745;">({{ _("recommended") }})</span>
+                                        </span>
+                                    </label>
+                                    <div id="autoContinueCountdown" style="margin-top: 10px; text-align: center; font-size: 0.9em; color: #666; display: none;">
+                                        {{ _("Continuing in") }} <strong id="countdownSeconds">3</strong> {{ _("seconds...") }}
+                                    </div>
+                                </div>
                                 <div style="display: flex; gap: 12px; justify-content: center; margin-top: 0; padding-bottom: 20px;">
                                     <button onclick="window.closeDialogAndContinue()" 
                                         id="continueButton"
@@ -1313,6 +1326,11 @@
                                     el.remove();
                                 }
                             });
+                        }
+                        
+                        // Start auto-continue countdown if there are more songs to process
+                        if (totalRemaining > 0) {
+                            startAutoContinueCountdown();
                         }
                     }, 50);
                     
@@ -1370,6 +1388,70 @@
                     showAlert('❌ Error: ' + error.message, 'error');
                 }
             });
+        }
+
+        // Auto-continue countdown function
+        let autoContinueTimer = null;
+        
+        function startAutoContinueCountdown() {
+            // Clear any existing timer
+            if (autoContinueTimer) {
+                clearInterval(autoContinueTimer);
+                autoContinueTimer = null;
+            }
+            
+            const checkbox = document.getElementById('autoContinueCheckbox');
+            const countdownDiv = document.getElementById('autoContinueCountdown');
+            const countdownSeconds = document.getElementById('countdownSeconds');
+            const continueButton = document.getElementById('continueButton');
+            
+            if (!checkbox || !countdownDiv || !countdownSeconds || !continueButton) {
+                return; // Elements not found
+            }
+            
+            // Listen for checkbox changes
+            checkbox.addEventListener('change', function() {
+                if (!this.checked) {
+                    // Stop countdown if unchecked
+                    if (autoContinueTimer) {
+                        clearInterval(autoContinueTimer);
+                        autoContinueTimer = null;
+                    }
+                    countdownDiv.style.display = 'none';
+                } else {
+                    // Restart countdown if checked
+                    countdownDiv.style.display = 'block';
+                    let secondsLeft = 3;
+                    countdownSeconds.textContent = secondsLeft;
+                    
+                    autoContinueTimer = setInterval(() => {
+                        secondsLeft--;
+                        if (secondsLeft > 0) {
+                            countdownSeconds.textContent = secondsLeft;
+                        } else {
+                            clearInterval(autoContinueTimer);
+                            continueButton.click();
+                        }
+                    }, 1000);
+                }
+            });
+            
+            // Start countdown if checkbox is checked (default)
+            if (checkbox.checked) {
+                countdownDiv.style.display = 'block';
+                let secondsLeft = 3;
+                countdownSeconds.textContent = secondsLeft;
+                
+                autoContinueTimer = setInterval(() => {
+                    secondsLeft--;
+                    if (secondsLeft > 0) {
+                        countdownSeconds.textContent = secondsLeft;
+                    } else {
+                        clearInterval(autoContinueTimer);
+                        continueButton.click();
+                    }
+                }, 1000);
+            }
         }
 
         // Add CSS animation for spinner
