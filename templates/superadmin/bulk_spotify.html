@@ -228,6 +228,16 @@
                 <input type="number" id="tenantDelay" class="control-input" value="5" min="1" max="30">
                 <small style="color: #6c757d;">seconds</small>
             </div>
+            <div class="control-row" style="margin-bottom: 15px;">
+                <button class="btn" onclick="selectAllTenants()" 
+                    style="background: #28a745; color: white; padding: 8px 16px; font-size: 0.9em;">
+                    ✓ Select All
+                </button>
+                <button class="btn" onclick="deselectAllTenants()" 
+                    style="background: #6c757d; color: white; padding: 8px 16px; font-size: 0.9em;">
+                    ✗ Deselect All
+                </button>
+            </div>
             <div class="control-row">
                 <button id="startBtn" class="btn btn-primary" onclick="startBulkFetch()">
                     🚀 Start Bulk Fetch
@@ -282,7 +292,11 @@
             listEl.innerHTML = tenantsData.map(tenant => `
                 <div class="tenant-card" id="tenant-${tenant.id}">
                     <div class="tenant-header">
-                        <div class="tenant-name">${tenant.name} (${tenant.slug})</div>
+                        <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; flex: 1;">
+                            <input type="checkbox" class="tenant-checkbox" data-tenant-id="${tenant.id}" checked
+                                style="width: 20px; height: 20px; cursor: pointer; accent-color: #667eea;">
+                            <div class="tenant-name" style="flex: 1;">${tenant.name} (${tenant.slug})</div>
+                        </label>
                         <span class="badge" id="badge-${tenant.id}">Pending</span>
                     </div>
                     <div class="tenant-stats">
@@ -311,11 +325,26 @@
             `).join('');
         }
 
+        function selectAllTenants() {
+            document.querySelectorAll('.tenant-checkbox').forEach(cb => cb.checked = true);
+        }
+
+        function deselectAllTenants() {
+            document.querySelectorAll('.tenant-checkbox').forEach(cb => cb.checked = false);
+        }
+
+        function getSelectedTenants() {
+            const selectedIds = Array.from(document.querySelectorAll('.tenant-checkbox:checked'))
+                .map(cb => parseInt(cb.dataset.tenantId));
+            return tenantsData.filter(t => selectedIds.includes(t.id));
+        }
+
         function updateSummary() {
+            const selectedTenants = getSelectedTenants();
             document.getElementById('totalTenants').textContent = tenantsData.length;
             document.getElementById('tenantsProcessed').textContent = globalStats.processed;
             
-            const totalImages = tenantsData.reduce((sum, t) => sum + t.missing_images, 0);
+            const totalImages = selectedTenants.reduce((sum, t) => sum + t.missing_images, 0);
             document.getElementById('totalImages').textContent = totalImages;
             document.getElementById('imagesFetched').textContent = globalStats.imagesFetched;
         }
