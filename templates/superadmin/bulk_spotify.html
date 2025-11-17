@@ -355,6 +355,13 @@
             // Load latest status first
             await loadTenantStatus();
             
+            // Get only selected tenants
+            const selectedTenants = getSelectedTenants();
+            if (selectedTenants.length === 0) {
+                showAlert('Please select at least one tenant to process', 'warning');
+                return;
+            }
+            
             isProcessing = true;
             shouldStop = false;
             globalStats = { processed: 0, imagesFetched: 0, genresAdded: 0, languagesAdded: 0 };
@@ -363,11 +370,12 @@
             document.getElementById('stopBtn').style.display = 'inline-block';
             document.getElementById('batchSize').disabled = true;
             document.getElementById('tenantDelay').disabled = true;
+            document.querySelectorAll('.tenant-checkbox').forEach(cb => cb.disabled = true);
             
             const batchSize = parseInt(document.getElementById('batchSize').value);
             const tenantDelay = parseInt(document.getElementById('tenantDelay').value) * 1000;
             
-            for (const tenant of tenantsData) {
+            for (const tenant of selectedTenants) {
                 if (shouldStop) {
                     showAlert('Processing stopped by user', 'info');
                     break;
@@ -456,6 +464,7 @@
             document.getElementById('stopBtn').style.display = 'none';
             document.getElementById('batchSize').disabled = false;
             document.getElementById('tenantDelay').disabled = false;
+            document.querySelectorAll('.tenant-checkbox').forEach(cb => cb.disabled = false);
             
             if (!shouldStop) {
                 showAlert('✅ Bulk fetch completed!<br>Images: ' + globalStats.imagesFetched + 
