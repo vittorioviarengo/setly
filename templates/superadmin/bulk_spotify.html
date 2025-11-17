@@ -398,8 +398,11 @@
                             tenantTotalGenres += stats.genres_added;
                             tenantTotalLanguages += stats.languages_added;
                             
-                            // If no songs were processed, we're done with this tenant
-                            if (stats.total === 0) {
+                            // Stop only if NO progress made (nothing fetched at all)
+                            const nothingFetched = stats.images_fetched === 0 && stats.genres_added === 0 && stats.languages_added === 0;
+                            
+                            if (nothingFetched) {
+                                // No progress in this batch - tenant is done
                                 break;
                             }
                             
