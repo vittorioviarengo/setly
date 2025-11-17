@@ -293,7 +293,7 @@
                 <div class="tenant-card" id="tenant-${tenant.id}">
                     <div class="tenant-header">
                         <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; flex: 1;">
-                            <input type="checkbox" class="tenant-checkbox" data-tenant-id="${tenant.id}" checked
+                            <input type="checkbox" class="tenant-checkbox" data-tenant-id="${tenant.id}"
                                 style="width: 20px; height: 20px; cursor: pointer; accent-color: #667eea;">
                             <div class="tenant-name" style="flex: 1;">${tenant.name} (${tenant.slug})</div>
                         </label>
@@ -323,14 +323,21 @@
                     <div class="status-message" id="status-${tenant.id}">Waiting...</div>
                 </div>
             `).join('');
+            
+            // Add event listeners to checkboxes to update summary in real-time
+            document.querySelectorAll('.tenant-checkbox').forEach(cb => {
+                cb.addEventListener('change', updateSummary);
+            });
         }
 
         function selectAllTenants() {
             document.querySelectorAll('.tenant-checkbox').forEach(cb => cb.checked = true);
+            updateSummary(); // Update summary after selecting all
         }
 
         function deselectAllTenants() {
             document.querySelectorAll('.tenant-checkbox').forEach(cb => cb.checked = false);
+            updateSummary(); // Update summary after deselecting all
         }
 
         function getSelectedTenants() {
@@ -344,7 +351,10 @@
             document.getElementById('totalTenants').textContent = tenantsData.length;
             document.getElementById('tenantsProcessed').textContent = globalStats.processed;
             
-            const totalImages = selectedTenants.reduce((sum, t) => sum + t.missing_images, 0);
+            // Calculate total images for SELECTED tenants only
+            const totalImages = selectedTenants.length > 0 
+                ? selectedTenants.reduce((sum, t) => sum + t.missing_images, 0)
+                : 0;
             document.getElementById('totalImages').textContent = totalImages;
             document.getElementById('imagesFetched').textContent = globalStats.imagesFetched;
         }
@@ -482,10 +492,16 @@
             }
         }
 
-        function stopBulkFetch() {
+        async function stopBulkFetch() {
             shouldStop = true;
             document.getElementById('stopBtn').disabled = true;
             document.getElementById('stopBtn').textContent = 'Stopping...';
+            
+            // Wait a moment for current batch to finish, then reload tenant data
+            setTimeout(async () => {
+                await loadTenantStatus();
+                showAlert('Bulk fetch stopped. Tenant data refreshed.', 'info');
+            }, 2000);
         }
 
         function updateTenantStatus(tenantId, status, message, progress) {
