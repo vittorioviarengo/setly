@@ -587,11 +587,21 @@ def process_bulk_fetch_job(job_id, tenant_id, tenant_slug, batch_size):
         conn = create_connection()
         cursor = conn.cursor()
         
-        # Get all songs for this tenant that need data
+        # Get songs for this tenant that need data (missing image, genre, or language)
         cursor.execute('''
             SELECT id, title, author, image, genre, language 
             FROM songs 
             WHERE tenant_id = ?
+            AND (
+                image IS NULL OR image = '' OR
+                image LIKE '%placeholder%' OR
+                image LIKE 'http%' OR
+                image LIKE '%setly%' OR
+                image LIKE '%music-icon%' OR
+                image LIKE '%default%' OR
+                genre IS NULL OR genre = '' OR
+                language IS NULL OR language = '' OR language = 'unknown'
+            )
             LIMIT ?
         ''', (tenant_id, batch_size))
         
@@ -727,8 +737,23 @@ def tenant_bulk_fetch_count(tenant_slug):
     
     tenant_id = tenant['id']
     
-    # Count all songs (we'll check if they need data in the message)
-    cursor.execute('SELECT COUNT(*) as total FROM songs WHERE tenant_id = ?', (tenant_id,))
+    # Count only songs that actually need data (missing image, genre, or language)
+    # This matches the same logic used in the bulk fetch
+    cursor.execute('''
+        SELECT COUNT(*) as total 
+        FROM songs 
+        WHERE tenant_id = ? 
+        AND (
+            image IS NULL OR image = '' OR
+            image LIKE '%placeholder%' OR
+            image LIKE 'http%' OR
+            image LIKE '%setly%' OR
+            image LIKE '%music-icon%' OR
+            image LIKE '%default%' OR
+            genre IS NULL OR genre = '' OR
+            language IS NULL OR language = '' OR language = 'unknown'
+        )
+    ''', (tenant_id,))
     result = cursor.fetchone()
     total_songs = result['total'] if result else 0
     

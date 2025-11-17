@@ -80,28 +80,41 @@ def add_background(canvas, doc, tenant_info):
         canvas.rect(0, 0, page_width, page_height, fill=1)
         
         # Path to the background image - use tenant's banner or default (using absolute paths)
-        if tenant_info and tenant_info.get('banner_image'):
-            image_path = os.path.join(SCRIPT_DIR, 'static', tenant_info['banner_image'])
-        else:
-            image_path = os.path.join(SCRIPT_DIR, 'static', 'img', 'musician-welcome-stock-photo.jpg')
+        image_path = None
+        default_image = os.path.join(SCRIPT_DIR, 'static', 'img', 'musician-welcome-stock-photo.jpg')
         
-        # Check if image exists
-        if os.path.exists(image_path):
-            # Load the image
-            img = Image(image_path)
-            
-            # Calculate the aspect ratio of the image
-            img_width, img_height = img.drawWidth, img.drawHeight
-            img_aspect = img_width / img_height
-            
-            # Determine the dimensions to draw the image
-            draw_width = page_width
-            draw_height = page_width / img_aspect
-            
-            # Draw the image at the top of the page
-            canvas.drawImage(image_path, 0, page_height - draw_height, width=draw_width, height=draw_height, mask='auto')
+        # Try tenant's banner first
+        if tenant_info and tenant_info.get('banner_image'):
+            tenant_image = os.path.join(SCRIPT_DIR, 'static', tenant_info['banner_image'])
+            if os.path.exists(tenant_image):
+                image_path = tenant_image
+        
+        # Fallback to default image if tenant image doesn't exist
+        if not image_path and os.path.exists(default_image):
+            image_path = default_image
+        
+        # Try to load and draw the image
+        if image_path:
+            try:
+                # Load the image
+                img = Image(image_path)
+                
+                # Calculate the aspect ratio of the image
+                img_width, img_height = img.drawWidth, img.drawHeight
+                img_aspect = img_width / img_height
+                
+                # Determine the dimensions to draw the image
+                draw_width = page_width
+                draw_height = page_width / img_aspect
+                
+                # Draw the image at the top of the page
+                canvas.drawImage(image_path, 0, page_height - draw_height, width=draw_width, height=draw_height, mask='auto')
+            except Exception as e:
+                print(f"Warning: Could not load image {image_path}: {e}")
+                draw_height = 200  # Default height if image fails to load
         else:
-            draw_height = 200  # Default height if no image
+            # No image available, use simple gradient background
+            draw_height = 200
         
         # Add the text in Gothic font, white color, 30 points, centered
         text = f"L'Universo Musicale di<br/>{tenant_name}"
