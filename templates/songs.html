@@ -139,16 +139,19 @@
     </div>
 
     <h2>{{ _('Song Database') }}</h2>
-    <div class="filter-container" style="margin-bottom: 1rem;">
+    <div class="filter-container" style="margin-bottom: 1rem; display: flex; align-items: center; gap: 10px;">
         <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="{{ _('Search for songs') }}" 
-               style="width: 400px; padding: 12px 15px; font-size: 16px; border: 2px solid var(--primary-color); border-radius: 6px;">
-        <select id="genreFilter" onchange="filterTable()" style="margin-left: 10px;">
+               style="width: 400px; padding: 12px 15px; font-size: 16px; border: 2px solid var(--primary-color); border-radius: 6px; height: 48px; box-sizing: border-box;">
+        <select id="genreFilter" onchange="filterTable()" 
+                style="padding: 12px 15px; font-size: 16px; border: 2px solid #ddd; border-radius: 6px; height: 48px; box-sizing: border-box; background: white; cursor: pointer;">
             <option value="">{{ _('All Genres') }}</option>
         </select>
-        <select id="playlistFilter" onchange="filterTable()" style="margin-left: 10px;">
+        <select id="playlistFilter" onchange="filterTable()" 
+                style="padding: 12px 15px; font-size: 16px; border: 2px solid #ddd; border-radius: 6px; height: 48px; box-sizing: border-box; background: white; cursor: pointer;">
             <option value="">{{ _('All Playlists') }}</option>
         </select>
-        <button onclick="clearSearch()">{{ _('Clear Search Button') }}</button>
+        <button onclick="clearSearch()" 
+                style="padding: 12px 24px; font-size: 16px; border: 2px solid var(--primary-color); background: white; color: var(--primary-color); border-radius: 6px; height: 48px; box-sizing: border-box; cursor: pointer; font-weight: 500; transition: all 0.2s;">{{ _('Clear Search Button') }}</button>
     </div>
     <table id="songsTable">
         <thead>
