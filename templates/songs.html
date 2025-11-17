@@ -1332,7 +1332,10 @@
                         
                         // Start auto-continue countdown if there are more songs to process
                         if (totalRemaining > 0) {
-                            startAutoContinueCountdown();
+                            // Wait a bit longer to ensure DOM is ready
+                            setTimeout(() => {
+                                startAutoContinueCountdown();
+                            }, 200);
                         }
                     }, 50);
                     
@@ -1395,7 +1398,7 @@
         // Auto-continue countdown function
         let autoContinueTimer = null;
         
-        function startAutoContinueCountdown() {
+        function startAutoContinueCountdown(retryCount = 0) {
             // Clear any existing timer
             if (autoContinueTimer) {
                 clearInterval(autoContinueTimer);
@@ -1407,8 +1410,14 @@
             const countdownSeconds = document.getElementById('countdownSeconds');
             const continueButton = document.getElementById('continueButton');
             
+            // If elements not found, retry up to 5 times with 100ms delay
             if (!checkbox || !countdownDiv || !countdownSeconds || !continueButton) {
-                return; // Elements not found
+                if (retryCount < 5) {
+                    setTimeout(() => startAutoContinueCountdown(retryCount + 1), 100);
+                } else {
+                    console.warn('Auto-continue elements not found after retries');
+                }
+                return;
             }
             
             // Listen for checkbox changes
