@@ -12,12 +12,17 @@ import os
 import qrcode
 from io import BytesIO
 
-# Register the Gothic font
-pdfmetrics.registerFont(TTFont('Gothic', 'static/fonts/Century Gothic.ttf'))
+# Get the absolute path of the script directory
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# Register the Gothic font using absolute path
+font_path = os.path.join(SCRIPT_DIR, 'static', 'fonts', 'Century Gothic.ttf')
+pdfmetrics.registerFont(TTFont('Gothic', font_path))
 
 def fetch_songs(tenant_id):
-    # Connect to the database
-    conn = sqlite3.connect('songs.db')  # Replace with your actual database
+    # Connect to the database using absolute path
+    db_path = os.path.join(SCRIPT_DIR, 'songs.db')
+    conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     
     # Fetch songs sorted by author (then title), excluding popularity, filtered by tenant_id
@@ -28,8 +33,9 @@ def fetch_songs(tenant_id):
     return songs
 
 def get_tenant_info(tenant_id):
-    # Connect to the database
-    conn = sqlite3.connect('songs.db')
+    # Connect to the database using absolute path
+    db_path = os.path.join(SCRIPT_DIR, 'songs.db')
+    conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     
     # Fetch tenant information
@@ -73,11 +79,11 @@ def add_background(canvas, doc, tenant_info):
         canvas.setFillColor(colors.black)
         canvas.rect(0, 0, page_width, page_height, fill=1)
         
-        # Path to the background image - use tenant's banner or default
+        # Path to the background image - use tenant's banner or default (using absolute paths)
         if tenant_info and tenant_info.get('banner_image'):
-            image_path = f"static/{tenant_info['banner_image']}"
+            image_path = os.path.join(SCRIPT_DIR, 'static', tenant_info['banner_image'])
         else:
-            image_path = "static/img/musician-welcome-stock-photo.jpg"
+            image_path = os.path.join(SCRIPT_DIR, 'static', 'img', 'musician-welcome-stock-photo.jpg')
         
         # Check if image exists
         if os.path.exists(image_path):
