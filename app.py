@@ -935,35 +935,49 @@ def tenant_bulk_fetch_spotify(tenant_slug):
         # Build message with info about remaining songs
         message = f"Processed {stats['total']} songs: {stats['images_fetched']} images, {stats['genres_added']} genres, {stats['languages_added']} languages"
         
-        # Check if there are more songs to process and get detailed breakdown
+        # Check if there are more songs to process - must check physical files!
         conn = create_connection()
         cursor = conn.cursor()
         cursor.execute('''
-            SELECT 
-                COUNT(*) as total,
-                SUM(CASE WHEN (image IS NULL OR image = '' OR 
-                              image LIKE '%placeholder%' OR image LIKE 'http%' OR
-                              image LIKE '%setly%' OR image LIKE '%music-icon%' OR 
-                              image LIKE '%default%') THEN 1 ELSE 0 END) as missing_images,
-                SUM(CASE WHEN (genre IS NULL OR genre = '') THEN 1 ELSE 0 END) as missing_genres,
-                SUM(CASE WHEN (language IS NULL OR language = '' OR language = 'unknown') THEN 1 ELSE 0 END) as missing_languages
+            SELECT id, image, genre, language 
             FROM songs 
-            WHERE tenant_id = ? 
-            AND (
-                image IS NULL OR image = '' OR
-                image LIKE '%placeholder%' OR
-                image LIKE 'http%' OR
-                image LIKE '%setly%' OR
-                image LIKE '%music-icon%' OR
-                image LIKE '%default%' OR
-                genre IS NULL OR genre = '' OR
-                language IS NULL OR language = '' OR language = 'unknown'
-            )
+            WHERE tenant_id = ?
         ''', (tenant_id,))
-        remaining_details = cursor.fetchone()
+        all_songs = cursor.fetchall()
         conn.close()
         
-        remaining = remaining_details['total'] if remaining_details else 0
+        # Count what's actually missing (including physical file check)
+        remaining_images = 0
+        remaining_genres = 0
+        remaining_languages = 0
+        
+        for song in all_songs:
+            needs_image = (not song['image'] or song['image'] == '' or 
+                          (song['image'] and (
+                              'placeholder' in song['image'].lower() or 
+                              song['image'].startswith('http') or
+                              'setly' in song['image'].lower() or
+                              'music-icon' in song['image'].lower() or
+                              'default' in song['image'].lower()
+                          )))
+            
+            # Check if image file actually exists on disk
+            if not needs_image and song['image']:
+                image_path = os.path.join(app_dir, 'static', 'tenants', tenant_slug, 'author_images', song['image'])
+                if not os.path.exists(image_path):
+                    needs_image = True
+            
+            needs_genre = not song['genre'] or song['genre'] == ''
+            needs_language = not song['language'] or song['language'] in ['', 'unknown']
+            
+            if needs_image:
+                remaining_images += 1
+            if needs_genre:
+                remaining_genres += 1
+            if needs_language:
+                remaining_languages += 1
+        
+        remaining = max(remaining_images, remaining_genres, remaining_languages)
         has_more = remaining > 0
         
         app.logger.info(f"Bulk fetch completed for {tenant_slug}: {message}")
@@ -975,9 +989,9 @@ def tenant_bulk_fetch_spotify(tenant_slug):
             'total_in_db': total_in_db,
             'has_more': has_more,
             'remaining': remaining,
-            'remaining_images': remaining_details['missing_images'] if remaining_details else 0,
-            'remaining_genres': remaining_details['missing_genres'] if remaining_details else 0,
-            'remaining_languages': remaining_details['missing_languages'] if remaining_details else 0
+            'remaining_images': remaining_images,
+            'remaining_genres': remaining_genres,
+            'remaining_languages': remaining_languages
         })
         
     except Exception as e:

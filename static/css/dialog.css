@@ -81,10 +81,10 @@
 }
 
 .app-dialog-body {
-    padding: 24px;
+    padding: 16px 24px;
     color: #546e7a;
     font-size: 15px;
-    line-height: 1.6;
+    line-height: 1.5;
     max-height: 85vh;
     overflow-y: auto;
 }
