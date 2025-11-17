@@ -85,7 +85,7 @@
     color: #546e7a;
     font-size: 14px;
     line-height: 1.4;
-    max-height: 85vh;
+    max-height: calc(98vh - 180px);
     overflow-y: auto;
 }
 
