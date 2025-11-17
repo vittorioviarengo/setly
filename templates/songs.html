@@ -1399,6 +1399,8 @@
         let autoContinueTimer = null;
         
         function startAutoContinueCountdown(retryCount = 0) {
+            console.log('startAutoContinueCountdown called, retry:', retryCount);
+            
             // Clear any existing timer
             if (autoContinueTimer) {
                 clearInterval(autoContinueTimer);
@@ -1410,15 +1412,25 @@
             const countdownSeconds = document.getElementById('countdownSeconds');
             const continueButton = document.getElementById('continueButton');
             
+            console.log('Elements found:', {
+                checkbox: !!checkbox,
+                countdownDiv: !!countdownDiv,
+                countdownSeconds: !!countdownSeconds,
+                continueButton: !!continueButton
+            });
+            
             // If elements not found, retry up to 5 times with 100ms delay
             if (!checkbox || !countdownDiv || !countdownSeconds || !continueButton) {
                 if (retryCount < 5) {
+                    console.log('Elements not found, retrying in 100ms...');
                     setTimeout(() => startAutoContinueCountdown(retryCount + 1), 100);
                 } else {
-                    console.warn('Auto-continue elements not found after retries');
+                    console.error('Auto-continue elements not found after 5 retries');
                 }
                 return;
             }
+            
+            console.log('All elements found successfully!');
             
             // Listen for checkbox changes
             checkbox.addEventListener('change', function() {
@@ -1448,20 +1460,28 @@
             });
             
             // Start countdown if checkbox is checked (default)
+            console.log('Auto-continue countdown starting, checkbox checked:', checkbox.checked);
             if (checkbox.checked) {
                 countdownDiv.style.display = 'block';
+                countdownDiv.style.visibility = 'visible';
+                countdownDiv.style.opacity = '1';
                 let secondsLeft = 3;
                 countdownSeconds.textContent = secondsLeft;
                 
+                console.log('Starting countdown timer from 3 seconds');
                 autoContinueTimer = setInterval(() => {
                     secondsLeft--;
+                    console.log('Countdown:', secondsLeft);
                     if (secondsLeft > 0) {
                         countdownSeconds.textContent = secondsLeft;
                     } else {
+                        console.log('Countdown finished, clicking continue button');
                         clearInterval(autoContinueTimer);
                         continueButton.click();
                     }
                 }, 1000);
+            } else {
+                console.log('Checkbox not checked, countdown will not start');
             }
         }
 
