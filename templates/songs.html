@@ -1174,10 +1174,14 @@
                     // Slower, smaller random increments (2-5% instead of 0-10%)
                     progress += Math.random() * 3 + 2; // Between 2% and 5% per tick
                     if (progress > 92) progress = 92; // Cap at 92% (not 95%, to stay longer before "Almost done")
-                    progressBar.style.width = progress + '%';
+                    
+                    // Check if elements exist before updating (defensive)
+                    if (progressBar) {
+                        progressBar.style.width = progress + '%';
+                    }
                     
                     // Change status message based on progress thresholds
-                    if (currentStepIndex < progressSteps.length - 1 && 
+                    if (statusText && currentStepIndex < progressSteps.length - 1 && 
                         progress >= progressSteps[currentStepIndex + 1].threshold) {
                         currentStepIndex++;
                         statusText.textContent = progressSteps[currentStepIndex].message;
@@ -1331,7 +1335,7 @@
                         }
                         
                         // Start auto-continue countdown if there are more songs to process
-                        if (totalRemaining > 0) {
+                        if (data.has_more && data.remaining > 0) {
                             // Wait a bit longer to ensure DOM is ready
                             setTimeout(() => {
                                 startAutoContinueCountdown();
