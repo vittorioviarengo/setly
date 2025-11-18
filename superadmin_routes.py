@@ -1495,6 +1495,9 @@ def bulk_spotify_process():
         # Get more songs than batch_size to compensate for skips (same logic as tenant bulk)
         # Many songs match the query but get skipped in the loop (e.g., file exists, Spotify returns no data)
         extended_batch = batch_size * 5
+        
+        # First, get songs that match the obvious patterns OR have missing genre/language
+        # This query finds songs with obvious missing data
         cursor.execute('''
             SELECT id, title, author, image, genre, language 
             FROM songs 
@@ -1514,8 +1517,74 @@ def bulk_spotify_process():
         
         songs = cursor.fetchall()
         
+        # Also get songs that have missing genre/language (they might also have missing image files)
+        # This helps us find songs with images in DB that don't exist physically
+        if len(songs) < extended_batch:
+            remaining = extended_batch - len(songs)
+            song_ids = [song['id'] for song in songs] if songs else []
+            
+            # Get additional songs that have missing genre/language (even if they have image values)
+            # We'll check if the image file exists in the loop
+            if song_ids:
+                placeholders = ','.join(['?'] * len(song_ids))
+                cursor.execute(f'''
+                    SELECT id, title, author, image, genre, language 
+                    FROM songs 
+                    WHERE tenant_id = ?
+                    AND id NOT IN ({placeholders})
+                    AND (genre IS NULL OR genre = '' OR language IS NULL OR language = '' OR language = 'unknown')
+                    LIMIT ?
+                ''', [tenant_id] + song_ids + [remaining])
+            else:
+                cursor.execute('''
+                    SELECT id, title, author, image, genre, language 
+                    FROM songs 
+                    WHERE tenant_id = ?
+                    AND (genre IS NULL OR genre = '' OR language IS NULL OR language = '' OR language = 'unknown')
+                    LIMIT ?
+                ''', (tenant_id, remaining))
+            
+            additional_songs = cursor.fetchall()
+            if additional_songs:
+                songs.extend(additional_songs)
+                app.logger.info(f"[Superadmin Bulk] Added {len(additional_songs)} more songs with missing genre/language")
+        
+        # If still not enough, also get songs that have image values (even if they don't match patterns)
+        # These might have images in DB but missing physical files
+        if len(songs) < extended_batch:
+            remaining = extended_batch - len(songs)
+            song_ids = [song['id'] for song in songs] if songs else []
+            
+            if song_ids:
+                placeholders = ','.join(['?'] * len(song_ids))
+                cursor.execute(f'''
+                    SELECT id, title, author, image, genre, language 
+                    FROM songs 
+                    WHERE tenant_id = ?
+                    AND id NOT IN ({placeholders})
+                    AND image IS NOT NULL 
+                    AND image != ''
+                    LIMIT ?
+                ''', [tenant_id] + song_ids + [remaining])
+            else:
+                cursor.execute('''
+                    SELECT id, title, author, image, genre, language 
+                    FROM songs 
+                    WHERE tenant_id = ?
+                    AND image IS NOT NULL 
+                    AND image != ''
+                    LIMIT ?
+                ''', (tenant_id, remaining))
+            
+            more_songs = cursor.fetchall()
+            if more_songs:
+                songs.extend(more_songs)
+                app.logger.info(f"[Superadmin Bulk] Added {len(more_songs)} more songs with image values (will check if files exist)")
+        
+        total_songs = len(songs)
+        
         stats = {
-            'total': len(songs),
+            'total': total_songs,
             'images_fetched': 0,
             'genres_added': 0,
             'languages_added': 0,
@@ -1524,7 +1593,7 @@ def bulk_spotify_process():
             'skipped_reasons': []  # Track why songs are skipped
         }
         
-        app.logger.info(f"[Superadmin Bulk] Tenant {tenant_slug}: Found {len(songs)} songs to process")
+        app.logger.info(f"[Superadmin Bulk] Tenant {tenant_slug}: Found {total_songs} songs to process")
         
         processed_artists = {}
         
@@ -1541,10 +1610,13 @@ def bulk_spotify_process():
                               )))
                 
                 # Check if file exists (use absolute path)
+                image_file_missing = False
                 if not needs_image and song['image']:
                     image_path = os.path.join(app_dir, 'static', 'tenants', tenant_slug, 'author_images', song['image'])
                     if not os.path.exists(image_path):
                         needs_image = True
+                        image_file_missing = True
+                        app.logger.debug(f"[Superadmin Bulk] Song {song['id']} ({song['title']}) has image '{song['image']}' in DB but file doesn't exist")
                 
                 needs_genre = not song['genre'] or song['genre'] == ''
                 needs_language = not song['language'] or song['language'] in ['', 'unknown']
@@ -1555,6 +1627,10 @@ def bulk_spotify_process():
                     stats['skipped_reasons'].append(reason)
                     app.logger.debug(f"[Superadmin Bulk] {reason}")
                     continue
+                
+                # Log what we're processing
+                if needs_image:
+                    app.logger.debug(f"[Superadmin Bulk] Processing song {song['id']} ({song['title']}): needs_image={needs_image} (file_missing={image_file_missing}), needs_genre={needs_genre}, needs_language={needs_language}")
                 
                 # Get artist data
                 artist_name = song['author']

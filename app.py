@@ -901,6 +901,38 @@ def tenant_bulk_fetch_spotify(tenant_slug):
                 songs.extend(additional_songs)
                 app.logger.info(f"[Tenant Bulk] Added {len(additional_songs)} more songs with missing genre/language")
         
+        # If still not enough, also get songs that have image values (even if they don't match patterns)
+        # These might have images in DB but missing physical files
+        if len(songs) < extended_batch:
+            remaining = extended_batch - len(songs)
+            song_ids = [song['id'] for song in songs] if songs else []
+            
+            if song_ids:
+                placeholders = ','.join(['?'] * len(song_ids))
+                cursor.execute(f'''
+                    SELECT id, title, author, image, genre, language 
+                    FROM songs 
+                    WHERE tenant_id = ?
+                    AND id NOT IN ({placeholders})
+                    AND image IS NOT NULL 
+                    AND image != ''
+                    LIMIT ?
+                ''', [tenant_id] + song_ids + [remaining])
+            else:
+                cursor.execute('''
+                    SELECT id, title, author, image, genre, language 
+                    FROM songs 
+                    WHERE tenant_id = ?
+                    AND image IS NOT NULL 
+                    AND image != ''
+                    LIMIT ?
+                ''', (tenant_id, remaining))
+            
+            more_songs = cursor.fetchall()
+            if more_songs:
+                songs.extend(more_songs)
+                app.logger.info(f"[Tenant Bulk] Added {len(more_songs)} more songs with image values (will check if files exist)")
+        
         total_songs = len(songs)
         
         app.logger.info(f"[Tenant Bulk] Found {total_songs} songs to check for tenant {tenant_slug}")
