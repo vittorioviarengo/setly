@@ -1125,7 +1125,17 @@
             try {
                 const countResponse = await fetch('{{ url_for("tenant_bulk_fetch_count", tenant_slug=tenant.slug) }}');
                 if (countResponse.ok) {
-                    countDetails = await countResponse.json();
+                    const contentType = countResponse.headers.get('content-type');
+                    if (contentType && contentType.includes('application/json')) {
+                        countDetails = await countResponse.json();
+                    } else {
+                        // If not JSON, log error and continue without count details
+                        const text = await countResponse.text();
+                        console.error('Expected JSON but got:', text.substring(0, 200));
+                    }
+                } else {
+                    // If not OK, log error but continue
+                    console.error('Count fetch failed with status:', countResponse.status);
                 }
             } catch (err) {
                 console.error('Error fetching count:', err);
@@ -1139,7 +1149,7 @@
             
             if (countDetails && countDetails.total_songs > 0) {
                 detailsHtml += '<div style="background: #f0f8ff; padding: 12px; border-radius: 8px; margin: 10px 0; border-left: 4px solid #1DB954;">' +
-                    '<strong>📊 {{ _("Songs to process:") }}</strong><br>' +
+                    '<strong>📊 {{ _("Songs in database:") }}</strong><br>' +
                     '{{ _("Total songs:") }} <strong>' + countDetails.total_songs + '</strong><br>' +
                     '{{ _("Missing images:") }} <strong>' + countDetails.missing_images + '</strong><br>' +
                     '{{ _("Missing genres:") }} <strong>' + countDetails.missing_genres + '</strong><br>' +

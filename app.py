@@ -724,76 +724,87 @@ def tenant_bulk_fetch_count(tenant_slug):
     """Count how many songs need data from Spotify - includes physical file check."""
     import os
     
-    # Check if tenant admin is logged in
-    if not session.get('is_tenant_admin') or session.get('tenant_slug') != tenant_slug:
-        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
-    
-    conn = create_connection()
-    cursor = conn.cursor()
-    cursor.execute('SELECT * FROM tenants WHERE slug = ? AND active = 1', (tenant_slug,))
-    tenant = cursor.fetchone()
-    
-    if not tenant:
+    try:
+        # Check if tenant admin is logged in
+        if not session.get('is_tenant_admin') or session.get('tenant_slug') != tenant_slug:
+            return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+        
+        conn = create_connection()
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM tenants WHERE slug = ? AND active = 1', (tenant_slug,))
+        tenant = cursor.fetchone()
+        
+        if not tenant:
+            conn.close()
+            return jsonify({'success': False, 'message': 'Tenant not found'}), 404
+        
+        tenant_id = tenant['id']
+        
+        # Get absolute path to the app directory
+        app_dir = os.path.dirname(os.path.abspath(__file__))
+        
+        # First, count TOTAL songs in database for this tenant
+        cursor.execute('SELECT COUNT(*) as total FROM songs WHERE tenant_id = ?', (tenant_id,))
+        total_result = cursor.fetchone()
+        total_songs_in_db = total_result['total'] if total_result else 0
+        
+        # Get all songs for this tenant
+        cursor.execute('''
+            SELECT id, image, genre, language 
+            FROM songs 
+            WHERE tenant_id = ?
+        ''', (tenant_id,))
+        songs = cursor.fetchall()
+        
+        # Count what's actually missing (including physical file check)
+        missing_images = 0
+        missing_genres = 0
+        missing_languages = 0
+        total_needing_data = 0
+        
+        for song in songs:
+            needs_image = (not song['image'] or song['image'] == '' or 
+                          (song['image'] and (
+                              'placeholder' in song['image'].lower() or 
+                              song['image'].startswith('http') or
+                              'setly' in song['image'].lower() or
+                              'music-icon' in song['image'].lower() or
+                              'default' in song['image'].lower()
+                          )))
+            
+            # Check if image file actually exists on disk (use absolute path)
+            if not needs_image and song['image']:
+                image_path = os.path.join(app_dir, 'static', 'tenants', tenant_slug, 'author_images', song['image'])
+                if not os.path.exists(image_path):
+                    needs_image = True
+            
+            needs_genre = not song['genre'] or song['genre'] == ''
+            needs_language = not song['language'] or song['language'] in ['', 'unknown']
+            
+            if needs_image:
+                missing_images += 1
+            if needs_genre:
+                missing_genres += 1
+            if needs_language:
+                missing_languages += 1
+            
+            if needs_image or needs_genre or needs_language:
+                total_needing_data += 1
+        
         conn.close()
-        return jsonify({'success': False, 'message': 'Tenant not found'}), 404
-    
-    tenant_id = tenant['id']
-    
-    # Get absolute path to the app directory
-    app_dir = os.path.dirname(os.path.abspath(__file__))
-    
-    # Get all songs for this tenant
-    cursor.execute('''
-        SELECT id, image, genre, language 
-        FROM songs 
-        WHERE tenant_id = ?
-    ''', (tenant_id,))
-    songs = cursor.fetchall()
-    
-    # Count what's actually missing (including physical file check)
-    missing_images = 0
-    missing_genres = 0
-    missing_languages = 0
-    total_needing_data = 0
-    
-    for song in songs:
-        needs_image = (not song['image'] or song['image'] == '' or 
-                      (song['image'] and (
-                          'placeholder' in song['image'].lower() or 
-                          song['image'].startswith('http') or
-                          'setly' in song['image'].lower() or
-                          'music-icon' in song['image'].lower() or
-                          'default' in song['image'].lower()
-                      )))
         
-        # Check if image file actually exists on disk (use absolute path)
-        if not needs_image and song['image']:
-            image_path = os.path.join(app_dir, 'static', 'tenants', tenant_slug, 'author_images', song['image'])
-            if not os.path.exists(image_path):
-                needs_image = True
-        
-        needs_genre = not song['genre'] or song['genre'] == ''
-        needs_language = not song['language'] or song['language'] in ['', 'unknown']
-        
-        if needs_image:
-            missing_images += 1
-        if needs_genre:
-            missing_genres += 1
-        if needs_language:
-            missing_languages += 1
-        
-        if needs_image or needs_genre or needs_language:
-            total_needing_data += 1
-    
-    conn.close()
-    
-    return jsonify({
-        'success': True,
-        'total_songs': total_needing_data,
-        'missing_images': missing_images,
-        'missing_genres': missing_genres,
-        'missing_languages': missing_languages
-    })
+        return jsonify({
+            'success': True,
+            'total_songs': total_songs_in_db,  # Total songs in database
+            'missing_images': missing_images,
+            'missing_genres': missing_genres,
+            'missing_languages': missing_languages
+        })
+    except Exception as e:
+        app.logger.error(f"Error in tenant_bulk_fetch_count for {tenant_slug}: {e}")
+        if 'conn' in locals():
+            conn.close()
+        return jsonify({'success': False, 'message': str(e)}), 500
 
 @app.route('/<tenant_slug>/bulk_fetch_spotify', methods=['POST'])
 def tenant_bulk_fetch_spotify(tenant_slug):
