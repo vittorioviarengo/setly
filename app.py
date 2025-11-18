@@ -435,6 +435,45 @@ def get_spotify_image(author_name):
     app.logger.warning(f"No artist found on Spotify for: {author_name}")
     return None
 
+def normalize_artist_filename(artist_name):
+    """
+    Normalize artist name to a safe filename.
+    Handles special characters, multiple artists, abbreviations, etc.
+    """
+    if not artist_name:
+        return "unknown_artist"
+    
+    # Convert to lowercase
+    normalized = artist_name.lower().strip()
+    
+    # Replace common separators with underscore
+    # Handle "/", ",", "&", "feat.", "featuring", etc.
+    normalized = normalized.replace('/', ' ')
+    normalized = normalized.replace(',', ' ')
+    normalized = normalized.replace('&', ' ')
+    normalized = normalized.replace('feat.', ' ')
+    normalized = normalized.replace('featuring', ' ')
+    normalized = normalized.replace('ft.', ' ')
+    normalized = normalized.replace('with', ' ')
+    
+    # Replace multiple spaces/underscores with single underscore
+    normalized = re.sub(r'[\s_]+', '_', normalized)
+    
+    # Remove trailing underscores
+    normalized = normalized.strip('_')
+    
+    # Remove special characters except underscore, dash, and alphanumeric
+    normalized = re.sub(r'[^a-z0-9_-]', '', normalized)
+    
+    # Collapse multiple underscores to single underscore
+    normalized = re.sub(r'_+', '_', normalized)
+    
+    # If empty after normalization, use default
+    if not normalized:
+        normalized = "unknown_artist"
+    
+    return normalized
+
 def download_image(url, filename, tenant_slug=None):
     """Download image from URL and save to tenant-specific or shared directory."""
     from utils.tenant_utils import get_tenant_dir
@@ -655,8 +694,8 @@ def process_bulk_fetch_job(job_id, tenant_id, tenant_slug, batch_size):
                     
                     # Update image if needed
                     if needs_image and artist_data.get('image_url'):
-                        # Normalize filename: lowercase, replace spaces with underscores
-                        normalized_artist = artist_name.lower().replace(' ', '_')
+                        # Normalize filename: handle special characters, multiple artists, etc.
+                        normalized_artist = normalize_artist_filename(artist_name)
                         filename = f"{normalized_artist}.jpg"
                         saved_filename = download_image(artist_data['image_url'], filename, tenant_slug)
                         if saved_filename:
@@ -671,7 +710,7 @@ def process_bulk_fetch_job(job_id, tenant_id, tenant_slug, batch_size):
                         stats['genres_added'] += 1
                     
                     # Update language if needed  
-                    if needs_language and artist_data.get('language'):
+                    if needs_language and artist_data and artist_data.get('language'):
                         updates.append('language = ?')
                         params.append(artist_data['language'])
                         stats['languages_added'] += 1
@@ -993,7 +1032,7 @@ def tenant_bulk_fetch_spotify(tenant_slug):
                     # Update image if needed
                     if needs_image:
                         if artist_data.get('image_url'):
-                            normalized_artist = artist_name.lower().replace(' ', '_')
+                            normalized_artist = normalize_artist_filename(artist_name)
                             filename = f"{normalized_artist}.jpg"
                             saved_filename = download_image(artist_data['image_url'], filename, tenant_slug)
                             if saved_filename:
@@ -1007,13 +1046,13 @@ def tenant_bulk_fetch_spotify(tenant_slug):
                             app.logger.warning(f"[Tenant Bulk] Spotify found artist '{artist_name}' but no image_url available (song: {song['title']})")
                     
                     # Update genre if needed
-                    if needs_genre and artist_data.get('genre'):
+                    if needs_genre and artist_data and artist_data.get('genre'):
                         updates.append('genre = ?')
                         params.append(artist_data['genre'])
                         stats['genres_added'] += 1
                     
                     # Update language if needed  
-                    if needs_language and artist_data.get('language'):
+                    if needs_language and artist_data and artist_data.get('language'):
                         updates.append('language = ?')
                         params.append(artist_data['language'])
                         stats['languages_added'] += 1

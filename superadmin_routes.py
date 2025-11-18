@@ -1663,7 +1663,8 @@ def bulk_spotify_process():
                     
                     # Update image
                     if needs_image and artist_data.get('image_url'):
-                        normalized_artist = artist_name.lower().replace(' ', '_')
+                        from app import normalize_artist_filename
+                        normalized_artist = normalize_artist_filename(artist_name)
                         filename = f"{normalized_artist}.jpg"
                         saved_filename = download_image(artist_data['image_url'], filename, tenant_slug)
                         if saved_filename:
