@@ -813,10 +813,10 @@ def tenant_bulk_fetch_spotify(tenant_slug):
     # Get absolute path to the app directory
     app_dir = os.path.dirname(os.path.abspath(__file__))
     
-    # Get max batch size from system settings (default 5 for PythonAnywhere timeout limits)
-    # PythonAnywhere has aggressive 30-second timeout, so we need very small batches
-    # Even with 5*2=10 songs, the physical file checks and Spotify API calls can be slow
-    max_batch_size = get_system_setting('spotify_batch_size', default=5, value_type=int)
+    # Get max batch size from system settings (default 50 for local, smaller on PythonAnywhere)
+    # User can set spotify_batch_size in superadmin settings
+    # PythonAnywhere needs smaller batches (5-10), local can handle 50-500
+    max_batch_size = get_system_setting('spotify_batch_size', default=50, value_type=int)
     request_data = request.json if request.json else {}
     requested_batch_size = int(request_data.get('batch_size', max_batch_size))
     batch_size = min(requested_batch_size, max_batch_size)
@@ -829,9 +829,9 @@ def tenant_bulk_fetch_spotify(tenant_slug):
         
         # Get more songs than batch_size to compensate for skips
         # Many songs match the query but get skipped (e.g., already have images, Spotify returns no genre, etc.)
-        # Reduced from 3x to 2x for PythonAnywhere timeout limits
-        # This means we'll get ~10 songs per batch instead of ~30, which should finish within 25 seconds
-        extended_batch = batch_size * 2
+        # Use multiplier from settings (default 3x), can be adjusted for local vs PythonAnywhere
+        batch_multiplier = get_system_setting('spotify_batch_multiplier', default=3, value_type=int)
+        extended_batch = batch_size * batch_multiplier
         
         # First, get songs that match the obvious patterns OR have missing genre/language
         # This query finds songs with obvious missing data
@@ -1128,6 +1128,70 @@ def tenant_bulk_fetch_spotify(tenant_slug):
         conn.close()
         app.logger.error(f"Error in bulk fetch for {tenant_slug}: {e}")
         return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/<tenant_slug>/check_image_sync', methods=['GET'])
+def tenant_check_image_sync(tenant_slug):
+    """Check if images in database match files in filesystem."""
+    import os
+    
+    # Check if tenant admin is logged in
+    if not session.get('is_tenant_admin') or session.get('tenant_slug') != tenant_slug:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+    
+    conn = create_connection()
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM tenants WHERE slug = ? AND active = 1', (tenant_slug,))
+    tenant = cursor.fetchone()
+    
+    if not tenant:
+        conn.close()
+        return jsonify({'success': False, 'message': 'Tenant not found'}), 404
+    
+    tenant_id = tenant['id']
+    app_dir = os.path.dirname(os.path.abspath(__file__))
+    images_dir = os.path.join(app_dir, 'static', 'tenants', tenant_slug, 'author_images')
+    
+    # Get all songs with image values
+    cursor.execute('''
+        SELECT id, title, author, image 
+        FROM songs 
+        WHERE tenant_id = ? 
+        AND image IS NOT NULL 
+        AND image != ''
+    ''', (tenant_id,))
+    songs = cursor.fetchall()
+    conn.close()
+    
+    stats = {
+        'total_with_image_in_db': len(songs),
+        'files_exist': 0,
+        'files_missing': 0,
+        'missing_files': []
+    }
+    
+    for song in songs:
+        image_path = os.path.join(images_dir, song['image'])
+        if os.path.exists(image_path):
+            stats['files_exist'] += 1
+        else:
+            stats['files_missing'] += 1
+            stats['missing_files'].append({
+                'id': song['id'],
+                'title': song['title'],
+                'author': song['author'],
+                'image': song['image']
+            })
+            # Limit to first 50 for performance
+            if len(stats['missing_files']) >= 50:
+                break
+    
+    return jsonify({
+        'success': True,
+        'tenant_name': tenant['name'],
+        'tenant_slug': tenant_slug,
+        'images_directory': images_dir,
+        'stats': stats
+    })
 
 @app.route('/<tenant_slug>/bulk_fetch_status/<job_id>', methods=['GET'])
 def tenant_bulk_fetch_status(tenant_slug, job_id):
