@@ -1100,7 +1100,16 @@ def tenant_bulk_fetch_spotify(tenant_slug):
                 else:
                     # Spotify returned no data for this artist
                     if artist_data is None:
-                        app.logger.warning(f"[Tenant Bulk] Spotify returned no data for artist '{artist_name}' (song: {song['title']})")
+                        error_msg = f"Spotify did NOT find artist '{artist_name}' (song: {song['title']})"
+                        app.logger.warning(f"[Tenant Bulk] {error_msg}")
+                        # Store error message for debugging
+                        if 'error_details' not in stats:
+                            stats['error_details'] = []
+                        stats['error_details'].append({
+                            'artist': artist_name,
+                            'song': song['title'],
+                            'reason': 'artist_not_found'
+                        })
                         stats['errors'] += 1
                     elif artist_data.get('rate_limited'):
                         app.logger.warning(f"[Tenant Bulk] Spotify rate limited for artist '{artist_name}' (song: {song['title']})")
@@ -1171,6 +1180,9 @@ def tenant_bulk_fetch_spotify(tenant_slug):
         app.logger.info(f"Bulk fetch completed for {tenant_slug}: {message}")
         app.logger.info(f"[Tenant Bulk] Remaining: {remaining_images} images, {remaining_genres} genres, {remaining_languages} languages. Has more: {has_more}")
         
+        # Include error details (limit to first 20 for performance)
+        error_details = stats.get('error_details', [])[:20]
+        
         return jsonify({
             'success': True,
             'message': message,
@@ -1180,7 +1192,8 @@ def tenant_bulk_fetch_spotify(tenant_slug):
             'remaining': remaining,
             'remaining_images': remaining_images,
             'remaining_genres': remaining_genres,
-            'remaining_languages': remaining_languages
+            'remaining_languages': remaining_languages,
+            'error_details': error_details  # First 20 artists not found by Spotify
         })
         
     except Exception as e:

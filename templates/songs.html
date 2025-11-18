@@ -1356,8 +1356,30 @@
                                     <div><strong style="color: #495057;">{{ _("Skipped") }}:</strong> <span style="color: #ffc107; font-weight: 600;">${stats.skipped || 0}</span></div>
                                     <div><strong style="color: #495057;">{{ _("Errors") }}:</strong> <span style="color: #dc3545; font-weight: 600;">${stats.errors || 0}</span></div>
                                 </div>
-                            </div>
-                            <div style="margin-top: 1.5rem;">`
+                            </div>`
+                    
+                    // Show artists not found by Spotify if there are errors
+                    if (data.error_details && data.error_details.length > 0) {
+                        messageHtml += `
+                            <div style="background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 8px; padding: 14px 16px; margin: 1rem 0; text-align: left;">
+                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+                                    <span style="font-size: 1.5em;">⚠️</span>
+                                    <strong style="color: #721c24; font-size: 1.05em;">{{ _("Artists not found by Spotify") }} (${data.error_details.length}):</strong>
+                                </div>
+                                <div style="max-height: 200px; overflow-y: auto; font-size: 0.85em; color: #721c24; line-height: 1.6;">
+                                    ${data.error_details.map(err => 
+                                        `<div style="padding: 4px 0; border-bottom: 1px solid rgba(114,28,36,0.2);">
+                                            <strong>${err.artist}</strong> <span style="color: #856404;">(${err.song})</span>
+                                        </div>`
+                                    ).join('')}
+                                </div>
+                                <div style="margin-top: 10px; font-size: 0.8em; color: #856404; font-style: italic;">
+                                    {{ _("These artists may have typos or be unknown on Spotify. Check the artist names in your database.") }}
+                                </div>
+                            </div>`;
+                    }
+                    
+                    messageHtml += `<div style="margin-top: 1.5rem;">`
                     
                     // Log for debugging
                     console.log('[Tenant Bulk] Response:', {
