@@ -1467,3 +1467,18 @@ msgstr "Artisti non trovati da Spotify"
 
 msgid "These artists may have typos or be unknown on Spotify. Check the artist names in your database."
 msgstr "Questi artisti potrebbero avere errori di battitura o essere sconosciuti su Spotify. Controlla i nomi degli artisti nel database."
+
+msgid "Missing image"
+msgstr "Immagine mancante"
+
+msgid "No image"
+msgstr "Nessuna immagine"
+
+msgid "Warning:"
+msgstr "Attenzione:"
+
+msgid "songs are missing images. The PDF will show default icons for these songs. Continue anyway?"
+msgstr "canzoni non hanno immagini. Il PDF mostrerà icone predefinite per queste canzoni. Continuare comunque?"
+
+msgid "Missing Images"
+msgstr "Immagini Mancanti"

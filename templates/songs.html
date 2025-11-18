@@ -266,16 +266,33 @@
                 console.log('Loading song:', song.title, 'Image from DB:', song.image);
                 const authorImage = song.image ? getAuthorImageUrl(song.image) : '/static/img/music-music-note-2.svg';
                 console.log('Resolved image URL:', authorImage);
+                
+                // Check if song has missing image (no image, placeholder, or default)
+                const hasMissingImage = !song.image || 
+                    song.image === '' || 
+                    song.image.toLowerCase().includes('placeholder') ||
+                    song.image.toLowerCase().includes('default') ||
+                    song.image.toLowerCase().includes('music-icon') ||
+                    song.image.toLowerCase().includes('setly') ||
+                    song.image.startsWith('http');
+                
                 const row = document.createElement('tr');
+                // Add warning style if image is missing
+                if (hasMissingImage) {
+                    row.style.borderLeft = '4px solid #ffc107';
+                    row.style.backgroundColor = '#fffbf0';
+                }
+                
                 row.innerHTML = `
-            <td contenteditable="true" oninput="markRowAsChanged(this)">${song.title}</td>
+            <td contenteditable="true" oninput="markRowAsChanged(this)">${song.title}${hasMissingImage ? ' <span style="color: #ffc107;" title="{{ _("Missing image") }}">⚠️</span>' : ''}</td>
             <td contenteditable="true" oninput="markRowAsChanged(this)">${song.author}</td>
             <td colspan="3" style="background-color: #f8f9fa; padding: 8px;">
                 <div style="display: flex; gap: 8px; align-items: stretch;">
                     <!-- Image Column -->
                     <div style="flex: 1; display: flex; flex-direction: column; gap: 4px; min-width: 60px;">
-                <div class="image-container">
-                            <img src="${authorImage}" alt="Author Image" width="50" onclick="enlargeImage('${authorImage}')" onerror="this.src='/static/img/music-music-note-2.svg'" style="cursor: pointer; border-radius: 4px;">
+                <div class="image-container" style="${hasMissingImage ? 'border: 2px dashed #ffc107; border-radius: 4px; padding: 4px;' : ''}">
+                            <img src="${authorImage}" alt="Author Image" width="50" onclick="enlargeImage('${authorImage}')" onerror="this.src='/static/img/music-music-note-2.svg'; this.closest('tr').style.borderLeft='4px solid #ffc107'; this.closest('tr').style.backgroundColor='#fffbf0';" style="cursor: pointer; border-radius: 4px;">
+                    ${hasMissingImage ? '<div style="font-size: 10px; color: #856404; text-align: center; margin-top: 2px; font-weight: 600;">⚠️ {{ _("No image") }}</div>' : ''}
                     <div class="button-container">
                                 <button onclick="triggerFileInput(this)" style="font-size: 11px; padding: 4px 8px;">${translations.editImage}</button>
                         <input type="file" class="file-input" style="display: none;" onchange="uploadImage(event, '${song.id}', this)">
@@ -995,6 +1012,27 @@
         async function generatePDF() {
             const button = document.getElementById('generatePdfBtn');
             const originalText = button.innerHTML;
+            
+            // Check for songs without images
+            const songsWithoutImages = allSongs.filter(song => {
+                return !song.image || 
+                    song.image === '' || 
+                    song.image.toLowerCase().includes('placeholder') ||
+                    song.image.toLowerCase().includes('default') ||
+                    song.image.toLowerCase().includes('music-icon') ||
+                    song.image.toLowerCase().includes('setly') ||
+                    song.image.startsWith('http');
+            });
+            
+            if (songsWithoutImages.length > 0) {
+                const proceed = await showConfirm(
+                    {{ _("Warning:") | tojson }} + ' ' + songsWithoutImages.length + ' ' + {{ _("songs are missing images. The PDF will show default icons for these songs. Continue anyway?") | tojson }},
+                    {{ _("Missing Images") | tojson }}
+                );
+                if (!proceed) {
+                    return;
+                }
+            }
             
             try {
                 // Disable button and show loading state
