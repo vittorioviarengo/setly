@@ -1295,6 +1295,17 @@
                             </div>
                             <div style="margin-top: 1.5rem;">`
                     
+                    // Log for debugging
+                    console.log('[Tenant Bulk] Response:', {
+                        success: data.success,
+                        has_more: data.has_more,
+                        remaining: data.remaining,
+                        remaining_images: data.remaining_images,
+                        remaining_genres: data.remaining_genres,
+                        remaining_languages: data.remaining_languages,
+                        stats: stats
+                    });
+                    
                     // Check if there are more songs to process
                     if (data.has_more && data.remaining > 0) {
                         messageHtml += `
