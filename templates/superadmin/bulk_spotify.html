@@ -440,11 +440,26 @@
                             tenantTotalGenres += stats.genres_added;
                             tenantTotalLanguages += stats.languages_added;
                             
-                            // Stop only if NO progress made (nothing fetched at all)
-                            const nothingFetched = stats.images_fetched === 0 && stats.genres_added === 0 && stats.languages_added === 0;
+                            // Log detailed stats for debugging
+                            console.log(`[Superadmin Bulk] Tenant ${tenant.name} Batch ${batchCount}:`, 
+                                       `Total=${stats.total}, Images=${stats.images_fetched}, ` +
+                                       `Genres=${stats.genres_added}, Languages=${stats.languages_added}, ` +
+                                       `Skipped=${stats.skipped}, Errors=${stats.errors}`);
                             
-                            if (nothingFetched) {
-                                // No progress in this batch - tenant is done
+                            // Stop if query found NO songs (not even to skip)
+                            // This means there are truly no more songs that need processing
+                            if (stats.total === 0) {
+                                console.log(`[Superadmin Bulk] Stopping ${tenant.name}: Query returned 0 songs`);
+                                break;
+                            }
+                            
+                            // Also stop if we processed songs but nothing was actually updated
+                            // AND all songs were either skipped or errored (meaning Spotify has no data for them)
+                            const nothingUpdated = stats.images_fetched === 0 && stats.genres_added === 0 && stats.languages_added === 0;
+                            const allSkippedOrErrored = (stats.skipped + stats.errors) === stats.total;
+                            
+                            if (nothingUpdated && allSkippedOrErrored) {
+                                console.log(`[Superadmin Bulk] Stopping ${tenant.name}: All songs skipped/errored (Spotify has no data)`);
                                 break;
                             }
                             

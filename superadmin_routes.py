@@ -1395,6 +1395,74 @@ def bulk_spotify_status():
         'tenants': tenant_stats
     })
 
+@superadmin.route('/superadmin/bulk_spotify/debug/<int:tenant_id>', methods=['GET'])
+@superadmin_required
+def bulk_spotify_debug(tenant_id):
+    """Debug endpoint to inspect songs that need images but aren't being processed."""
+    import os
+    
+    conn = create_connection()
+    cursor = conn.cursor()
+    
+    # Get tenant info
+    cursor.execute('SELECT * FROM tenants WHERE id = ? AND active = 1', (tenant_id,))
+    tenant = cursor.fetchone()
+    
+    if not tenant:
+        conn.close()
+        return jsonify({'success': False, 'message': 'Tenant not found'}), 404
+    
+    tenant_slug = tenant['slug']
+    app_dir = os.path.dirname(os.path.abspath(__file__))
+    
+    # Get songs that supposedly need images
+    cursor.execute('''
+        SELECT id, title, author, image, genre, language 
+        FROM songs 
+        WHERE tenant_id = ?
+        AND (
+            image IS NULL OR image = '' OR
+            image LIKE '%placeholder%' OR
+            image LIKE 'http%' OR
+            image LIKE '%setly%' OR
+            image LIKE '%music-icon%' OR
+            image LIKE '%default%'
+        )
+        LIMIT 20
+    ''', (tenant_id,))
+    
+    songs = cursor.fetchall()
+    conn.close()
+    
+    # Check which ones actually need images
+    debug_info = []
+    for song in songs:
+        image_status = "Missing (NULL or empty)" if not song['image'] else f"Has value: {song['image']}"
+        
+        # Check if file exists
+        file_exists = False
+        if song['image']:
+            image_path = os.path.join(app_dir, 'static', 'tenants', tenant_slug, 'author_images', song['image'])
+            file_exists = os.path.exists(image_path)
+        
+        debug_info.append({
+            'id': song['id'],
+            'title': song['title'],
+            'author': song['author'],
+            'image_db_value': song['image'],
+            'image_status': image_status,
+            'file_exists': file_exists,
+            'genre': song['genre'],
+            'language': song['language']
+        })
+    
+    return jsonify({
+        'success': True,
+        'tenant_name': tenant['name'],
+        'tenant_slug': tenant_slug,
+        'debug_info': debug_info
+    })
+
 @superadmin.route('/superadmin/bulk_spotify_process', methods=['POST'])
 @superadmin_required
 def bulk_spotify_process():
@@ -1452,8 +1520,11 @@ def bulk_spotify_process():
             'genres_added': 0,
             'languages_added': 0,
             'errors': 0,
-            'skipped': 0
+            'skipped': 0,
+            'skipped_reasons': []  # Track why songs are skipped
         }
+        
+        app.logger.info(f"[Superadmin Bulk] Tenant {tenant_slug}: Found {len(songs)} songs to process")
         
         processed_artists = {}
         
@@ -1480,6 +1551,9 @@ def bulk_spotify_process():
                 
                 if not (needs_image or needs_genre or needs_language):
                     stats['skipped'] += 1
+                    reason = f"Song {song['id']} ({song['title']} by {song['author']}): Already has all data"
+                    stats['skipped_reasons'].append(reason)
+                    app.logger.debug(f"[Superadmin Bulk] {reason}")
                     continue
                 
                 # Get artist data
@@ -1504,6 +1578,11 @@ def bulk_spotify_process():
                             updates.append('image = ?')
                             params.append(saved_filename)
                             stats['images_fetched'] += 1
+                            app.logger.info(f"[Superadmin Bulk] Downloaded image for {artist_name}: {saved_filename}")
+                        else:
+                            app.logger.warning(f"[Superadmin Bulk] Failed to download image for {artist_name}")
+                    elif needs_image and not artist_data.get('image_url'):
+                        app.logger.debug(f"[Superadmin Bulk] Spotify returned no image for {artist_name}")
                     
                     # Update genre
                     if needs_genre and artist_data.get('genre'):
@@ -1523,6 +1602,8 @@ def bulk_spotify_process():
                         cursor.execute(query, tuple(params))
                         conn.commit()
                 else:
+                    # Spotify returned no data for this artist
+                    app.logger.warning(f"[Superadmin Bulk] Spotify returned no data for artist: {artist_name} (song: {song['title']})")
                     stats['errors'] += 1
                     
             except Exception as e:
@@ -1532,10 +1613,18 @@ def bulk_spotify_process():
         
         conn.close()
         
+        # Log final summary
+        app.logger.info(f"[Superadmin Bulk] Tenant {tenant_slug} batch complete: " +
+                       f"Images={stats['images_fetched']}, Genres={stats['genres_added']}, " +
+                       f"Languages={stats['languages_added']}, Skipped={stats['skipped']}, Errors={stats['errors']}")
+        
+        # Remove skipped_reasons from stats before sending to frontend (too verbose)
+        response_stats = {k: v for k, v in stats.items() if k != 'skipped_reasons'}
+        
         return jsonify({
             'success': True,
             'tenant_name': tenant['name'],
-            'stats': stats
+            'stats': response_stats
         })
         
     except Exception as e:
