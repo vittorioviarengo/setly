@@ -1233,10 +1233,11 @@
             window.spotifyProgressInterval = progressInterval;
             
             // Start the bulk fetch (synchronous request)
-            // Use longer timeout for local (120s) vs PythonAnywhere (25s)
+            // Use longer timeout for local (120s) vs PythonAnywhere (30s - server limit)
             // Detect if we're on localhost
             const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-            const timeoutMs = isLocal ? 120000 : 25000; // 120 seconds local, 25 seconds PythonAnywhere
+            const isPythonAnywhere = window.location.hostname.includes('pythonanywhere.com');
+            const timeoutMs = isLocal ? 120000 : (isPythonAnywhere ? 30000 : 25000); // 120s local, 30s PythonAnywhere, 25s other
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
             

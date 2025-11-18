@@ -1479,8 +1479,24 @@ def bulk_spotify_process():
     
     # Get batch size from system settings (can be set in superadmin settings)
     from app import get_system_setting
+    from flask import request as flask_request
+    import os
+    
     default_batch_size = get_system_setting('spotify_batch_size', default=20, value_type=int)
-    batch_size = data.get('batch_size', default_batch_size)
+    requested_batch_size = data.get('batch_size', default_batch_size)
+    
+    # Detect PythonAnywhere and limit batch size automatically (30-second server timeout)
+    is_pythonanywhere = (
+        'pythonanywhere.com' in flask_request.host or 
+        os.environ.get('PYTHONANYWHERE', '').lower() == 'true' or
+        os.path.exists('/home/vittorioviarengo')  # PythonAnywhere user directory
+    )
+    
+    if is_pythonanywhere:
+        # PythonAnywhere has strict 30-second timeout, use smaller batches
+        default_batch_size = min(default_batch_size, 10)  # Cap at 10 for PythonAnywhere
+    
+    batch_size = min(requested_batch_size, default_batch_size)
     
     conn = create_connection()
     cursor = conn.cursor()
@@ -1500,7 +1516,12 @@ def bulk_spotify_process():
         # Many songs match the query but get skipped in the loop (e.g., file exists, Spotify returns no data)
         # Use multiplier from settings (default 3x), can be adjusted for local vs PythonAnywhere
         batch_multiplier = get_system_setting('spotify_batch_multiplier', default=3, value_type=int)
-        extended_batch = batch_size * batch_multiplier
+        
+        # PythonAnywhere needs smaller multiplier to avoid timeout
+        if is_pythonanywhere:
+            batch_multiplier = min(batch_multiplier, 1.5)  # Cap at 1.5x for PythonAnywhere (10 * 1.5 = 15 songs)
+        
+        extended_batch = int(batch_size * batch_multiplier)
         
         # First, get songs that match the obvious patterns OR have missing genre/language
         # This query finds songs with obvious missing data

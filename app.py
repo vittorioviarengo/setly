@@ -858,6 +858,20 @@ def tenant_bulk_fetch_spotify(tenant_slug):
     max_batch_size = get_system_setting('spotify_batch_size', default=20, value_type=int)
     request_data = request.json if request.json else {}
     requested_batch_size = int(request_data.get('batch_size', max_batch_size))
+    
+    # Detect PythonAnywhere and limit batch size automatically (30-second server timeout)
+    # Check hostname or environment variable
+    is_pythonanywhere = (
+        'pythonanywhere.com' in request.host or 
+        os.environ.get('PYTHONANYWHERE', '').lower() == 'true' or
+        os.path.exists('/home/vittorioviarengo')  # PythonAnywhere user directory
+    )
+    
+    if is_pythonanywhere:
+        # PythonAnywhere has strict 30-second timeout, use smaller batches
+        max_batch_size = min(max_batch_size, 10)  # Cap at 10 for PythonAnywhere
+        app.logger.info(f"[Tenant Bulk] PythonAnywhere detected - limiting batch size to {max_batch_size}")
+    
     batch_size = min(requested_batch_size, max_batch_size)
     
     try:
@@ -870,7 +884,13 @@ def tenant_bulk_fetch_spotify(tenant_slug):
         # Many songs match the query but get skipped (e.g., already have images, Spotify returns no genre, etc.)
         # Use multiplier from settings (default 2x for safety, can be increased)
         batch_multiplier = get_system_setting('spotify_batch_multiplier', default=2, value_type=int)
-        extended_batch = batch_size * batch_multiplier
+        
+        # PythonAnywhere needs smaller multiplier to avoid timeout
+        if is_pythonanywhere:
+            batch_multiplier = min(batch_multiplier, 1.5)  # Cap at 1.5x for PythonAnywhere (10 * 1.5 = 15 songs)
+            app.logger.info(f"[Tenant Bulk] PythonAnywhere detected - limiting multiplier to {batch_multiplier}x")
+        
+        extended_batch = int(batch_size * batch_multiplier)
         
         # First, get songs that match the obvious patterns OR have missing genre/language
         # This query finds songs with obvious missing data
