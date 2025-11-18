@@ -1693,8 +1693,57 @@ def bulk_spotify_process():
         
         # Log final summary
         app.logger.info(f"[Superadmin Bulk] Tenant {tenant_slug} batch complete: " +
-                       f"Images={stats['images_fetched']}, Genres={stats['genres_added']}, " +
-                       f"Languages={stats['languages_added']}, Skipped={stats['skipped']}, Errors={stats['errors']}")
+                       f"Total={stats['total']}, Images={stats['images_fetched']}, " +
+                       f"Genres={stats['genres_added']}, Languages={stats['languages_added']}, " +
+                       f"Skipped={stats['skipped']}, Errors={stats['errors']}")
+        
+        # Check if there are more songs to process - must check physical files!
+        # This is important to determine if we should continue processing
+        conn = create_connection()
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT id, image, genre, language 
+            FROM songs 
+            WHERE tenant_id = ?
+        ''', (tenant_id,))
+        all_songs = cursor.fetchall()
+        conn.close()
+        
+        # Count what's actually missing (including physical file check)
+        remaining_images = 0
+        remaining_genres = 0
+        remaining_languages = 0
+        
+        for song in all_songs:
+            needs_image = (not song['image'] or song['image'] == '' or 
+                          (song['image'] and (
+                              'placeholder' in song['image'].lower() or 
+                              song['image'].startswith('http') or
+                              'setly' in song['image'].lower() or
+                              'music-icon' in song['image'].lower() or
+                              'default' in song['image'].lower()
+                          )))
+            
+            # Check if image file actually exists on disk
+            if not needs_image and song['image']:
+                image_path = os.path.join(app_dir, 'static', 'tenants', tenant_slug, 'author_images', song['image'])
+                if not os.path.exists(image_path):
+                    needs_image = True
+            
+            needs_genre = not song['genre'] or song['genre'] == ''
+            needs_language = not song['language'] or song['language'] in ['', 'unknown']
+            
+            if needs_image:
+                remaining_images += 1
+            if needs_genre:
+                remaining_genres += 1
+            if needs_language:
+                remaining_languages += 1
+        
+        remaining = max(remaining_images, remaining_genres, remaining_languages)
+        has_more = remaining > 0
+        
+        app.logger.info(f"[Superadmin Bulk] Remaining: {remaining_images} images, {remaining_genres} genres, {remaining_languages} languages. Has more: {has_more}")
         
         # Remove skipped_reasons from stats before sending to frontend (too verbose)
         response_stats = {k: v for k, v in stats.items() if k != 'skipped_reasons'}
@@ -1702,7 +1751,12 @@ def bulk_spotify_process():
         return jsonify({
             'success': True,
             'tenant_name': tenant['name'],
-            'stats': response_stats
+            'stats': response_stats,
+            'has_more': has_more,
+            'remaining': remaining,
+            'remaining_images': remaining_images,
+            'remaining_genres': remaining_genres,
+            'remaining_languages': remaining_languages
         })
         
     except Exception as e:

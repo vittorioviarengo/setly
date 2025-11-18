@@ -444,23 +444,28 @@
                             console.log(`[Superadmin Bulk] Tenant ${tenant.name} Batch ${batchCount}:`, 
                                        `Total=${stats.total}, Images=${stats.images_fetched}, ` +
                                        `Genres=${stats.genres_added}, Languages=${stats.languages_added}, ` +
-                                       `Skipped=${stats.skipped}, Errors=${stats.errors}`);
+                                       `Skipped=${stats.skipped}, Errors=${stats.errors}, ` +
+                                       `HasMore=${result.has_more}, Remaining=${result.remaining}`);
                             
-                            // Stop if query found NO songs (not even to skip)
-                            // This means there are truly no more songs that need processing
-                            if (stats.total === 0) {
-                                console.log(`[Superadmin Bulk] Stopping ${tenant.name}: Query returned 0 songs`);
+                            // Use backend's has_more flag to determine if we should continue
+                            // This is more accurate than checking stats.total === 0 because:
+                            // - stats.total is just this batch, not all remaining songs
+                            // - has_more checks ALL songs in database for missing data (including physical files)
+                            if (!result.has_more || result.remaining === 0) {
+                                console.log(`[Superadmin Bulk] Stopping ${tenant.name}: No more songs need processing (remaining=${result.remaining})`);
                                 break;
                             }
                             
-                            // Also stop if we processed songs but nothing was actually updated
-                            // AND all songs were either skipped or errored (meaning Spotify has no data for them)
-                            const nothingUpdated = stats.images_fetched === 0 && stats.genres_added === 0 && stats.languages_added === 0;
-                            const allSkippedOrErrored = (stats.skipped + stats.errors) === stats.total;
-                            
-                            if (nothingUpdated && allSkippedOrErrored) {
-                                console.log(`[Superadmin Bulk] Stopping ${tenant.name}: All songs skipped/errored (Spotify has no data)`);
+                            // Also stop if query found NO songs AND there are no more songs to process
+                            // This handles edge case where has_more might be true but query finds nothing
+                            if (stats.total === 0 && !result.has_more) {
+                                console.log(`[Superadmin Bulk] Stopping ${tenant.name}: Query returned 0 songs and has_more=false`);
                                 break;
+                            }
+                            
+                            // Log remaining counts for visibility
+                            if (result.has_more) {
+                                console.log(`[Superadmin Bulk] ${tenant.name} still has ${result.remaining} items remaining (${result.remaining_images} images, ${result.remaining_genres} genres, ${result.remaining_languages} languages)`);
                             }
                             
                             // Small delay between batches
