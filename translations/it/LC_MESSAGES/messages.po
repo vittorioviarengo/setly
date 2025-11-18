@@ -231,6 +231,9 @@ msgstr "Annulla"
 msgid "Song Database"
 msgstr "Database dei brani"
 
+msgid "songs"
+msgstr "brani"
+
 msgid "Author Image"
 msgstr "Immagine dell&#39;autore"
 

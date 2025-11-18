@@ -138,7 +138,12 @@
         </table>
     </div>
 
-    <h2>{{ _('Song Database') }}</h2>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h2 style="margin: 0;">{{ _('Song Database') }}</h2>
+        <div id="songCounter" style="font-size: 1.1em; color: #666; font-weight: 500;">
+            <span id="visibleCount">0</span> / <span id="totalCount">0</span> {{ _('songs') }}
+        </div>
+    </div>
     <div class="filter-container" style="margin-bottom: 1rem; display: flex; align-items: center; gap: 10px;">
         <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="{{ _('Search for songs') }}" 
                style="width: 400px; padding: 12px 15px; font-size: 16px; border: 2px solid var(--primary-color); border-radius: 6px; height: 48px; box-sizing: border-box;">
@@ -307,6 +312,28 @@
             
             // Update filter dropdowns with unique values from ALL songs
             updateFilters(allSongs);
+            
+            // Update song counter
+            updateSongCounter();
+        }
+        
+        function updateSongCounter() {
+            const tableBody = document.getElementById('songsTableBody');
+            const visibleRows = tableBody.querySelectorAll('tr').length;
+            const totalSongs = allSongs.length;
+            
+            document.getElementById('visibleCount').textContent = visibleRows;
+            document.getElementById('totalCount').textContent = totalSongs;
+            
+            // Update color if filtered
+            const counter = document.getElementById('songCounter');
+            if (visibleRows < totalSongs) {
+                counter.style.color = 'var(--primary-color)';
+                counter.style.fontWeight = '600';
+            } else {
+                counter.style.color = '#666';
+                counter.style.fontWeight = '500';
+            }
         }
 
         function markRowAsChanged(element) {
