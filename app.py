@@ -831,9 +831,10 @@ def tenant_bulk_fetch_spotify(tenant_slug):
     # Get absolute path to the app directory
     app_dir = os.path.dirname(os.path.abspath(__file__))
     
-    # Get max batch size from system settings (default 10 for PythonAnywhere timeout limits)
-    # PythonAnywhere has aggressive 30-second timeout, so we need small batches
-    max_batch_size = get_system_setting('spotify_batch_size', default=10, value_type=int)
+    # Get max batch size from system settings (default 5 for PythonAnywhere timeout limits)
+    # PythonAnywhere has aggressive 30-second timeout, so we need very small batches
+    # Even with 5*2=10 songs, the physical file checks and Spotify API calls can be slow
+    max_batch_size = get_system_setting('spotify_batch_size', default=5, value_type=int)
     request_data = request.json if request.json else {}
     requested_batch_size = int(request_data.get('batch_size', max_batch_size))
     batch_size = min(requested_batch_size, max_batch_size)
@@ -846,9 +847,9 @@ def tenant_bulk_fetch_spotify(tenant_slug):
         
         # Get more songs than batch_size to compensate for skips
         # Many songs match the query but get skipped (e.g., already have images, Spotify returns no genre, etc.)
-        # Reduced from 5x to 3x for PythonAnywhere timeout limits
-        # This means we'll get ~30 songs per batch instead of ~50, which should finish within 30 seconds
-        extended_batch = batch_size * 3
+        # Reduced from 3x to 2x for PythonAnywhere timeout limits
+        # This means we'll get ~10 songs per batch instead of ~30, which should finish within 25 seconds
+        extended_batch = batch_size * 2
         
         # First, get songs that match the obvious patterns OR have missing genre/language
         # This query finds songs with obvious missing data

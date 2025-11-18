@@ -1154,11 +1154,11 @@
                     '{{ _("Missing images:") }} <strong>' + countDetails.missing_images + '</strong><br>' +
                     '{{ _("Missing genres:") }} <strong>' + countDetails.missing_genres + '</strong><br>' +
                     '{{ _("Missing languages:") }} <strong>' + countDetails.missing_languages + '</strong><br><br>' +
-                    '<em style="color: #666;">⚡ {{ _("Processing up to") }} <strong>30 {{ _("songs per batch") }}</strong> {{ _("(smaller batches for better reliability)") }}</em>' +
+                    '<em style="color: #666;">⚡ {{ _("Processing up to") }} <strong>10 {{ _("songs per batch") }}</strong> {{ _("(very small batches to avoid timeouts)") }}</em>' +
                     '</div><br>';
             }
             
-            detailsHtml += '<em>⏱️ {{ _("Estimated time: 20-30 seconds per batch") }}</em><br><br>' +
+            detailsHtml += '<em>⏱️ {{ _("Estimated time: 15-25 seconds per batch") }}</em><br><br>' +
                 '{{ _("Please keep this page open...") }}';
             
             // Update button text
