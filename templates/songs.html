@@ -1154,11 +1154,11 @@
                     '{{ _("Missing images:") }} <strong>' + countDetails.missing_images + '</strong><br>' +
                     '{{ _("Missing genres:") }} <strong>' + countDetails.missing_genres + '</strong><br>' +
                     '{{ _("Missing languages:") }} <strong>' + countDetails.missing_languages + '</strong><br><br>' +
-                    '<em style="color: #666;">⚡ {{ _("Processing up to") }} <strong>50 {{ _("songs per batch") }}</strong></em>' +
+                    '<em style="color: #666;">⚡ {{ _("Processing up to") }} <strong>30 {{ _("songs per batch") }}</strong> {{ _("(smaller batches for better reliability)") }}</em>' +
                     '</div><br>';
             }
             
-            detailsHtml += '<em>⏱️ {{ _("Estimated time: 30-60 seconds") }}</em><br><br>' +
+            detailsHtml += '<em>⏱️ {{ _("Estimated time: 20-30 seconds per batch") }}</em><br><br>' +
                 '{{ _("Please keep this page open...") }}';
             
             // Update button text
@@ -1232,10 +1232,11 @@
             // Store interval ID to clear it later
             window.spotifyProgressInterval = progressInterval;
             
-            // Start the bulk fetch (synchronous request, should complete in 30-60 seconds)
-            // Add a 3 minute timeout (conservative for PythonAnywhere)
+            // Start the bulk fetch (synchronous request)
+            // PythonAnywhere has 30-second server timeout, so use 25 seconds client timeout
+            // This allows server to respond before it times out
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 180000); // 3 minutes
+            const timeoutId = setTimeout(() => controller.abort(), 25000); // 25 seconds
             
             fetch('{% if tenant %}/{{ tenant.slug }}{% endif %}/bulk_fetch_spotify', {
                 method: 'POST',
@@ -1247,7 +1248,67 @@
             })
             .then(response => {
                 clearTimeout(timeoutId); // Clear timeout on response
+                if (!response.ok) {
+                    // If server error (like 500 timeout), treat as partial success
+                    if (response.status >= 500) {
+                        throw new Error('TIMEOUT_OR_SERVER_ERROR');
+                    }
+                    return response.json().then(data => Promise.reject(new Error(data.message || 'Server error')));
+                }
                 return response.json();
+            })
+            .catch(error => {
+                clearTimeout(timeoutId);
+                // Handle timeout or server error - assume some processing happened
+                if (error.name === 'AbortError' || error.message === 'TIMEOUT_OR_SERVER_ERROR') {
+                    // Timeout occurred - show partial success dialog with continue option
+                    button.disabled = false;
+                    button.innerHTML = originalText;
+                    
+                    if (window.spotifyProgressInterval) {
+                        clearInterval(window.spotifyProgressInterval);
+                    }
+                    
+                    const loadingStyle = document.getElementById('spotify-loading-style');
+                    if (loadingStyle) {
+                        loadingStyle.remove();
+                    }
+                    
+                    setTimeout(() => {
+                        const existingDialog = document.querySelector('.app-dialog');
+                        if (existingDialog) {
+                            existingDialog.querySelectorAll('button, .dialog-button, .dialog-footer, .dialog-actions').forEach(el => {
+                                el.style.display = 'none';
+                                el.remove();
+                            });
+                            
+                            const messageHtml = `
+                                <div style="padding: 20px 20px 30px 20px; text-align: center;">
+                                    <div class="dialog-icon" style="font-size: 3.5em; margin-bottom: 1rem;">⚠️</div>
+                                    <h2 style="margin: 0 0 1rem 0; color: #ffc107; font-size: 1.3em; font-weight: 600;">{{ _("Request timed out") }}</h2>
+                                    <p style="color: #666; margin-bottom: 1.5rem;">{{ _("This can happen with large databases. Try again to continue processing more songs.") }}</p>
+                                    <div style="position: sticky; bottom: 0; background: white; padding: 12px 20px; margin: 16px -24px -12px -24px; border-top: 2px solid #e0e0e0; z-index: 10; box-shadow: 0 -4px 12px rgba(0,0,0,0.08);">
+                                        <div style="display: flex; gap: 10px; justify-content: center;">
+                                            <button onclick="window.closeDialogAndContinue()" 
+                                                style="padding: 10px 20px; background: linear-gradient(135deg, var(--primary-color) 0%, #0056b3 100%); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95em; box-shadow: 0 3px 6px rgba(0,0,0,0.1);">
+                                                {{ _("Continue with Next Batch") }}</button>
+                                            <button onclick="window.closeDialogAndRefresh()" 
+                                                style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; font-size: 0.95em; box-shadow: 0 3px 6px rgba(0,0,0,0.1);">
+                                                {{ _("Done for Now") }}</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                            
+                            const dialogBody = existingDialog.querySelector('.app-dialog-body');
+                            if (dialogBody) {
+                                dialogBody.innerHTML = messageHtml;
+                            }
+                        }
+                    }, 100);
+                    return; // Exit early
+                }
+                throw error; // Re-throw other errors
             })
             .then(data => {
                 button.disabled = false;

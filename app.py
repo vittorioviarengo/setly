@@ -831,8 +831,9 @@ def tenant_bulk_fetch_spotify(tenant_slug):
     # Get absolute path to the app directory
     app_dir = os.path.dirname(os.path.abspath(__file__))
     
-    # Get max batch size from system settings (default 50 for PythonAnywhere timeout limits)
-    max_batch_size = get_system_setting('spotify_batch_size', default=50, value_type=int)
+    # Get max batch size from system settings (default 10 for PythonAnywhere timeout limits)
+    # PythonAnywhere has aggressive 30-second timeout, so we need small batches
+    max_batch_size = get_system_setting('spotify_batch_size', default=10, value_type=int)
     request_data = request.json if request.json else {}
     requested_batch_size = int(request_data.get('batch_size', max_batch_size))
     batch_size = min(requested_batch_size, max_batch_size)
@@ -845,8 +846,9 @@ def tenant_bulk_fetch_spotify(tenant_slug):
         
         # Get more songs than batch_size to compensate for skips
         # Many songs match the query but get skipped (e.g., already have images, Spotify returns no genre, etc.)
-        # Fetch 5x the batch size to ensure we actually process ~batch_size songs with missing data
-        extended_batch = batch_size * 5
+        # Reduced from 5x to 3x for PythonAnywhere timeout limits
+        # This means we'll get ~30 songs per batch instead of ~50, which should finish within 30 seconds
+        extended_batch = batch_size * 3
         
         # First, get songs that match the obvious patterns OR have missing genre/language
         # This query finds songs with obvious missing data
@@ -989,7 +991,7 @@ def tenant_bulk_fetch_spotify(tenant_slug):
                     # Fetch from Spotify
                     artist_data = get_spotify_image(artist_name)
                     processed_artists[artist_name] = artist_data
-                    time.sleep(0.1)  # Small delay to avoid rate limiting
+                    time.sleep(0.05)  # Smaller delay for PythonAnywhere timeout limits
                 
                 if artist_data:
                     updates = []

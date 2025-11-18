@@ -1476,7 +1476,7 @@ def bulk_spotify_process():
     
     data = request.json
     tenant_id = data.get('tenant_id')
-    batch_size = data.get('batch_size', 20)  # Smaller batch for superadmin to avoid timeouts
+    batch_size = data.get('batch_size', 10)  # Very small batch for PythonAnywhere timeout limits
     
     conn = create_connection()
     cursor = conn.cursor()
@@ -1494,7 +1494,9 @@ def bulk_spotify_process():
     try:
         # Get more songs than batch_size to compensate for skips (same logic as tenant bulk)
         # Many songs match the query but get skipped in the loop (e.g., file exists, Spotify returns no data)
-        extended_batch = batch_size * 5
+        # Reduced from 5x to 3x for PythonAnywhere timeout limits (30 seconds max)
+        # This means we'll get ~30 songs per batch instead of ~100, which should finish within timeout
+        extended_batch = batch_size * 3
         
         # First, get songs that match the obvious patterns OR have missing genre/language
         # This query finds songs with obvious missing data
@@ -1639,7 +1641,7 @@ def bulk_spotify_process():
                 else:
                     artist_data = get_spotify_image(artist_name)
                     processed_artists[artist_name] = artist_data
-                    time.sleep(0.15)  # Longer delay for superadmin to be extra safe
+                    time.sleep(0.05)  # Smaller delay for PythonAnywhere timeout limits
                 
                 if artist_data:
                     updates = []
