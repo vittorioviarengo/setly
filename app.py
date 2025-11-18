@@ -355,11 +355,17 @@ def get_spotify_image(author_name):
     Returns a dict with 'image_url', 'genre', and 'language', or None if not found.
     """
     try:
+        # Use a writable cache directory (PythonAnywhere home directory)
+        # Default .cache doesn't work on PythonAnywhere due to permissions
+        cache_dir = os.path.join(os.path.expanduser('~'), '.spotify_cache')
+        os.makedirs(cache_dir, exist_ok=True)
+        
         # Set timeout for Spotify API calls
         sp = Spotify(
             auth_manager=SpotifyClientCredentials(
                 client_id=client_id, 
-                client_secret=client_secret
+                client_secret=client_secret,
+                cache_path=os.path.join(cache_dir, '.cache')
             ),
             requests_timeout=10,  # 10 second timeout
             retries=2
@@ -395,62 +401,29 @@ def get_spotify_image(author_name):
         
         app.logger.info(f"Selected genre for '{author_name}': {genre}")
         
-        # Try to infer language from artist's top track or origin
-        # Get artist's top tracks to check their markets
+        # Infer language from genre only (removed top_tracks call to avoid timeout)
+        # The artist_top_tracks() call was causing timeouts on PythonAnywhere
         language = None
+        genre_lower = genre.lower() if genre else ''
+        
         try:
-            artist_id = artist_data.get("id")
-            if artist_id:
-                app.logger.info(f"Fetching top tracks for artist ID: {artist_id}")
-                top_tracks = sp.artist_top_tracks(artist_id)
-                tracks = top_tracks.get("tracks", [])
-                app.logger.info(f"Found {len(tracks)} top tracks")
-                
-                # Check available markets to infer language
-                if tracks:
-                    markets = tracks[0].get("available_markets", [])
-                    app.logger.info(f"First track available in {len(markets)} markets")
-                    # Map common markets to languages
-                    market_to_lang = {
-                        'IT': 'it', 'CH': 'it',  # Italy, Switzerland (Italian)
-                        'ES': 'es', 'MX': 'es', 'AR': 'es', 'CO': 'es', 'CL': 'es',  # Spanish countries
-                        'DE': 'de', 'AT': 'de',  # Germany, Austria
-                        'FR': 'fr', 'BE': 'fr', 'CA': 'fr',  # French countries
-                        'US': 'en', 'GB': 'en', 'AU': 'en', 'CA': 'en', 'IE': 'en'  # English countries
-                    }
-                    
-                    # Check genre for language hints
-                    genre_lower = genre.lower() if genre else ''
-                    if 'italian' in genre_lower or 'italiano' in genre_lower:
-                        language = 'it'
-                        app.logger.info(f"Language detected from genre: {language}")
-                    elif 'spanish' in genre_lower or 'latin' in genre_lower or 'latino' in genre_lower:
-                        language = 'es'
-                        app.logger.info(f"Language detected from genre: {language}")
-                    elif 'german' in genre_lower or 'deutsch' in genre_lower:
-                        language = 'de'
-                        app.logger.info(f"Language detected from genre: {language}")
-                    elif 'french' in genre_lower or 'chanson' in genre_lower:
-                        language = 'fr'
-                        app.logger.info(f"Language detected from genre: {language}")
-                    # If no genre hint, check markets
-                    elif not language:
-                        for market in ['IT', 'ES', 'DE', 'FR', 'US']:
-                            if market in markets:
-                                language = market_to_lang.get(market, 'en')
-                                app.logger.info(f"Language detected from market {market}: {language}")
-                                break
-                    
-                    # If still no language detected, default to English
-                    if not language:
-                        language = 'en'
-                        app.logger.info(f"No language detected, defaulting to: {language}")
-                else:
-                    app.logger.warning("No tracks found, defaulting to English")
-                    language = 'en'
+            # Check genre for language hints (faster, no additional API call)
+            if 'italian' in genre_lower or 'italiano' in genre_lower:
+                language = 'it'
+                app.logger.info(f"Language detected from genre: {language}")
+            elif 'spanish' in genre_lower or 'latin' in genre_lower or 'latino' in genre_lower:
+                language = 'es'
+                app.logger.info(f"Language detected from genre: {language}")
+            elif 'german' in genre_lower or 'deutsch' in genre_lower:
+                language = 'de'
+                app.logger.info(f"Language detected from genre: {language}")
+            elif 'french' in genre_lower or 'chanson' in genre_lower:
+                language = 'fr'
+                app.logger.info(f"Language detected from genre: {language}")
             else:
-                app.logger.warning("No artist ID found, defaulting to English")
+                # Default to English if no genre hint
                 language = 'en'
+                app.logger.info(f"No language detected from genre, defaulting to: {language}")
         except Exception as e:
             app.logger.error(f"Error inferring language: {e}")
             language = 'en'  # Default to English on error
