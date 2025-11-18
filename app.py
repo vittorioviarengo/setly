@@ -367,6 +367,19 @@ def get_spotify_image(author_name):
         results = sp.search(q=author_name, type="artist", limit=1)
         items = results.get("artists", {}).get("items", [])
     except Exception as e:
+        error_str = str(e).lower()
+        
+        # Check for rate limiting (429) or quota exceeded
+        if '429' in error_str or 'too many requests' in error_str or 'rate limit' in error_str:
+            app.logger.warning(f"Spotify API rate limit hit for '{author_name}': {str(e)}")
+            return {'rate_limited': True}
+        
+        # Check for authentication errors (401, 403)
+        if '401' in error_str or '403' in error_str or 'unauthorized' in error_str or 'forbidden' in error_str:
+            app.logger.error(f"Spotify API authentication error for '{author_name}': {str(e)}")
+            return None
+        
+        # Other errors
         app.logger.error(f"Spotify API error for '{author_name}': {str(e)}")
         return None
 
@@ -992,9 +1005,19 @@ def tenant_bulk_fetch_spotify(tenant_slug):
                     # Fetch from Spotify
                     artist_data = get_spotify_image(artist_name)
                     processed_artists[artist_name] = artist_data
-                    time.sleep(0.05)  # Smaller delay for PythonAnywhere timeout limits
+                    
+                    # Check for rate limiting
+                    if artist_data and artist_data.get('rate_limited'):
+                        app.logger.warning(f"[Tenant Bulk] Spotify rate limit hit, waiting 30 seconds...")
+                        stats['errors'] += 1  # Count as error
+                        time.sleep(30)  # Wait 30 seconds for rate limit to reset
+                        # Don't cache rate_limited result, try again next time
+                        del processed_artists[artist_name]
+                        continue
+                    
+                    time.sleep(0.1)  # Standard delay between calls (increased slightly to avoid rate limits)
                 
-                if artist_data:
+                if artist_data and not artist_data.get('rate_limited'):
                     updates = []
                     params = []
                     

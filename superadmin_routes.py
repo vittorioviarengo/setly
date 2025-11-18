@@ -1641,9 +1641,19 @@ def bulk_spotify_process():
                 else:
                     artist_data = get_spotify_image(artist_name)
                     processed_artists[artist_name] = artist_data
-                    time.sleep(0.05)  # Smaller delay for PythonAnywhere timeout limits
+                    
+                    # Check for rate limiting
+                    if artist_data and artist_data.get('rate_limited'):
+                        app.logger.warning(f"[Superadmin Bulk] Spotify rate limit hit for tenant {tenant_slug}, waiting 30 seconds...")
+                        stats['errors'] += 1  # Count as error
+                        time.sleep(30)  # Wait 30 seconds for rate limit to reset
+                        # Don't cache rate_limited result, try again next time
+                        del processed_artists[artist_name]
+                        continue
+                    
+                    time.sleep(0.1)  # Standard delay between calls (increased slightly to avoid rate limits)
                 
-                if artist_data:
+                if artist_data and not artist_data.get('rate_limited'):
                     updates = []
                     params = []
                     
