@@ -355,17 +355,13 @@ def get_spotify_image(author_name):
     Returns a dict with 'image_url', 'genre', and 'language', or None if not found.
     """
     try:
-        # Use a writable cache directory (PythonAnywhere home directory)
-        # Default .cache doesn't work on PythonAnywhere due to permissions
-        cache_dir = os.path.join(os.path.expanduser('~'), '.spotify_cache')
-        os.makedirs(cache_dir, exist_ok=True)
-        
         # Set timeout for Spotify API calls
+        # Note: Cache warnings are expected on PythonAnywhere and can be ignored
+        # Spotify API will still work without cache, just slightly slower
         sp = Spotify(
             auth_manager=SpotifyClientCredentials(
                 client_id=client_id, 
-                client_secret=client_secret,
-                cache_path=os.path.join(cache_dir, '.cache')
+                client_secret=client_secret
             ),
             requests_timeout=10,  # 10 second timeout
             retries=2
