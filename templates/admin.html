@@ -529,6 +529,9 @@
                     <button class="btn" id="bulkFetchBtn" style="width: 100%;">
                         <span id="bulkFetchText">{{ _('Fetch Missing Data') }}</span>
                     </button>
+                    <button class="btn" id="checkImageSyncBtn" style="width: 100%; margin-top: 0.5rem; background: #3498db;">
+                        <span>🔍 {{ _('Check Image Sync') }}</span>
+                    </button>
                     <div id="bulkFetchProgress" style="display: none; margin-top: 1rem; text-align: center;">
                         <p style="font-weight: 600; font-size: 1.1em; margin-bottom: 0.5rem;">
                             <span id="progressCounter">Processing...</span>
@@ -1085,6 +1088,10 @@
             const bulkFetchBtn = document.getElementById('bulkFetchBtn');
             if (bulkFetchBtn) bulkFetchBtn.addEventListener('click', bulkFetchSpotify);
             
+            // Check image sync button
+            const checkImageSyncBtn = document.getElementById('checkImageSyncBtn');
+            if (checkImageSyncBtn) checkImageSyncBtn.addEventListener('click', checkImageSync);
+            
             // CSV file input
             const fileInput = document.getElementById('fileInput');
             if (fileInput) fileInput.addEventListener('change', updateFileName);
@@ -1195,6 +1202,69 @@
                 console.error('Bulk fetch error:', error);
                 throw error;
             });
+        }
+
+        async function checkImageSync() {
+            const btn = document.getElementById('checkImageSyncBtn');
+            const tenantSlug = '{{ tenant.slug if tenant else "" }}';
+            
+            if (!tenantSlug) {
+                showAlert('{{ _("Tenant slug not found") }}', 'error');
+                return;
+            }
+            
+            btn.disabled = true;
+            btn.innerHTML = '<span>⏳ {{ _("Checking...") }}</span>';
+            
+            try {
+                const response = await fetch(`/${tenantSlug}/check_image_sync`);
+                const data = await response.json();
+                
+                if (!data.success) {
+                    showAlert(data.message || '{{ _("Error checking sync") }}', 'error');
+                    btn.disabled = false;
+                    btn.innerHTML = '<span>🔍 {{ _("Check Image Sync") }}</span>';
+                    return;
+                }
+                
+                const stats = data.stats;
+                const total = stats.total_with_image_in_db;
+                const exist = stats.files_exist;
+                const missing = stats.files_missing;
+                const percentage = total > 0 ? Math.round((exist / total) * 100) : 0;
+                
+                let message = `<strong>📊 {{ _("Image Sync Status") }}</strong><br><br>` +
+                    `{{ _("Total songs with image in DB") }}: <strong>${total}</strong><br>` +
+                    `{{ _("Files exist in filesystem") }}: <strong style="color: #27ae60;">${exist}</strong><br>` +
+                    `{{ _("Files missing") }}: <strong style="color: ${missing > 0 ? '#e74c3c' : '#27ae60'};">${missing}</strong><br>` +
+                    `{{ _("Sync percentage") }}: <strong>${percentage}%</strong><br><br>`;
+                
+                if (missing > 0) {
+                    message += `<strong style="color: #e74c3c;">⚠️ {{ _("Warning") }}:</strong> ${missing} {{ _("image files are missing from filesystem") }}<br>`;
+                    if (stats.missing_files && stats.missing_files.length > 0) {
+                        message += `<br><strong>{{ _("First missing files") }}:</strong><br>`;
+                        stats.missing_files.slice(0, 10).forEach(song => {
+                            message += `• ${song.title} - ${song.author} (${song.image})<br>`;
+                        });
+                        if (stats.missing_files.length > 10) {
+                            message += `... {{ _("and") }} ${stats.missing_files.length - 10} {{ _("more") }}<br>`;
+                        }
+                    }
+                } else {
+                    message += `<strong style="color: #27ae60;">✓ {{ _("All images are synchronized!") }}</strong>`;
+                }
+                
+                message += `<br><br><em>{{ _("Images directory") }}: ${data.images_directory}</em>`;
+                
+                showAlert(message, missing > 0 ? 'warning' : 'success');
+                
+            } catch (error) {
+                console.error('Sync check error:', error);
+                showAlert('{{ _("Error checking image sync") }}: ' + error.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span>🔍 {{ _("Check Image Sync") }}</span>';
+            }
         }
 
         async function populateSampleSongs() {

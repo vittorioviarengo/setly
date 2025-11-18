@@ -424,14 +424,21 @@
                     updateTenantStatus(tenant.id, 'processing', `Batch ${batchCount}...`, progressPct);
                     
                     try {
+                        // Use longer timeout for local (120s) vs PythonAnywhere (25s)
+                        const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                        const timeoutMs = isLocal ? 120000 : 25000; // 120 seconds local, 25 seconds PythonAnywhere
+                        const controller = new AbortController();
+                        const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+                        
                         const response = await fetch('{{ url_for("superadmin.bulk_spotify_process") }}', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
                                 tenant_id: tenant.id,
                                 batch_size: batchSize
-                            })
-                        });
+                            }),
+                            signal: controller.signal
+                        }).finally(() => clearTimeout(timeoutId));
                         
                         const result = await response.json();
                         

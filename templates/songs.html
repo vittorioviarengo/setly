@@ -1233,10 +1233,12 @@
             window.spotifyProgressInterval = progressInterval;
             
             // Start the bulk fetch (synchronous request)
-            // PythonAnywhere has 30-second server timeout, so use 25 seconds client timeout
-            // This allows server to respond before it times out
+            // Use longer timeout for local (120s) vs PythonAnywhere (25s)
+            // Detect if we're on localhost
+            const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            const timeoutMs = isLocal ? 120000 : 25000; // 120 seconds local, 25 seconds PythonAnywhere
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 25000); // 25 seconds
+            const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
             
             fetch('{% if tenant %}/{{ tenant.slug }}{% endif %}/bulk_fetch_spotify', {
                 method: 'POST',

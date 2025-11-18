@@ -1479,7 +1479,7 @@ def bulk_spotify_process():
     
     # Get batch size from system settings (can be set in superadmin settings)
     from app import get_system_setting
-    default_batch_size = get_system_setting('spotify_batch_size', default=50, value_type=int)
+    default_batch_size = get_system_setting('spotify_batch_size', default=20, value_type=int)
     batch_size = data.get('batch_size', default_batch_size)
     
     conn = create_connection()

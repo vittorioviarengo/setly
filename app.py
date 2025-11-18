@@ -813,10 +813,10 @@ def tenant_bulk_fetch_spotify(tenant_slug):
     # Get absolute path to the app directory
     app_dir = os.path.dirname(os.path.abspath(__file__))
     
-    # Get max batch size from system settings (default 50 for local, smaller on PythonAnywhere)
+    # Get max batch size from system settings (default 20 for safety, can be increased)
     # User can set spotify_batch_size in superadmin settings
-    # PythonAnywhere needs smaller batches (5-10), local can handle 50-500
-    max_batch_size = get_system_setting('spotify_batch_size', default=50, value_type=int)
+    # PythonAnywhere needs smaller batches (5-10), local can handle 20-500
+    max_batch_size = get_system_setting('spotify_batch_size', default=20, value_type=int)
     request_data = request.json if request.json else {}
     requested_batch_size = int(request_data.get('batch_size', max_batch_size))
     batch_size = min(requested_batch_size, max_batch_size)
@@ -829,8 +829,8 @@ def tenant_bulk_fetch_spotify(tenant_slug):
         
         # Get more songs than batch_size to compensate for skips
         # Many songs match the query but get skipped (e.g., already have images, Spotify returns no genre, etc.)
-        # Use multiplier from settings (default 3x), can be adjusted for local vs PythonAnywhere
-        batch_multiplier = get_system_setting('spotify_batch_multiplier', default=3, value_type=int)
+        # Use multiplier from settings (default 2x for safety, can be increased)
+        batch_multiplier = get_system_setting('spotify_batch_multiplier', default=2, value_type=int)
         extended_batch = batch_size * batch_multiplier
         
         # First, get songs that match the obvious patterns OR have missing genre/language
