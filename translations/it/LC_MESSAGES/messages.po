@@ -1461,3 +1461,9 @@ msgstr "Continuo tra"
 
 msgid "seconds..."
 msgstr "secondi..."
+
+msgid "Artists not found by Spotify"
+msgstr "Artisti non trovati da Spotify"
+
+msgid "These artists may have typos or be unknown on Spotify. Check the artist names in your database."
+msgstr "Questi artisti potrebbero avere errori di battitura o essere sconosciuti su Spotify. Controlla i nomi degli artisti nel database."
