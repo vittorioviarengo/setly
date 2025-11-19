@@ -195,22 +195,10 @@ def render_queue():
 #--------------------------------------------- Utility functions to inspect the database table ---------------------------------------------
 
 
-@app.route('/fetch_table')
-def fetch_table():
-    table_name = request.args.get('name')
-    conn = create_connection()
-    cursor = conn.cursor()
-
-    try:
-        cursor.execute(f'SELECT * FROM {table_name}')
-        rows = cursor.fetchall()
-        data = [dict(row) for row in rows]
-        return jsonify(data)
-    except sqlite3.Error as e:
-        return jsonify({'error': str(e)}), 500
-    finally:
-        conn.close()
-
+# SECURITY: /fetch_table endpoint REMOVED
+# This endpoint had no authentication and was vulnerable to SQL injection.
+# It allowed anyone to dump any table from the database.
+# If debugging is needed, use superadmin-only routes with proper auth and input validation.
 
 @app.route('/generate_pdf')
 def generate_pdf():
@@ -1323,6 +1311,12 @@ def async_reload():
 
 @app.route('/reload')
 def reload_route():
+    # SECURITY: Restrict to superadmin only
+    # This endpoint triggers a reload of the entire web app on PythonAnywhere
+    # Without auth, anyone could trigger continuous reloads (potential DOS)
+    if not session.get('is_superadmin'):
+        return jsonify({"error": "Unauthorized. Superadmin access required."}), 403
+    
     async_reload()
     return jsonify({"message": "Reload initiated. Please wait for the application to restart."})
 
