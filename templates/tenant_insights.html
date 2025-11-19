@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ _('Insights') }} - {{ tenant.name }}</title>
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') if tenant and tenant.favicon else url_for('static', filename='images/default_favicon.ico') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='nav.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='admin.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/dialog.css') }}">
     <style>
         .insights-grid {
@@ -195,7 +196,7 @@
         </div>
     </div>
     
-    <script src="{{ url_for('static', filename='js/dialog.js') }}"></script>
+    <script src="{{ url_for('static', filename='dialog.js') }}"></script>
 </body>
 </html>
 
