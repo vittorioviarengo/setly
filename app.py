@@ -1455,6 +1455,15 @@ def tenant_home(tenant_slug):
     session['tenant_id'] = tenant['id']
     session['tenant_name'] = tenant['name']
     
+    # Generate unique session_id for tracking user activity
+    # Format: tenant_id-YYYYMMDDHHMMSS-random
+    if 'user_session_id' not in session:
+        import secrets
+        from datetime import datetime
+        timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+        random_suffix = secrets.token_hex(4)
+        session['user_session_id'] = f"{tenant['id']}-{timestamp}-{random_suffix}"
+    
     user_name = request.args.get('user', '')
     return render_template('index.html', user_name=user_name, tenant=tenant)
 
@@ -1923,6 +1932,80 @@ def download_csv_template():
         mimetype='text/csv',
         headers={'Content-Disposition': 'attachment; filename=songs_template.csv'}
     )
+
+@app.route('/<tenant_slug>/insights')
+def tenant_insights(tenant_slug):
+    """Tenant insights dashboard - analytics and statistics."""
+    if not session.get('is_tenant_admin') or session.get('tenant_slug') != tenant_slug:
+        return redirect(url_for('tenant_login', tenant_slug=tenant_slug))
+    
+    conn = create_connection()
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM tenants WHERE slug = ? AND active = 1', (tenant_slug,))
+    tenant = cursor.fetchone()
+    
+    if not tenant:
+        session.clear()
+        conn.close()
+        flash('This tenant account has been deactivated')
+        return redirect(url_for('index'))
+    
+    tenant_id = tenant['id']
+    
+    # Get request statistics
+    cursor.execute('SELECT COUNT(*) as total FROM requests WHERE tenant_id = ?', (tenant_id,))
+    total_requests = cursor.fetchone()['total']
+    
+    cursor.execute('SELECT COUNT(*) as fulfilled FROM requests WHERE tenant_id = ? AND status = ?', (tenant_id, 'fulfilled'))
+    fulfilled_requests = cursor.fetchone()['fulfilled']
+    
+    cursor.execute('SELECT COUNT(*) as pending FROM requests WHERE tenant_id = ? AND status = ?', (tenant_id, 'pending'))
+    pending_requests = cursor.fetchone()['pending']
+    
+    # Calculate conversion rate
+    conversion_rate = (fulfilled_requests / total_requests * 100) if total_requests > 0 else 0
+    
+    # Get total tips (if any)
+    cursor.execute('SELECT SUM(tip_amount) as total_tips FROM requests WHERE tenant_id = ?', (tenant_id,))
+    result = cursor.fetchone()
+    total_tips = result['total_tips'] if result['total_tips'] else 0.0
+    
+    # Get most requested songs
+    cursor.execute('''
+        SELECT s.title, s.author, COUNT(r.id) as request_count
+        FROM requests r
+        JOIN songs s ON r.song_id = s.id
+        WHERE r.tenant_id = ?
+        GROUP BY s.id
+        ORDER BY request_count DESC
+        LIMIT 10
+    ''', (tenant_id,))
+    top_songs = cursor.fetchall()
+    
+    # Get recent fulfilled requests
+    cursor.execute('''
+        SELECT s.title, s.author, r.requester, r.played_at
+        FROM requests r
+        JOIN songs s ON r.song_id = s.id
+        WHERE r.tenant_id = ? AND r.status = ?
+        ORDER BY r.played_at DESC
+        LIMIT 10
+    ''', (tenant_id, 'fulfilled'))
+    recent_fulfilled = cursor.fetchall()
+    
+    conn.close()
+    
+    stats = {
+        'total_requests': total_requests,
+        'fulfilled_requests': fulfilled_requests,
+        'pending_requests': pending_requests,
+        'conversion_rate': round(conversion_rate, 1),
+        'total_tips': total_tips,
+        'top_songs': top_songs,
+        'recent_fulfilled': recent_fulfilled
+    }
+    
+    return render_template('tenant_insights.html', tenant=tenant, stats=stats)
 
 @app.route('/<tenant_slug>/admin')
 def tenant_admin(tenant_slug):
@@ -3096,8 +3179,14 @@ def request_song(song_id):
         # Increment the request count
         cursor.execute('UPDATE songs SET requests = requests + 1 WHERE id = ? AND tenant_id = ?', (song_id, tenant_id))
 
-        # Add the song to the queue with tenant_id
-        cursor.execute('INSERT INTO requests (song_id, requester, tenant_id) VALUES (?, ?, ?)', (song_id, user_name, tenant_id))
+        # Get session_id for tracking
+        user_session_id = session.get('user_session_id', 'unknown')
+        
+        # Add the song to the queue with tenant_id, session_id, and default status
+        cursor.execute(
+            'INSERT INTO requests (song_id, requester, tenant_id, session_id, status, tip_amount) VALUES (?, ?, ?, ?, ?, ?)', 
+            (song_id, user_name, tenant_id, user_session_id, 'pending', 0.0)
+        )
 
         conn.commit()
         conn.close()
@@ -3108,6 +3197,41 @@ def request_song(song_id):
     except Exception as e:
         app.logger.error(f"Error incrementing request: {e}")
         return jsonify({'error': _('Song Request Error')}), 500
+
+@app.route('/api/mark_request_fulfilled/<int:request_id>', methods=['POST'])
+def mark_request_fulfilled(request_id):
+    """Mark a song request as fulfilled (played) by the artist."""
+    try:
+        # Verify tenant admin is logged in
+        if not session.get('is_tenant_admin'):
+            return jsonify({'error': 'Unauthorized'}), 403
+        
+        tenant_id = session.get('tenant_id')
+        
+        conn = create_connection()
+        cursor = conn.cursor()
+        
+        # Verify request belongs to this tenant
+        cursor.execute('SELECT id FROM requests WHERE id = ? AND tenant_id = ?', (request_id, tenant_id))
+        if not cursor.fetchone():
+            conn.close()
+            return jsonify({'error': 'Request not found'}), 404
+        
+        # Update status to 'fulfilled' and set played_at timestamp
+        from datetime import datetime
+        cursor.execute(
+            'UPDATE requests SET status = ?, played_at = ? WHERE id = ? AND tenant_id = ?',
+            ('fulfilled', datetime.now().isoformat(), request_id, tenant_id)
+        )
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({'success': True, 'message': 'Request marked as fulfilled'}), 200
+        
+    except Exception as e:
+        app.logger.error(f"Error marking request as fulfilled: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
 
 @app.route('/create_db', methods=['POST'])
 def create_db():

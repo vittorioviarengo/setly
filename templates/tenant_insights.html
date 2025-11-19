@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="{{ session.get('language', 'en') }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ _('Insights') }} - {{ tenant.name }}</title>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') if tenant and tenant.favicon else url_for('static', filename='images/default_favicon.ico') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dialog.css') }}">
+    <style>
+        .insights-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 48px;
+            font-weight: bold;
+            color: var(--primary-color, #4a90e2);
+            margin: 10px 0;
+        }
+        
+        .stat-label {
+            font-size: 16px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .stat-card.conversion .stat-value {
+            color: #27ae60;
+        }
+        
+        .stat-card.pending .stat-value {
+            color: #f39c12;
+        }
+        
+        .stat-card.tips .stat-value {
+            color: #8e44ad;
+        }
+        
+        .insights-section {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin: 20px 0;
+        }
+        
+        .insights-section h2 {
+            margin-top: 0;
+            color: #333;
+            border-bottom: 2px solid var(--primary-color, #4a90e2);
+            padding-bottom: 10px;
+        }
+        
+        .song-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .song-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .song-item:last-child {
+            border-bottom: none;
+        }
+        
+        .song-info {
+            flex: 1;
+        }
+        
+        .song-title {
+            font-weight: bold;
+            color: #333;
+            font-size: 16px;
+        }
+        
+        .song-author {
+            color: #666;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        
+        .song-count {
+            background: var(--primary-color, #4a90e2);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+        
+        .played-time {
+            color: #999;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    {% include 'nav.html' %}
+    
+    <div class="container">
+        <h1>{{ _('Insights & Analytics') }}</h1>
+        
+        <div class="insights-grid">
+            <div class="stat-card">
+                <div class="stat-label">{{ _('Total Requests') }}</div>
+                <div class="stat-value">{{ stats.total_requests }}</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-label">{{ _('Fulfilled') }}</div>
+                <div class="stat-value">{{ stats.fulfilled_requests }}</div>
+            </div>
+            
+            <div class="stat-card pending">
+                <div class="stat-label">{{ _('Pending') }}</div>
+                <div class="stat-value">{{ stats.pending_requests }}</div>
+            </div>
+            
+            <div class="stat-card conversion">
+                <div class="stat-label">{{ _('Conversion Rate') }}</div>
+                <div class="stat-value">{{ stats.conversion_rate }}%</div>
+            </div>
+            
+            {% if stats.total_tips > 0 %}
+            <div class="stat-card tips">
+                <div class="stat-label">{{ _('Total Tips') }}</div>
+                <div class="stat-value">${{ "%.2f"|format(stats.total_tips) }}</div>
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="insights-section">
+            <h2>{{ _('Top Requested Songs') }}</h2>
+            {% if stats.top_songs %}
+            <ul class="song-list">
+                {% for song in stats.top_songs %}
+                <li class="song-item">
+                    <div class="song-info">
+                        <div class="song-title">{{ song.title }}</div>
+                        <div class="song-author">{{ song.author }}</div>
+                    </div>
+                    <div class="song-count">{{ song.request_count }}x</div>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <div class="empty-state">
+                {{ _('No requests yet') }}
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="insights-section">
+            <h2>{{ _('Recently Played Songs') }}</h2>
+            {% if stats.recent_fulfilled %}
+            <ul class="song-list">
+                {% for song in stats.recent_fulfilled %}
+                <li class="song-item">
+                    <div class="song-info">
+                        <div class="song-title">{{ song.title }} - {{ song.author }}</div>
+                        <div class="song-author">{{ _('Requested by') }}: {{ song.requester }}</div>
+                        <div class="played-time">{{ song.played_at[:16] }}</div>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <div class="empty-state">
+                {{ _('No songs played yet') }}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <script src="{{ url_for('static', filename='js/dialog.js') }}"></script>
+</body>
+</html>
+

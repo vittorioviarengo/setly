@@ -307,6 +307,42 @@ msgstr "Errore nella generazione del PDF:"
 msgid "Admin Page Link"
 msgstr "Amministrazione"
 
+msgid "Insights"
+msgstr "Statistiche"
+
+msgid "Insights & Analytics"
+msgstr "Statistiche e Analitiche"
+
+msgid "Total Requests"
+msgstr "Richieste Totali"
+
+msgid "Fulfilled"
+msgstr "Completate"
+
+msgid "Pending"
+msgstr "In Attesa"
+
+msgid "Conversion Rate"
+msgstr "Tasso di Conversione"
+
+msgid "Total Tips"
+msgstr "Mance Totali"
+
+msgid "Top Requested Songs"
+msgstr "Canzoni Più Richieste"
+
+msgid "Recently Played Songs"
+msgstr "Canzoni Suonate di Recente"
+
+msgid "No requests yet"
+msgstr "Nessuna richiesta ancora"
+
+msgid "No songs played yet"
+msgstr "Nessuna canzone suonata ancora"
+
+msgid "Requested by"
+msgstr "Richiesta da"
+
 msgid "Queue Page Link"
 msgstr "Richieste in tempo reale"
 
