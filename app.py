@@ -24,7 +24,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = b'3L+nc\xcd\x02e/\x88\xbf\x9e\xfc\xb5\xa2'
+# Read SECRET_KEY from environment variable for security
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-key-change-in-production')
 
 # Global dictionary to track background jobs
 background_jobs = {}
@@ -94,7 +95,8 @@ def inject_app_settings():
     conn.close()
     return dict(app_name=app_name, favicon=favicon, app_icon=app_icon, auto_refresh_interval=auto_refresh_interval)
 
-ADMIN_PASSWORD = 'cottonclub'
+# Read ADMIN_PASSWORD from environment variable for security
+ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'change-this-password')
 MAX_TIME_TO_REQUEST = 12
 
 app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(__file__), 'static', 'author_images')
@@ -1298,9 +1300,15 @@ def tenant_bulk_fetch_status(tenant_slug, job_id):
 
 
 def reload_webapp():
-    api_token = '5e76f4491650da91c0152a43a6ba5d8d9d765d66'
-    username = 'vittorioviarengo'
-    domain_name = 'vittorioviarengo.pythonanywhere.com'
+    # Read PythonAnywhere credentials from environment variables for security
+    api_token = os.environ.get('PYTHONANYWHERE_API_TOKEN')
+    username = os.environ.get('PYTHONANYWHERE_USERNAME', 'vittorioviarengo')
+    domain_name = os.environ.get('PYTHONANYWHERE_DOMAIN', 'vittorioviarengo.pythonanywhere.com')
+    
+    if not api_token:
+        logging.error("PYTHONANYWHERE_API_TOKEN not set in environment variables")
+        return
+    
     url = f"https://www.pythonanywhere.com/api/v0/user/{username}/webapps/{domain_name}/reload/"
     headers = {"Authorization": f"Token {api_token}"}
     response = requests.post(url, headers=headers)
