@@ -45,9 +45,14 @@ mail = Mail(app)
 app.register_blueprint(superadmin)
 
 
-# Vittorio's Spotify credentials
-client_id = "4dd130b8c960408798e64c30f04d67ad"
-client_secret = "96c2357eea1e400e9921799f45581370"
+# Spotify API credentials - read from environment variables for security
+# Set these in .env file: SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET
+client_id = os.environ.get('SPOTIFY_CLIENT_ID')
+client_secret = os.environ.get('SPOTIFY_CLIENT_SECRET')
+
+if not client_id or not client_secret:
+    app.logger.error("SPOTIFY_CLIENT_ID or SPOTIFY_CLIENT_SECRET not set in environment variables")
+    app.logger.error("Spotify integration will not work. Please set these in your .env file.")
 
 
 babel = Babel(app)
