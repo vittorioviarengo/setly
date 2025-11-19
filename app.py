@@ -3834,75 +3834,34 @@ def search():
     return render_template('search.html', user_name=user_name, language=language, songs=songs, can_request_songs=True, tenant=tenant)
 
 
-@app.route('/search_old', methods=['GET', 'POST'])
-def search_old():
-    user_name = request.form.get('user_name', request.args.get('user_name', session.get('user_name', '')))
-    language = request.form.get('lang', request.args.get('lang', session.get('language', 'en')))
-    search_query = request.args.get('s', '')  # Assuming there's a query parameter 's' for search queries
+# SECURITY: Disabled old debug endpoints (Phase 1, Task 2)
+# These were duplicate/debug versions of /search and should not be exposed in production
+# Commented out 2024-11-19 - can be removed completely after verification
 
-    # Set session variables
-    session['user_name'] = user_name
-    session['language'] = language
-    
-    app.logger.debug(f'Loading Search.html for user: {user_name}')
-    app.logger.debug(f'Language: {language}')
-    app.logger.debug(f'Search query: {search_query}')
-    
-    # Check if the username is empty
-    if user_name == '':
-        app.logger.debug('Rendering Search.html')
-        return render_template('search.html')
+# @app.route('/search_old', methods=['GET', 'POST'])
+# def search_old():
+#     # OLD/DEBUG: Superseded by /search
+#     pass
 
-    # If username is not empty, check if the session is valid
-    if not is_session_valid():
-        # Reset username and redirect if session is not valid
-        app.logger.debug(f'redirecting to scan_qr for user: {user_name}')
-        
-
-        session['user_name'] = ''
-        return redirect(url_for('scan_qr'))
-
-    # If session is valid and username is not empty, fetch and render the search page with song data
-    # Assuming 'all' is a valid argument for start_letter to fetch all songs
-    songs = fetch_songs('all', search_query, language)
-    return render_template('search.html', user_name=user_name, language=language, songs=songs)
-
-@app.route('/search_works', methods=['GET', 'POST'])
-def search_works():
-    if not is_session_valid():
-        return redirect('scan_qr')
-
-    user_name = request.form.get('user_name', request.args.get('user_name', session.get('user_name', '')))
-    language = request.form.get('lang', request.args.get('lang', session.get('language', 'en')))
-
-    if (user_name == '') :
-        can_request_songs = False
-
-    session['user_name'] = user_name
-    session['language'] = language
-
-
-    if request.method == 'POST':
-        return redirect(url_for('search', user_name=user_name, lang=language))
-
-    # Handle the case where 's' might be None
-    search_query = request.args.get('s', '')
-    if search_query:
-        search_query = search_query.strip().lower()
-
-    songs = fetch_songs(request.args.get('letter', 'all'), search_query, language)
-    return render_template('search.html', user_name=user_name, language=language, can_request_songs=can_request_songs, songs=songs)
+# @app.route('/search_works', methods=['GET', 'POST'])
+# def search_works():
+#     # OLD/DEBUG: Superseded by /search
+#     pass
 
 @app.route('/get_all_songs', methods=['GET'])
 def get_all_songs():
+    # SECURITY: Require tenant session for data isolation
+    # Without this, the endpoint would return ALL songs from ALL tenants
+    tenant_id = session.get('tenant_id')
+    if not tenant_id:
+        app.logger.warning("Unauthorized access attempt to /get_all_songs without tenant_id in session")
+        return jsonify({'error': 'Unauthorized - No tenant session'}), 403
+    
     sort_by = request.args.get('sort_by', 'title')  # Default sort by title
     sort_order = request.args.get('sort_order', 'asc')  # Default sort order ascending
     page = int(request.args.get('page', 1))  # Default to page 1
     per_page = int(request.args.get('per_page', 10))  # Default to 10 songs per page
     search_query = request.args.get('search', '')  # Default to empty search query
-
-    # Get tenant_id from session for data isolation
-    tenant_id = session.get('tenant_id')
 
     # Validate sort_by and sort_order
     valid_columns = ['title', 'author', 'language', 'popularity']
@@ -3916,23 +3875,15 @@ def get_all_songs():
     conn = create_connection()
     cursor = conn.cursor()
     
-    # Filter by tenant_id if available
-    if tenant_id:
-        query = f'''
-            SELECT * FROM songs
-            WHERE (title LIKE ? OR author LIKE ? OR language LIKE ?) AND tenant_id = ?
-            ORDER BY {sort_by} {sort_order}
-            LIMIT {per_page} OFFSET {offset}
-        '''
-        cursor.execute(query, (f'%{search_query}%', f'%{search_query}%', f'%{search_query}%', tenant_id))
-    else:
-        query = f'''
-            SELECT * FROM songs
-            WHERE title LIKE ? OR author LIKE ? OR language LIKE ?
-            ORDER BY {sort_by} {sort_order}
-            LIMIT {per_page} OFFSET {offset}
-        '''
-        cursor.execute(query, (f'%{search_query}%', f'%{search_query}%', f'%{search_query}%'))
+    # SECURITY: Always filter by tenant_id (already verified above)
+    # This ensures data isolation between tenants
+    query = f'''
+        SELECT * FROM songs
+        WHERE (title LIKE ? OR author LIKE ? OR language LIKE ?) AND tenant_id = ?
+        ORDER BY {sort_by} {sort_order}
+        LIMIT {per_page} OFFSET {offset}
+    '''
+    cursor.execute(query, (f'%{search_query}%', f'%{search_query}%', f'%{search_query}%', tenant_id))
     
     songs = cursor.fetchall()
     conn.close()
@@ -3942,6 +3893,12 @@ def get_all_songs():
 
 @app.route('/update_song/<int:song_id>', methods=['POST'])
 def update_song(song_id):
+    # SECURITY: Require tenant session to prevent cross-tenant data modification
+    tenant_id = session.get('tenant_id')
+    if not tenant_id:
+        app.logger.warning(f"Unauthorized update attempt for song {song_id} without tenant_id in session")
+        return jsonify({'error': 'Unauthorized - No tenant session'}), 403
+    
     try:
         data = request.get_json()
         app.logger.debug(f"Received data: {data}")
@@ -3959,26 +3916,16 @@ def update_song(song_id):
         if not title or not author or not language or popularity is None:
             app.logger.error('Invalid data received')
             return jsonify({'message': 'Invalid data'}), 400
-
-        # Get tenant_id from session for data isolation
-        tenant_id = session.get('tenant_id')
         
         conn = create_connection()
         cursor = conn.cursor()
         
-        # Filter by tenant_id if available
-        if tenant_id:
-            cursor.execute("""
-                UPDATE songs
-                SET title = ?, author = ?, language = ?, popularity = ?, image = ?, genre = ?, playlist = ?
-                WHERE id = ? AND tenant_id = ?
-            """, (title, author, language, popularity, image, genre, playlist, song_id, tenant_id))
-        else:
-            cursor.execute("""
-                UPDATE songs
-                SET title = ?, author = ?, language = ?, popularity = ?, image = ?, genre = ?, playlist = ?
-                WHERE id = ?
-            """, (title, author, language, popularity, image, genre, playlist, song_id))
+        # SECURITY: Always filter by tenant_id to prevent cross-tenant modification
+        cursor.execute("""
+            UPDATE songs
+            SET title = ?, author = ?, language = ?, popularity = ?, image = ?, genre = ?, playlist = ?
+            WHERE id = ? AND tenant_id = ?
+        """, (title, author, language, popularity, image, genre, playlist, song_id, tenant_id))
         
         conn.commit()
         conn.close()
