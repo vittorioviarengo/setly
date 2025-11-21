@@ -255,8 +255,8 @@ msgstr "Si prega di compilare correttamente tutti i campi."
 msgid "UI Language"
 msgstr "Lingua dell&#39;interfaccia utente"
 
-msgid "Play Song"
-msgstr "Riproduci canzone"
+msgid "Mark as Played"
+msgstr "Segna come Suonata"
 
 msgid "Welcome to"
 msgstr "Benvenuto a"

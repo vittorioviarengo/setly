@@ -2907,10 +2907,10 @@ def get_queue():
         SELECT s.id as song_id, s.title, s.author, s.image, GROUP_CONCAT(r.requester) as requesters, MIN(r.request_time) as request_time
         FROM requests r
         JOIN songs s ON r.song_id = s.id
-        WHERE r.tenant_id = ?
+        WHERE r.tenant_id = ? AND r.status = ?
         GROUP BY r.song_id
         ORDER BY request_time ASC
-    """, (tenant_id,))
+    """, (tenant_id, 'pending'))
     queue = cursor.fetchall()
     conn.close()
 
@@ -2941,27 +2941,27 @@ def get_user_requests():
         conn = create_connection()
         cursor = conn.cursor()
         
-        # Filter by tenant_id if available
+        # Filter by tenant_id if available (only show pending requests)
         if tenant_id:
             query = """
                 SELECT s.id as song_id, s.title, s.author, s.image, GROUP_CONCAT(r.requester) as requesters
                 FROM requests r
                 JOIN songs s ON r.song_id = s.id
-                WHERE r.requester = ? AND r.tenant_id = ?
+                WHERE r.requester = ? AND r.tenant_id = ? AND r.status = ?
                 GROUP BY r.song_id
                 ORDER BY MIN(r.request_time) ASC
             """
-            cursor.execute(query, (user_name, tenant_id))
+            cursor.execute(query, (user_name, tenant_id, 'pending'))
         else:
             query = """
                 SELECT s.id as song_id, s.title, s.author, s.image, GROUP_CONCAT(r.requester) as requesters
                 FROM requests r
                 JOIN songs s ON r.song_id = s.id
-                WHERE r.requester = ?
+                WHERE r.requester = ? AND r.status = ?
                 GROUP BY r.song_id
                 ORDER BY MIN(r.request_time) ASC
             """
-            cursor.execute(query, (user_name,))
+            cursor.execute(query, (user_name, 'pending'))
             
         user_requests = cursor.fetchall()
         app.logger.debug(f"Query returned {len(user_requests)} requests for tenant_id: {tenant_id}")
@@ -3117,7 +3117,7 @@ def check_session():
 
 @app.route('/api/user_requested_song_ids', methods=['GET'])
 def get_user_requested_song_ids():
-    """Get list of song IDs currently requested by the user (for polling)."""
+    """Get list of song IDs currently requested by the user (for polling). Only returns pending requests."""
     user_name = session.get('user_name')
     tenant_id = session.get('tenant_id')
     
@@ -3127,7 +3127,10 @@ def get_user_requested_song_ids():
     try:
         conn = create_connection()
         cursor = conn.cursor()
-        cursor.execute('SELECT song_id FROM requests WHERE requester = ? AND tenant_id = ?', (user_name, tenant_id))
+        cursor.execute(
+            'SELECT song_id FROM requests WHERE requester = ? AND tenant_id = ? AND status = ?', 
+            (user_name, tenant_id, 'pending')
+        )
         requests = cursor.fetchall()
         conn.close()
         
@@ -3284,23 +3287,33 @@ def delete_all_requests():
 
 @app.route('/delete_request/<int:song_id>', methods=['POST'])
 def delete_request(song_id):
+    """Mark all pending requests for a song as fulfilled (played)."""
     try:
         tenant_id = session.get('tenant_id')
         conn = create_connection()
         cursor = conn.cursor()
         
-        # Filter by tenant_id if available
+        from datetime import datetime
+        played_at = datetime.now().isoformat()
+        
+        # Mark all pending requests for this song as fulfilled
         if tenant_id:
-            cursor.execute("DELETE FROM requests WHERE song_id = ? AND tenant_id = ?", (song_id, tenant_id))
+            cursor.execute(
+                "UPDATE requests SET status = ?, played_at = ? WHERE song_id = ? AND tenant_id = ? AND status = ?",
+                ('fulfilled', played_at, song_id, tenant_id, 'pending')
+            )
         else:
-            cursor.execute("DELETE FROM requests WHERE song_id = ?", (song_id,))
+            cursor.execute(
+                "UPDATE requests SET status = ?, played_at = ? WHERE song_id = ? AND status = ?",
+                ('fulfilled', played_at, song_id, 'pending')
+            )
         
         conn.commit()
         conn.close()
-        return jsonify({"message": "Song removed from queue successfully"})
+        return jsonify({"message": "Song marked as played successfully"})
     except Exception as e:
-        print(f"Error removing song from queue: {e}")
-        return jsonify({"message": "Error removing song from queue"}), 500
+        print(f"Error marking song as played: {e}")
+        return jsonify({"message": "Error marking song as played"}), 500
 
 
 @app.route('/update_max_requests', methods=['POST'])

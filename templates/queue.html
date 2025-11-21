@@ -169,9 +169,9 @@
 
                 if ({{ is_admin | tojson }}) {
                     const removeButton = document.createElement('button');
-                    removeButton.textContent = '{{ _("Play Song") }}';
+                    removeButton.textContent = '{{ _("Mark as Played") }}';
                     removeButton.onclick = function () {
-                        removeFromQueue(song.song_id);
+                        markAsPlayed(song.song_id);
                     };
                     songItem.appendChild(removeButton);
                 }
@@ -184,7 +184,7 @@
         songCountElement.textContent = songs.length;
     }
             
-        function removeFromQueue(songId) {
+        function markAsPlayed(songId) {
             fetch(`/delete_request/${songId}`, {
                 method: 'POST',
                 headers: {
@@ -196,7 +196,7 @@
                     incrementPopularity(songId);  // Increment popularity
                     fetchQueue();  // Refresh the queue
                 })
-                .catch(error => console.error('Error removing from queue:', error));
+                .catch(error => console.error('Error marking song as played:', error));
         }
 
         function incrementPopularity(songId) {
