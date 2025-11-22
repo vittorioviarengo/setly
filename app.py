@@ -19,6 +19,8 @@ from spotipy import Spotify
 from spotipy.oauth2 import SpotifyClientCredentials
 from flask_mail import Mail
 from dotenv import load_dotenv
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 
 # Load environment variables from .env file
 load_dotenv()
@@ -26,6 +28,56 @@ load_dotenv()
 app = Flask(__name__)
 # Read SECRET_KEY from environment variable for security
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-key-change-in-production')
+
+# Configure Rate Limiting
+limiter = Limiter(
+    app=app,
+    key_func=get_remote_address,
+    default_limits=["200 per day", "50 per hour"],
+    storage_uri="memory://",
+    strategy="fixed-window"
+)
+
+# Exempt static files from rate limiting
+@limiter.request_filter
+def exempt_static_files():
+    return request.path.startswith('/static/')
+
+# Rate Limit Error Handler
+@app.errorhandler(429)
+def ratelimit_handler(e):
+    """Handle rate limit exceeded errors."""
+    if request.path.startswith('/api/') or request.is_json:
+        return jsonify({
+            'error': 'Rate limit exceeded',
+            'message': 'Too many requests. Please try again later.',
+            'retry_after': e.description
+        }), 429
+    
+    # For regular web requests, show a friendly page
+    return render_template_string('''
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Too Many Requests</title>
+            <style>
+                body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f5f5f5; }
+                .container { background: white; padding: 40px; border-radius: 10px; max-width: 500px; margin: 0 auto; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+                h1 { color: #e74c3c; margin-bottom: 20px; }
+                p { color: #666; line-height: 1.6; }
+                .retry { color: #3498db; font-weight: bold; margin-top: 20px; }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <h1>⏱️ Too Many Requests</h1>
+                <p>You've made too many requests in a short period. Please wait a moment before trying again.</p>
+                <p class="retry">{{ retry_after }}</p>
+                <p><a href="javascript:history.back()">← Go Back</a></p>
+            </div>
+        </body>
+        </html>
+    ''', retry_after=e.description), 429
 
 # Global dictionary to track background jobs
 background_jobs = {}
@@ -145,6 +197,7 @@ babel.init_app(app, locale_selector=get_locale)
 
 #--------------------------------------------- ADMIN Entry Points ---------------------------------------------
 @app.route('/login', methods=['GET', 'POST'])
+@limiter.limit("5 per 15 minutes", methods=['POST'])
 def login():
     if request.method == 'POST':
         password = request.form.get('password')
@@ -1477,6 +1530,7 @@ def tenant_logout(tenant_slug):
     return redirect(url_for('tenant_login', tenant_slug=tenant_slug))
 
 @app.route('/<tenant_slug>/login', methods=['GET', 'POST'])
+@limiter.limit("5 per 15 minutes", methods=['POST'])
 def tenant_login(tenant_slug):
     """Tenant admin login page."""
     conn = create_connection()
@@ -3141,6 +3195,7 @@ def get_user_requested_song_ids():
         return jsonify({'requested_song_ids': []})
 
 @app.route('/request_song/<int:song_id>', methods=['POST'])
+@limiter.limit("10 per minute")
 def request_song(song_id):
 
 
