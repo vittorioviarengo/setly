@@ -29,6 +29,12 @@ app = Flask(__name__)
 # Read SECRET_KEY from environment variable for security
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-key-change-in-production')
 
+# Configure session to persist across browser tabs/closing
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)  # Session expires after 7 days
+app.config['SESSION_COOKIE_HTTPONLY'] = True  # Prevent XSS attacks
+app.config['SESSION_COOKIE_SECURE'] = os.environ.get('FLASK_ENV') == 'production'  # HTTPS only in production
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Allow cookies when navigating from external sites
+
 # Configure Rate Limiting
 limiter = Limiter(
     app=app,
@@ -1554,6 +1560,9 @@ def tenant_login(tenant_slug):
         print(f"DEBUG tenant_login POST: email={email}, tenant_email={tenant['email']}")
         
         if email == tenant['email'] and check_password_hash(tenant['password'], password):
+            # Make session permanent so it persists across browser tabs/closing
+            session.permanent = True
+            
             session['is_tenant_admin'] = True
             session['tenant_id'] = tenant['id']
             session['tenant_slug'] = tenant_slug
@@ -2725,6 +2734,17 @@ def tenant_help(tenant_slug):
         return redirect(url_for('index'))
     
     return render_template('help.html', tenant=tenant)
+
+@app.route('/<tenant_slug>/logout_user', methods=['GET', 'POST'])
+def tenant_logout_user(tenant_slug):
+    """Logout end user - clear name and return to home."""
+    # Clear user name from session
+    session.pop('user_name', None)
+    session.pop('last_visited', None)
+    session.pop('user_session_id', None)
+    
+    # Redirect to home page
+    return redirect(url_for('tenant_home', tenant_slug=tenant_slug))
 
 @app.route('/<tenant_slug>/search', methods=['GET', 'POST'])
 def tenant_search(tenant_slug):
@@ -3984,6 +4004,17 @@ def populate_db():
 def help_page():
     """Non-tenant help page (for backwards compatibility)."""
     return render_template('help.html', tenant=None)
+
+@app.route('/logout_user', methods=['GET', 'POST'])
+def logout_user():
+    """Logout end user - clear name and return to home."""
+    # Clear user name from session
+    session.pop('user_name', None)
+    session.pop('last_visited', None)
+    session.pop('user_session_id', None)
+    
+    # Redirect to home page
+    return redirect(url_for('index'))
 
 @app.route('/search', methods=['GET', 'POST'])
 def search():

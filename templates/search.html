@@ -55,6 +55,12 @@
                             <a href="http://sergiochiappa.com">{{ _('About') }} {{ tenant.name }}</a>
                             {% endif %}
                             <div class="menu-divider"></div> <!-- Divider -->
+                            {% if user_name %}
+                            <a href="{% if tenant %}/{{ tenant.slug }}/logout_user{% else %}/logout_user{% endif %}" style="color: #e74c3c;">
+                                🚪 {{ _('Logout') }}
+                            </a>
+                            <div class="menu-divider"></div> <!-- Divider -->
+                            {% endif %}
                             <div class="menu-item" data-lang="en">English</div>
                             <div class="menu-item" data-lang="it">Italiano</div>
                             <div class="menu-item" data-lang="es">Espanol</div>

@@ -334,6 +334,9 @@ msgstr "Canzoni Più Richieste"
 msgid "Recently Played Songs"
 msgstr "Canzoni Suonate di Recente"
 
+msgid "Logout"
+msgstr "Esci"
+
 msgid "No requests yet"
 msgstr "Nessuna richiesta ancora"
 

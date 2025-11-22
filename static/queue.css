@@ -315,71 +315,6 @@ body {
 
 @media screen and (max-width: 768px) {
     .admin-container {
-        padding: 0 0.75rem;
-    }
-    
-    .admin-header {
-        padding: 1.25rem;
-        margin: 0.75rem 0 1.25rem 0;
-    }
-    
-    .admin-header h1 {
-        font-size: 1.6em;
-    }
-    
-    .admin-actions-container {
-        padding: 1.25rem;
-    }
-    
-    .action-item {
-        padding: 1rem;
-    }
-    .song-item {
-        flex-direction: column;
-        align-items: center;
-        padding: 18px;
-        text-align: center;
-    }
-    
-    .author-image {
-        width: 90px;
-        height: 90px;
-        margin-bottom: 15px;
-    }
-    
-    .song-info {
-        width: 100%;
-    }
-    
-    .song-info p {
-        font-size: 0.95em;
-    }
-    
-    .song-item .button {
-        width: 100%;
-        margin-top: 12px;
-        padding: 14px 24px;
-        font-size: 16px;
-    }
-    
-    #songCountContainer {
-        flex-direction: column;
-        text-align: center;
-        padding: 1.125rem;
-    }
-    
-    .song-count-text {
-        font-size: 1.2em;
-    }
-    
-    #songCountContainer .button {
-        width: 100%;
-        min-width: 100%;
-    }
-}
-
-@media screen and (max-width: 480px) {
-    .admin-container {
         padding: 0 0.5rem;
     }
     
@@ -390,48 +325,199 @@ body {
     
     .admin-header h1 {
         font-size: 1.4em;
+        line-height: 1.3;
+        word-wrap: break-word;
     }
     
     .admin-header #datetime,
     .admin-subtitle {
+        font-size: 0.85em;
+    }
+    
+    .admin-actions-container {
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .action-item {
+        padding: 0.875rem;
+        margin-bottom: 0.75rem;
+    }
+    
+    .action-item label {
         font-size: 0.9em;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+    
+    .action-item input {
+        width: 100%;
+        margin-bottom: 0.5rem;
+        font-size: 0.95em;
     }
     
     .song-item {
+        flex-direction: column;
+        align-items: stretch;
         padding: 15px;
+        text-align: left;
+        gap: 10px;
     }
     
     .author-image {
         width: 70px;
         height: 70px;
+        margin: 0 auto 10px auto;
+        align-self: center;
+    }
+    
+    .song-info {
+        width: 100%;
+        text-align: center;
     }
     
     .song-info p {
         font-size: 0.9em;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        margin: 5px 0;
     }
     
     .song-info strong {
         font-size: 1.05em;
+        display: block;
+        margin-bottom: 5px;
+    }
+    
+    .song-item .button {
+        width: 100%;
+        margin-top: 10px;
+        padding: 12px 20px;
+        font-size: 15px;
+        min-width: 100%;
     }
     
     #songCountContainer {
+        flex-direction: column;
+        text-align: center;
         padding: 1rem;
+        gap: 0.75rem;
     }
     
     .song-count-text {
         font-size: 1.1em;
+        word-wrap: break-word;
+    }
+    
+    #songCountContainer .button {
+        width: 100%;
+        min-width: 100%;
+        padding: 12px 20px;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .admin-container {
+        padding: 0 0.5rem;
+    }
+    
+    .admin-header {
+        padding: 0.875rem;
+        margin: 0.5rem 0 0.875rem 0;
+    }
+    
+    .admin-header h1 {
+        font-size: 1.25em;
+        line-height: 1.2;
+        word-wrap: break-word;
+        hyphens: auto;
+    }
+    
+    .admin-header #datetime,
+    .admin-subtitle {
+        font-size: 0.8em;
+        line-height: 1.4;
     }
     
     .admin-actions-container {
-        padding: 1rem;
+        padding: 0.875rem;
+        margin-bottom: 0.875rem;
     }
     
     .action-item {
+        padding: 0.75rem;
+        margin-bottom: 0.625rem;
+    }
+    
+    .action-item label {
+        font-size: 0.85em;
+        margin-bottom: 0.375rem;
+    }
+    
+    .action-item input {
+        font-size: 0.9em;
+        padding: 8px 10px;
+    }
+    
+    .action-item button {
+        font-size: 0.9em;
+        padding: 10px 18px;
+    }
+    
+    .song-item {
+        padding: 12px;
+        margin-bottom: 8px;
+        gap: 8px;
+    }
+    
+    .author-image {
+        width: 60px;
+        height: 60px;
+        margin-bottom: 8px;
+    }
+    
+    .song-info {
+        text-align: center;
+    }
+    
+    .song-info p {
+        font-size: 0.85em;
+        line-height: 1.4;
+        margin: 4px 0;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+    }
+    
+    .song-info strong {
+        font-size: 1em;
+        margin-bottom: 4px;
+    }
+    
+    .song-item .button {
+        padding: 10px 18px;
+        font-size: 14px;
+        margin-top: 8px;
+    }
+    
+    #songCountContainer {
         padding: 0.875rem;
+        gap: 0.625rem;
+    }
+    
+    .song-count-text {
+        font-size: 1em;
+        line-height: 1.4;
+        word-wrap: break-word;
+    }
+    
+    #songCountContainer .button {
+        padding: 10px 18px;
+        font-size: 14px;
     }
     
     #queueContainer > p {
-        padding: 2rem 1.25rem;
-        font-size: 1.1em;
+        padding: 1.5rem 1rem;
+        font-size: 1em;
+        line-height: 1.5;
     }
 }

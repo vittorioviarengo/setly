@@ -80,6 +80,9 @@ def login():
         conn.close()
 
         if admin and check_password_hash(admin['password_hash'], password):
+            # Make session permanent so it persists across browser tabs/closing
+            session.permanent = True
+            
             session['is_superadmin'] = True
             session['superadmin_id'] = admin['id']
             return redirect(url_for('superadmin.dashboard'))
