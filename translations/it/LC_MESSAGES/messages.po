@@ -670,6 +670,9 @@ msgstr "Ora che sai come funziona, vai avanti e richiedi le tue canzoni preferit
 msgid "Go to Song List"
 msgstr "Vai all'Elenco delle Canzoni"
 
+msgid "Back to Song List"
+msgstr "Torna all'Elenco delle Canzoni"
+
 msgid "How to Use"
 msgstr "Come Usare"
 

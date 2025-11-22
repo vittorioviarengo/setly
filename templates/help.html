@@ -243,9 +243,33 @@
             transition: color 0.3s ease;
         }
         
-        .footer-links a:hover {
-            color: var(--teal-dark);
-            text-decoration: underline;
+            .footer-links a:hover {
+                color: var(--teal-dark);
+                text-decoration: underline;
+            }
+        
+        .back-to-search {
+            display: inline-block;
+            color: var(--teal);
+            text-decoration: none;
+            margin-bottom: 20px;
+            padding: 10px 15px;
+            border: 1px solid var(--teal);
+            border-radius: var(--radius);
+            transition: all 0.3s ease;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+        
+        .back-to-search:hover {
+            background: var(--teal);
+            color: var(--bg-dark);
+            border-color: var(--teal);
+        }
+        
+        .back-to-search-link-wrapper {
+            text-align: left;
+            margin-bottom: 10px;
         }
         
         @media (max-width: 768px) {
@@ -338,6 +362,14 @@
                 display: block;
                 margin: 10px 0;
             }
+            
+            .back-to-search {
+                width: 100%;
+                text-align: center;
+                box-sizing: border-box;
+                font-size: 0.9rem;
+                padding: 12px 15px;
+            }
         }
         
         @media (max-width: 480px) {
@@ -375,6 +407,11 @@
 </head>
 <body>
     <div class="help-container">
+        <div class="back-to-search-link-wrapper">
+            <a href="{% if tenant %}/{{ tenant.slug }}/search{% else %}/search{% endif %}" class="back-to-search">
+                ← {{ _('Back to Song List') }}
+            </a>
+        </div>
         <div class="help-header">
             <h1>🎵 {{ _('How to Request Songs') }}</h1>
             <p>{{ _('Your guide to using the music request system') }}</p>
