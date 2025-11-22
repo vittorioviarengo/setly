@@ -10,54 +10,59 @@
     
     <style>
         :root {
-            --primary-color: #2c3e50;
-            --accent-color: #3498db;
-            --success-color: #27ae60;
-            --warning-color: #f39c12;
-            --danger-color: #e74c3c;
-            --text-primary: #2c3e50;
-            --text-secondary: #7f8c8d;
-            --bg-card: #ffffff;
-            --border-color: #dfe6e9;
-            --shadow-sm: 0 2px 8px rgba(0,0,0,0.1);
-            --shadow-md: 0 4px 16px rgba(0,0,0,0.15);
-            --radius: 8px;
+            --teal: #00c2cb;
+            --teal-dark: #00858b;
+            --bg-dark: #000000;
+            --bg-card-dark: #1e1e1e;
+            --bg-card-darker: #001d1f;
+            --text-primary: #ffffff;
+            --text-secondary: #c4c4c4;
+            --text-muted: #8a9a9d;
+            --border-color: #050505;
+            --shadow-sm: 0 2px 8px rgba(0,0,0,0.3);
+            --shadow-md: 0 4px 16px rgba(0,0,0,0.4);
+            --radius: 10px;
         }
         
         body {
             font-family: 'Century Gothic', 'Apple Gothic', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: var(--bg-dark);
             margin: 0;
             padding: 0;
             min-height: 100vh;
+            color: var(--text-primary);
         }
         
         .help-container {
             max-width: 900px;
             margin: 0 auto;
             padding: 20px;
+            width: 100%;
+            box-sizing: border-box;
         }
         
         .help-header {
             text-align: center;
-            color: white;
+            color: var(--teal);
             padding: 30px 20px;
         }
         
         .help-header h1 {
             font-size: 2.5rem;
             margin: 0 0 10px 0;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            color: var(--teal);
+            font-weight: 700;
         }
         
         .help-header p {
             font-size: 1.2rem;
             margin: 0;
-            opacity: 0.9;
+            color: var(--text-secondary);
         }
         
         .help-card {
-            background: var(--bg-card);
+            background: var(--bg-card-dark);
+            border: 1px solid var(--border-color);
             border-radius: var(--radius);
             box-shadow: var(--shadow-md);
             margin-bottom: 20px;
@@ -67,12 +72,13 @@
         
         .help-card:hover {
             transform: translateY(-4px);
-            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
         }
         
         .help-card-header {
-            background: linear-gradient(135deg, var(--accent-color) 0%, #2980b9 100%);
-            color: white;
+            background: var(--bg-card-darker);
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-primary);
             padding: 20px;
             display: flex;
             align-items: center;
@@ -101,6 +107,7 @@
         
         .help-card-body {
             padding: 25px;
+            background: var(--bg-card-dark);
         }
         
         .step {
@@ -118,8 +125,8 @@
             flex-shrink: 0;
             width: 40px;
             height: 40px;
-            background: linear-gradient(135deg, var(--accent-color) 0%, #2980b9 100%);
-            color: white;
+            background: var(--teal);
+            color: var(--bg-dark);
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -133,6 +140,7 @@
             margin: 0 0 8px 0;
             color: var(--text-primary);
             font-size: 1.1rem;
+            font-weight: 700;
         }
         
         .step-content p {
@@ -158,15 +166,17 @@
         }
         
         .feature {
-            background: #f8f9fa;
+            background: var(--bg-card-darker);
+            border: 1px solid var(--border-color);
             padding: 20px;
             border-radius: var(--radius);
             text-align: center;
-            transition: background 0.3s ease;
+            transition: background 0.3s ease, border-color 0.3s ease;
         }
         
         .feature:hover {
-            background: #e9ecef;
+            background: #002a2f;
+            border-color: var(--teal);
         }
         
         .feature-icon {
@@ -177,6 +187,7 @@
         .feature h4 {
             margin: 0 0 8px 0;
             color: var(--text-primary);
+            font-weight: 700;
         }
         
         .feature p {
@@ -187,33 +198,34 @@
         
         .cta-button {
             display: inline-block;
-            background: linear-gradient(135deg, var(--success-color) 0%, #229954 100%);
-            color: white;
+            background: var(--teal);
+            color: var(--bg-dark);
             padding: 15px 40px;
             border-radius: 50px;
             text-decoration: none;
             font-size: 1.1rem;
             font-weight: bold;
             box-shadow: var(--shadow-md);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
             margin-top: 20px;
         }
         
         .cta-button:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+            box-shadow: 0 6px 20px rgba(0, 194, 203, 0.4);
+            background: var(--teal-dark);
         }
         
         .tip-box {
-            background: #fff3cd;
-            border-left: 4px solid var(--warning-color);
+            background: var(--bg-card-darker);
+            border-left: 4px solid var(--teal);
             padding: 15px 20px;
             border-radius: var(--radius);
             margin-top: 20px;
         }
         
         .tip-box strong {
-            color: var(--warning-color);
+            color: var(--teal);
             display: block;
             margin-bottom: 5px;
         }
@@ -221,38 +233,142 @@
         .footer-links {
             text-align: center;
             padding: 30px 20px;
-            color: white;
+            color: var(--text-secondary);
         }
         
         .footer-links a {
-            color: white;
+            color: var(--teal);
             text-decoration: none;
             margin: 0 15px;
-            opacity: 0.9;
-            transition: opacity 0.3s ease;
+            transition: color 0.3s ease;
         }
         
         .footer-links a:hover {
-            opacity: 1;
+            color: var(--teal-dark);
             text-decoration: underline;
         }
         
         @media (max-width: 768px) {
+            .help-container {
+                padding: 15px;
+            }
+            
+            .help-header {
+                padding: 20px 15px;
+            }
+            
             .help-header h1 {
-                font-size: 2rem;
+                font-size: 1.8rem;
+                line-height: 1.2;
+            }
+            
+            .help-header p {
+                font-size: 1rem;
+            }
+            
+            .help-card {
+                margin-bottom: 15px;
             }
             
             .help-card-header {
                 flex-direction: column;
                 text-align: center;
+                padding: 15px;
+                gap: 10px;
+            }
+            
+            .help-card-icon {
+                font-size: 2rem;
+            }
+            
+            .help-card-title h2 {
+                font-size: 1.3rem;
+            }
+            
+            .help-card-title p {
+                font-size: 0.85rem;
+            }
+            
+            .help-card-body {
+                padding: 20px 15px;
             }
             
             .step {
                 flex-direction: column;
+                gap: 15px;
+                margin-bottom: 20px;
+            }
+            
+            .step-number {
+                width: 35px;
+                height: 35px;
+                font-size: 1rem;
+            }
+            
+            .step-content h3 {
+                font-size: 1rem;
+            }
+            
+            .step-content p {
+                font-size: 0.9rem;
             }
             
             .feature-grid {
                 grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .feature {
+                padding: 15px;
+            }
+            
+            .cta-button {
+                padding: 12px 30px;
+                font-size: 1rem;
+                width: 100%;
+                text-align: center;
+                box-sizing: border-box;
+            }
+            
+            .footer-links {
+                padding: 20px 15px;
+            }
+            
+            .footer-links a {
+                display: block;
+                margin: 10px 0;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .help-container {
+                padding: 10px;
+            }
+            
+            .help-header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .help-header p {
+                font-size: 0.9rem;
+            }
+            
+            .help-card-header {
+                padding: 12px;
+            }
+            
+            .help-card-body {
+                padding: 15px 12px;
+            }
+            
+            .step {
+                margin-bottom: 15px;
+            }
+            
+            .step-number {
+                width: 30px;
+                height: 30px;
+                font-size: 0.9rem;
             }
         }
     </style>
@@ -323,7 +439,7 @@
         
         <!-- Features Card -->
         <div class="help-card">
-            <div class="help-card-header" style="background: linear-gradient(135deg, #27ae60 0%, #229954 100%);">
+            <div class="help-card-header">
                 <div class="help-card-icon">✨</div>
                 <div class="help-card-title">
                     <h2>{{ _('Key Features') }}</h2>
@@ -361,7 +477,7 @@
         
         <!-- Ready to Start -->
         <div class="help-card">
-            <div class="help-card-header" style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);">
+            <div class="help-card-header">
                 <div class="help-card-icon">🎤</div>
                 <div class="help-card-title">
                     <h2>{{ _('Ready to Start?') }}</h2>

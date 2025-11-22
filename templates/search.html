@@ -41,11 +41,11 @@
                       
                         <!-- Hidden menu -->
                         <div class="menu" id="menu">
-                            <a href="{% if tenant %}/{{ tenant.slug }}/help{% else %}/help{% endif %}" style="color: #3498db;">
+                            <a href="{% if tenant %}/{{ tenant.slug }}/help{% else %}/help{% endif %}">
                                 ❓ {{ _('How to Use') }}
                             </a>
                             {% if tenant and tenant.events_link %}
-                            <a href="{{ tenant.events_link }}" target="_blank" style="color: #e67e22;">
+                            <a href="{{ tenant.events_link }}" target="_blank">
                                 🎟️ {{ _('Upcoming Shows') }}
                             </a>
                             {% endif %}
@@ -56,7 +56,7 @@
                             {% endif %}
                             <div class="menu-divider"></div> <!-- Divider -->
                             {% if user_name %}
-                            <a href="{% if tenant %}/{{ tenant.slug }}/logout_user{% else %}/logout_user{% endif %}" style="color: #e74c3c;">
+                            <a href="{% if tenant %}/{{ tenant.slug }}/logout_user{% else %}/logout_user{% endif %}">
                                 🚪 {{ _('Logout') }}
                             </a>
                             <div class="menu-divider"></div> <!-- Divider -->
