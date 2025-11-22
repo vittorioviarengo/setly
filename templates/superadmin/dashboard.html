@@ -2,7 +2,7 @@
 <html>
 <head>
     <title>Super Admin Dashboard</title>
-    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename=favicon) }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename=favicon) if favicon else url_for('static', filename='favicon.ico') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='superadmin.css') }}">
 </head>
 <body>
