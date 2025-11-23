@@ -840,12 +840,17 @@ def fetch_spotify_image():
         app.logger.error(f"Traceback: {traceback.format_exc()}")
         return jsonify({'message': f'Unexpected error: {str(e)}'}), 500
     finally:
-        # Always cancel timeout
-        if hasattr(signal, 'SIGALRM'):
-            try:
-                signal.alarm(0)
-            except:
-                pass
+        # Always cancel timeout (if signal module is available)
+        try:
+            import signal
+            if hasattr(signal, 'SIGALRM'):
+                try:
+                    signal.alarm(0)
+                except:
+                    pass
+        except ImportError:
+            # signal module not available on all platforms (e.g., Windows)
+            pass
 
 def process_bulk_fetch_job(job_id, tenant_id, tenant_slug, batch_size):
     """Background worker function to process bulk Spotify fetch."""
