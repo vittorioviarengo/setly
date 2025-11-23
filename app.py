@@ -753,6 +753,11 @@ def fetch_spotify_image():
         if not author:
             return jsonify({'message': 'Author name is required'}), 400
 
+        # Check if Spotify credentials are configured
+        if not client_id or not client_secret:
+            app.logger.error("Spotify credentials not configured")
+            return jsonify({'message': 'Spotify integration not configured. Please contact the administrator.'}), 500
+
         # Get tenant_slug from session if available
         tenant_slug = session.get('tenant_slug')
         
@@ -2928,37 +2933,65 @@ def tenant_start_gig(tenant_slug):
         return jsonify({'success': False, 'message': 'Unauthorized'}), 403
     
     data = request.get_json()
-    gig_name = data.get('gig_name', '').strip() if data else None
+    if data and data.get('gig_name'):
+        gig_name = str(data.get('gig_name')).strip() or None
+    else:
+        gig_name = None
     
     tenant_id = session.get('tenant_id')
     if not tenant_id:
         return jsonify({'success': False, 'message': 'Tenant ID not found'}), 400
     
-    gig_id = start_gig(tenant_id, gig_name if gig_name else None)
-    
-    if gig_id:
-        active_gig = get_active_gig(tenant_id)
+    try:
+        gig_id = start_gig(tenant_id, gig_name if gig_name else None)
         
-        # Log gig started (async - non-blocking)
-        log_tenant_admin_action(
-            action='gig_started',
-            entity_type='gig',
-            entity_id=gig_id,
-            gig_name=active_gig['name'],
-            gig_start_time=active_gig['start_time']
-        )
-        
-        return jsonify({
-            'success': True, 
-            'message': 'Gig started successfully',
-            'gig': {
-                'id': active_gig['id'],
-                'name': active_gig['name'],
-                'start_time': active_gig['start_time']
-            }
-        })
-    else:
-        return jsonify({'success': False, 'message': 'Failed to start gig. Make sure the gigs table exists.'}), 500
+        if gig_id:
+            # Retrieve the gig directly by ID instead of using get_active_gig
+            conn = create_connection()
+            cursor = conn.cursor()
+            try:
+                cursor.execute("SELECT * FROM gigs WHERE id = ?", (gig_id,))
+                gig = cursor.fetchone()
+                if gig:
+                    active_gig = dict(gig)
+                else:
+                    app.logger.error(f"Gig {gig_id} was created but could not be retrieved")
+                    conn.close()
+                    return jsonify({'success': False, 'message': 'Gig started but could not be retrieved. Please refresh the page.'}), 500
+            except Exception as db_error:
+                app.logger.error(f"Error retrieving gig {gig_id}: {db_error}")
+                conn.close()
+                return jsonify({'success': False, 'message': 'Error retrieving gig details.'}), 500
+            finally:
+                conn.close()
+            
+            # Log gig started (async - non-blocking)
+            try:
+                log_tenant_admin_action(
+                    action='gig_started',
+                    entity_type='gig',
+                    entity_id=gig_id,
+                    gig_name=active_gig['name'],
+                    gig_start_time=active_gig['start_time']
+                )
+            except Exception as log_error:
+                # Don't fail the request if logging fails
+                app.logger.warning(f"Failed to log gig started: {log_error}")
+            
+            return jsonify({
+                'success': True, 
+                'message': 'Gig started successfully',
+                'gig': {
+                    'id': active_gig['id'],
+                    'name': active_gig['name'],
+                    'start_time': active_gig['start_time']
+                }
+            })
+        else:
+            return jsonify({'success': False, 'message': 'Failed to start gig. Make sure the gigs table exists.'}), 500
+    except Exception as e:
+        app.logger.error(f"Error in tenant_start_gig: {e}", exc_info=True)
+        return jsonify({'success': False, 'message': f'Error starting gig: {str(e)}'}), 500
 
 @app.route('/<tenant_slug>/end_gig', methods=['POST'])
 def tenant_end_gig(tenant_slug):
@@ -3010,23 +3043,37 @@ def tenant_end_gig(tenant_slug):
 @app.route('/<tenant_slug>/get_active_gig', methods=['GET'])
 def tenant_get_active_gig(tenant_slug):
     """Get the currently active gig for the tenant."""
-    tenant_id = session.get('tenant_id')
-    if not tenant_id:
-        return jsonify({'success': False, 'message': 'Tenant ID not found'}), 400
-    
-    active_gig = get_active_gig(tenant_id)
-    
-    if active_gig:
-        return jsonify({
-            'success': True,
-            'gig': {
-                'id': active_gig['id'],
-                'name': active_gig['name'],
-                'start_time': active_gig['start_time']
-            }
-        })
-    else:
-        return jsonify({'success': True, 'gig': None})
+    # Get tenant_id from slug (more reliable than session)
+    conn = create_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute('SELECT id FROM tenants WHERE slug = ? AND active = 1', (tenant_slug,))
+        tenant = cursor.fetchone()
+        if not tenant:
+            conn.close()
+            return jsonify({'success': False, 'message': 'Tenant not found'}), 404
+        
+        tenant_id = tenant['id']
+        
+        # Also update session for consistency
+        session['tenant_id'] = tenant_id
+        session['tenant_slug'] = tenant_slug
+        
+        active_gig = get_active_gig(tenant_id)
+        
+        if active_gig:
+            return jsonify({
+                'success': True,
+                'gig': {
+                    'id': active_gig['id'],
+                    'name': active_gig['name'],
+                    'start_time': active_gig['start_time']
+                }
+            })
+        else:
+            return jsonify({'success': True, 'gig': None})
+    finally:
+        conn.close()
 
 @app.route('/<tenant_slug>/update_default_language', methods=['POST'])
 def tenant_update_default_language(tenant_slug):
