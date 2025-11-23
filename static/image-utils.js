@@ -189,21 +189,36 @@ function setupGlobalImageErrorHandler() {
             return;
         }
         
-        const src = img.src || '';
+        const src = img.src || img.getAttribute('src') || '';
         const isAuthorImage = src.includes('author_images') || 
                              src.includes('/tenants/') ||
                              img.classList.contains('author-image');
         
         if (isAuthorImage) {
             img.dataset.errorHandlerAdded = 'true';
-            // Add onerror handler
-            img.addEventListener('error', function() {
+            // Add onerror handler using both addEventListener and onerror property
+            // This ensures it works even if the image fails to load immediately
+            const errorHandler = function() {
                 if (this.dataset.fallbackAttempted !== 'true' && 
                     !this.src.includes('music-music-note-2.svg')) {
                     this.dataset.fallbackAttempted = 'true';
                     this.src = defaultImagePath;
+                    // Prevent the error from showing in console by stopping propagation
+                    if (window.event) {
+                        window.event.stopPropagation();
+                    }
                 }
-            });
+            };
+            
+            // Use both methods to ensure it works
+            img.addEventListener('error', errorHandler, true);
+            img.onerror = errorHandler;
+            
+            // Also check if image is already broken (src set but not loaded)
+            if (img.complete && img.naturalWidth === 0 && !src.includes('music-music-note-2.svg')) {
+                // Image failed to load, trigger fallback immediately
+                errorHandler.call(img);
+            }
         }
     }
     
