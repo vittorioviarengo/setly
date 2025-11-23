@@ -260,13 +260,23 @@ def render_queue():
     is_admin = session.get('is_admin', False)  # Default to False if not set
     current_datetime = format_datetime(datetime.now())
     tenant_id = session.get('tenant_id')
+    
+    # Get tenant info if tenant_id is available
+    tenant = None
+    if tenant_id:
+        conn = create_connection()
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM tenants WHERE id = ? AND active = 1', (tenant_id,))
+        tenant = cursor.fetchone()
+        conn.close()
+    
     venue_name = get_venue_name(tenant_id)
     max_requests = get_setting('max_requests_per_user', tenant_id)
     
     # Get active gig info
     active_gig = get_active_gig(tenant_id)
     
-    return render_template('queue.html', is_admin=is_admin, current_datetime=current_datetime, venue_name=venue_name, max_requests=max_requests, active_gig=active_gig)
+    return render_template('queue.html', is_admin=is_admin, current_datetime=current_datetime, venue_name=venue_name, max_requests=max_requests, tenant=tenant, active_gig=active_gig)
 
 
 #--------------------------------------------- Gig Management Functions ---------------------------------------------
