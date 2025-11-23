@@ -1147,17 +1147,8 @@ def tenant_bulk_fetch_spotify(tenant_slug):
         extended_batch = int(batch_size * batch_multiplier)
         app.logger.info(f"[Tenant Bulk] Extended batch: {extended_batch} (batch_size: {batch_size}, multiplier: {batch_multiplier})")
         
-        # Strategy: Get a mix of songs to check
-        # Priority 1: Songs with obvious missing data (no image, placeholder, missing genre/language)
-        # Priority 2: Songs with images in DB (need to check if files exist)
-        # We'll get 50% obvious missing, 50% images to check
-        
-        priority1_count = int(extended_batch * 0.5)  # 50% for obvious missing
-        priority2_count = extended_batch - priority1_count  # Rest for images to check
-        
-        app.logger.info(f"[Tenant Bulk] Fetching {priority1_count} songs with obvious missing data, {priority2_count} songs with images to check")
-        
-        # Priority 1: Songs with obvious missing data
+        # First, get songs that match the obvious patterns OR have missing genre/language
+        # This query finds songs with obvious missing data
         cursor.execute('''
             SELECT id, title, author, image, genre, language 
             FROM songs 
@@ -1173,50 +1164,70 @@ def tenant_bulk_fetch_spotify(tenant_slug):
                 language IS NULL OR language = '' OR language = 'unknown'
             )
             LIMIT ?
-        ''', (tenant_id, priority1_count))
+        ''', (tenant_id, extended_batch))
         
         songs = cursor.fetchall()
-        app.logger.info(f"[Tenant Bulk] Found {len(songs)} songs with obvious missing data")
         
-        # Priority 2: ALWAYS get songs with images in DB to check if files exist
-        # These are the ones that likely have missing files (769 missing images)
-        song_ids = [song['id'] for song in songs] if songs else []
+        # Also get songs that have missing genre/language (they might also have missing image files)
+        if len(songs) < extended_batch:
+            remaining = extended_batch - len(songs)
+            song_ids = [song['id'] for song in songs] if songs else []
+            
+            if song_ids:
+                placeholders = ','.join(['?'] * len(song_ids))
+                cursor.execute(f'''
+                    SELECT id, title, author, image, genre, language 
+                    FROM songs 
+                    WHERE tenant_id = ?
+                    AND id NOT IN ({placeholders})
+                    AND (genre IS NULL OR genre = '' OR language IS NULL OR language = '' OR language = 'unknown')
+                    LIMIT ?
+                ''', [tenant_id] + song_ids + [remaining])
+            else:
+                cursor.execute('''
+                    SELECT id, title, author, image, genre, language 
+                    FROM songs 
+                    WHERE tenant_id = ?
+                    AND (genre IS NULL OR genre = '' OR language IS NULL OR language = '' OR language = 'unknown')
+                    LIMIT ?
+                ''', (tenant_id, remaining))
+            
+            additional_songs = cursor.fetchall()
+            if additional_songs:
+                songs.extend(additional_songs)
+                app.logger.info(f"[Tenant Bulk] Added {len(additional_songs)} more songs with missing genre/language")
         
-        if song_ids:
-            placeholders = ','.join(['?'] * len(song_ids))
-            cursor.execute(f'''
-                SELECT id, title, author, image, genre, language 
-                FROM songs 
-                WHERE tenant_id = ?
-                AND id NOT IN ({placeholders})
-                AND image IS NOT NULL 
-                AND image != ''
-                AND image NOT LIKE '%placeholder%'
-                AND image NOT LIKE 'http%'
-                AND image NOT LIKE '%setly%'
-                AND image NOT LIKE '%music-icon%'
-                AND image NOT LIKE '%default%'
-                LIMIT ?
-            ''', [tenant_id] + song_ids + [priority2_count])
-        else:
-            cursor.execute('''
-                SELECT id, title, author, image, genre, language 
-                FROM songs 
-                WHERE tenant_id = ?
-                AND image IS NOT NULL 
-                AND image != ''
-                AND image NOT LIKE '%placeholder%'
-                AND image NOT LIKE 'http%'
-                AND image NOT LIKE '%setly%'
-                AND image NOT LIKE '%music-icon%'
-                AND image NOT LIKE '%default%'
-                LIMIT ?
-            ''', (tenant_id, priority2_count))
-        
-        more_songs = cursor.fetchall()
-        if more_songs:
-            songs.extend(more_songs)
-            app.logger.info(f"[Tenant Bulk] Added {len(more_songs)} songs with images in DB (will check if files exist)")
+        # If still not enough, also get songs that have image values (even if they don't match patterns)
+        # These might have images in DB but missing physical files
+        if len(songs) < extended_batch:
+            remaining = extended_batch - len(songs)
+            song_ids = [song['id'] for song in songs] if songs else []
+            
+            if song_ids:
+                placeholders = ','.join(['?'] * len(song_ids))
+                cursor.execute(f'''
+                    SELECT id, title, author, image, genre, language 
+                    FROM songs 
+                    WHERE tenant_id = ?
+                    AND id NOT IN ({placeholders})
+                    AND image IS NOT NULL 
+                    AND image != ''
+                    LIMIT ?
+                ''', [tenant_id] + song_ids + [remaining])
+            else:
+                cursor.execute('''
+                    SELECT id, title, author, image, genre, language 
+                    FROM songs 
+                    WHERE tenant_id = ?
+                    AND image IS NOT NULL 
+                    AND image != ''
+                    LIMIT ?
+                ''', (tenant_id, remaining))
+            
+            more_songs = cursor.fetchall()
+            if more_songs:
+                songs.extend(more_songs)
+                app.logger.info(f"[Tenant Bulk] Added {len(more_songs)} more songs with image values (will check if files exist)")
         
         total_songs = len(songs)
         
