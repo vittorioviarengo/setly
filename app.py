@@ -2024,7 +2024,7 @@ def tenant_insights(tenant_slug):
     
     tenant_id = tenant['id']
     
-    # Get request statistics
+    # Get request statistics from requests table
     cursor.execute('SELECT COUNT(*) as total FROM requests WHERE tenant_id = ?', (tenant_id,))
     total_requests = cursor.fetchone()['total']
     
@@ -2033,6 +2033,19 @@ def tenant_insights(tenant_slug):
     
     cursor.execute('SELECT COUNT(*) as pending FROM requests WHERE tenant_id = ? AND status = ?', (tenant_id, 'pending'))
     pending_requests = cursor.fetchone()['pending']
+    
+    # If no requests in requests table, try to get historical data from songs table
+    # This handles cases where old requests were deleted but songs.requests counter remains
+    if total_requests == 0:
+        cursor.execute('SELECT SUM(requests) as total FROM songs WHERE tenant_id = ? AND requests > 0', (tenant_id,))
+        result = cursor.fetchone()
+        historical_total = result['total'] if result['total'] else 0
+        if historical_total > 0:
+            # Use historical data as fallback
+            total_requests = historical_total
+            # We can't know the breakdown, so assume all are fulfilled (historical data)
+            fulfilled_requests = historical_total
+            pending_requests = 0
     
     # Calculate conversion rate
     conversion_rate = (fulfilled_requests / total_requests * 100) if total_requests > 0 else 0
@@ -2043,6 +2056,7 @@ def tenant_insights(tenant_slug):
     total_tips = result['total_tips'] if result['total_tips'] else 0.0
     
     # Get most requested songs
+    # First try from requests table, if empty use songs.requests as fallback
     cursor.execute('''
         SELECT s.title, s.author, COUNT(r.id) as request_count
         FROM requests r
@@ -2053,6 +2067,17 @@ def tenant_insights(tenant_slug):
         LIMIT 10
     ''', (tenant_id,))
     top_songs = cursor.fetchall()
+    
+    # If no songs from requests table, use songs.requests as fallback
+    if not top_songs:
+        cursor.execute('''
+            SELECT title, author, requests as request_count
+            FROM songs
+            WHERE tenant_id = ? AND requests > 0
+            ORDER BY requests DESC
+            LIMIT 10
+        ''', (tenant_id,))
+        top_songs = cursor.fetchall()
     
     # Get recent fulfilled requests
     cursor.execute('''
