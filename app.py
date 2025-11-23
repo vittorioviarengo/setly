@@ -262,7 +262,108 @@ def render_queue():
     tenant_id = session.get('tenant_id')
     venue_name = get_venue_name(tenant_id)
     max_requests = get_setting('max_requests_per_user', tenant_id)
-    return render_template('queue.html', is_admin=is_admin, current_datetime=current_datetime, venue_name=venue_name, max_requests=max_requests)
+    
+    # Get active gig info
+    active_gig = get_active_gig(tenant_id)
+    
+    return render_template('queue.html', is_admin=is_admin, current_datetime=current_datetime, venue_name=venue_name, max_requests=max_requests, active_gig=active_gig)
+
+
+#--------------------------------------------- Gig Management Functions ---------------------------------------------
+
+def get_active_gig(tenant_id):
+    """Get the currently active gig for a tenant, if any."""
+    if not tenant_id:
+        return None
+    
+    conn = create_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            SELECT * FROM gigs 
+            WHERE tenant_id = ? AND is_active = 1 
+            ORDER BY start_time DESC 
+            LIMIT 1
+        """, (tenant_id,))
+        gig = cursor.fetchone()
+        return dict(gig) if gig else None
+    except sqlite3.OperationalError:
+        # Table doesn't exist yet - return None (gig system not initialized)
+        return None
+    finally:
+        conn.close()
+
+def has_active_gig(tenant_id):
+    """Check if a tenant has an active gig."""
+    return get_active_gig(tenant_id) is not None
+
+def start_gig(tenant_id, gig_name=None):
+    """Start a new gig for a tenant. Returns the gig ID if successful, None otherwise."""
+    if not tenant_id:
+        return None
+    
+    conn = create_connection()
+    cursor = conn.cursor()
+    try:
+        # First, end any existing active gigs for this tenant
+        cursor.execute("""
+            UPDATE gigs 
+            SET is_active = 0, end_time = CURRENT_TIMESTAMP 
+            WHERE tenant_id = ? AND is_active = 1
+        """, (tenant_id,))
+        
+        # Create new active gig
+        if gig_name:
+            cursor.execute("""
+                INSERT INTO gigs (tenant_id, name, start_time, is_active)
+                VALUES (?, ?, CURRENT_TIMESTAMP, 1)
+            """, (tenant_id, gig_name))
+        else:
+            # Generate default name from timestamp
+            default_name = f"Gig {datetime.now().strftime('%Y-%m-%d %H:%M')}"
+            cursor.execute("""
+                INSERT INTO gigs (tenant_id, name, start_time, is_active)
+                VALUES (?, ?, CURRENT_TIMESTAMP, 1)
+            """, (tenant_id, default_name))
+        
+        gig_id = cursor.lastrowid
+        conn.commit()
+        return gig_id
+    except sqlite3.OperationalError as e:
+        # Table doesn't exist yet
+        app.logger.warning(f"Gigs table not found: {e}")
+        return None
+    except Exception as e:
+        app.logger.error(f"Error starting gig: {e}")
+        conn.rollback()
+        return None
+    finally:
+        conn.close()
+
+def end_gig(tenant_id):
+    """End the currently active gig for a tenant. Returns True if successful."""
+    if not tenant_id:
+        return False
+    
+    conn = create_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            UPDATE gigs 
+            SET is_active = 0, end_time = CURRENT_TIMESTAMP 
+            WHERE tenant_id = ? AND is_active = 1
+        """, (tenant_id,))
+        conn.commit()
+        return cursor.rowcount > 0
+    except sqlite3.OperationalError:
+        # Table doesn't exist yet
+        return False
+    except Exception as e:
+        app.logger.error(f"Error ending gig: {e}")
+        conn.rollback()
+        return False
+    finally:
+        conn.close()
 
 
 #--------------------------------------------- Utility functions to inspect the database table ---------------------------------------------
@@ -421,13 +522,18 @@ def get_spotify_image(author_name):
         # Set timeout for Spotify API calls
         # Note: Cache warnings are expected on PythonAnywhere and can be ignored
         # Spotify API will still work without cache, just slightly slower
+        # PythonAnywhere has a 30-second limit, so use shorter timeout
+        # Set timeout for Spotify API calls - use values that worked before
+        timeout = 20  # Standard timeout
+        retries = 2  # Standard retries
+        
         sp = Spotify(
             auth_manager=SpotifyClientCredentials(
                 client_id=client_id, 
                 client_secret=client_secret
             ),
-            requests_timeout=10,  # 10 second timeout
-            retries=2
+            requests_timeout=timeout,
+            retries=retries
         )
         results = sp.search(q=author_name, type="artist", limit=1)
         items = results.get("artists", {}).get("items", [])
@@ -541,101 +647,172 @@ def download_image(url, filename, tenant_slug=None):
     """Download image from URL and save to tenant-specific or shared directory."""
     from utils.tenant_utils import get_tenant_dir
     
+    if not url or not filename:
+        app.logger.error(f"Invalid parameters: url={url}, filename={filename}")
+        return None
+    
     try:
         # Add timeout and disable SSL verification if needed (for compatibility)
-        response = requests.get(url, stream=True, timeout=10, verify=True)
+        # PythonAnywhere has stricter limits, use shorter timeout
+        is_pythonanywhere = (
+            'pythonanywhere.com' in os.environ.get('PYTHONANYWHERE_DOMAIN', '') or
+            'pythonanywhere' in os.environ.get('HOME', '').lower() or
+            os.path.exists('/var/www/.pythonanywhere_com')
+        )
+        timeout = 8 if is_pythonanywhere else 15  # Shorter timeout on PythonAnywhere
+        response = requests.get(url, stream=True, timeout=timeout, verify=True)
         if response.status_code == 200:
-            safe_filename = secure_filename(filename)
-            
-            # Use tenant-specific directory if tenant_slug is provided
-            if tenant_slug:
-                image_dir = get_tenant_dir(app, tenant_slug, 'author_images')
-            else:
-                image_dir = app.config['UPLOAD_FOLDER']
-            
-            filepath = os.path.join(image_dir, safe_filename)
-            with open(filepath, 'wb') as f:
-                for chunk in response.iter_content(1024):
-                    f.write(chunk)
-            return safe_filename
+            try:
+                safe_filename = secure_filename(filename)
+                
+                # Use tenant-specific directory if tenant_slug is provided
+                try:
+                    if tenant_slug:
+                        image_dir = get_tenant_dir(app, tenant_slug, 'author_images')
+                    else:
+                        image_dir = app.config.get('UPLOAD_FOLDER', 'static/uploads')
+                except Exception as dir_error:
+                    app.logger.error(f"Error getting image directory: {dir_error}")
+                    # Fallback to default directory
+                    image_dir = app.config.get('UPLOAD_FOLDER', 'static/uploads')
+                
+                # Ensure directory exists
+                os.makedirs(image_dir, exist_ok=True)
+                
+                filepath = os.path.join(image_dir, safe_filename)
+                with open(filepath, 'wb') as f:
+                    for chunk in response.iter_content(1024):
+                        if chunk:  # Filter out keep-alive chunks
+                            f.write(chunk)
+                return safe_filename
+            except (OSError, IOError) as file_error:
+                app.logger.error(f"Error saving image file: {file_error}")
+                return None
     except requests.exceptions.SSLError as e:
         app.logger.error(f"SSL Error downloading image from {url}: {e}")
         # Try again without SSL verification as fallback
         try:
             import urllib3
             urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-            response = requests.get(url, stream=True, timeout=10, verify=False)
+            timeout = 15  # Standard timeout that worked before
+            response = requests.get(url, stream=True, timeout=timeout, verify=False)
             if response.status_code == 200:
-                safe_filename = secure_filename(filename)
-                if tenant_slug:
-                    image_dir = get_tenant_dir(app, tenant_slug, 'author_images')
-                else:
-                    image_dir = app.config['UPLOAD_FOLDER']
-                filepath = os.path.join(image_dir, safe_filename)
-                with open(filepath, 'wb') as f:
-                    for chunk in response.iter_content(1024):
-                        f.write(chunk)
-                return safe_filename
+                try:
+                    safe_filename = secure_filename(filename)
+                    try:
+                        if tenant_slug:
+                            image_dir = get_tenant_dir(app, tenant_slug, 'author_images')
+                        else:
+                            image_dir = app.config.get('UPLOAD_FOLDER', 'static/uploads')
+                    except Exception as dir_error:
+                        app.logger.error(f"Error getting image directory (fallback): {dir_error}")
+                        image_dir = app.config.get('UPLOAD_FOLDER', 'static/uploads')
+                    
+                    os.makedirs(image_dir, exist_ok=True)
+                    
+                    filepath = os.path.join(image_dir, safe_filename)
+                    with open(filepath, 'wb') as f:
+                        for chunk in response.iter_content(1024):
+                            if chunk:
+                                f.write(chunk)
+                    return safe_filename
+                except (OSError, IOError) as file_error:
+                    app.logger.error(f"Error saving image file (fallback): {file_error}")
+                    return None
         except Exception as fallback_error:
-            app.logger.error(f"Fallback download also failed: {fallback_error}")
+            app.logger.error(f"Fallback download also failed: {fallback_error}", exc_info=True)
             return None
+    except requests.exceptions.Timeout as e:
+        app.logger.error(f"Timeout downloading image from {url}: {e}")
+        return None
     except requests.exceptions.RequestException as e:
         app.logger.error(f"Error downloading image from {url}: {e}")
         return None
     except Exception as e:
-        app.logger.error(f"Unexpected error downloading image: {e}")
+        app.logger.error(f"Unexpected error downloading image: {e}", exc_info=True)
         return None
     
     return None
 
 @app.route('/fetch_spotify_image', methods=['POST'])
+@limiter.limit("10 per minute")  # Limit to 10 requests per minute per IP
 def fetch_spotify_image():
     """Fetch image from Spotify (legacy route)."""
-    author = request.form.get('author')
-    if not author:
-        return jsonify({'message': 'Author name is required'}), 400
-
-    # Get tenant_slug from session if available
-    tenant_slug = session.get('tenant_slug')
-    
     try:
-        app.logger.info(f"Fetching Spotify data for: {author}")
-        artist_data = get_spotify_image(author)
+        author = request.form.get('author')
+        if not author:
+            return jsonify({'message': 'Author name is required'}), 400
+
+        # Get tenant_slug from session if available
+        tenant_slug = session.get('tenant_slug')
+        
+        try:
+            app.logger.info(f"Fetching Spotify data for: {author}")
+            artist_data = get_spotify_image(author)
+        except Exception as spotify_error:
+            app.logger.error(f"Error calling get_spotify_image for '{author}': {spotify_error}", exc_info=True)
+            return jsonify({'message': 'Spotify API error. Please try again later.'}), 500
         
         if artist_data is None:
             app.logger.warning(f"No Spotify data returned for: {author}")
             return jsonify({'message': 'Spotify API timeout or error. Please check your internet connection and try again.'}), 408
+        
+        # Check for rate limiting
+        if artist_data and artist_data.get('rate_limited'):
+            app.logger.warning(f"Spotify API rate limited for: {author}")
+            return jsonify({'message': 'Spotify API rate limit reached. Please wait a moment and try again.'}), 429
             
         if artist_data and artist_data.get('image_url'):
             # Normalize filename: lowercase, replace spaces with underscores
-            normalized_author = author.lower().replace(' ', '_')
-            filename = f"{normalized_author}.jpg"
-            saved_filename = download_image(artist_data['image_url'], filename, tenant_slug)
+            try:
+                normalized_author = author.lower().replace(' ', '_')
+                filename = f"{normalized_author}.jpg"
+                saved_filename = download_image(artist_data['image_url'], filename, tenant_slug)
+            except Exception as download_error:
+                app.logger.error(f"Error downloading image for '{author}': {download_error}", exc_info=True)
+                return jsonify({'message': 'Failed to download image. Please try again.'}), 500
+            
             if saved_filename:
-                response_data = {
-                    'message': 'Image fetched successfully', 
-                    'image': saved_filename
-                }
-                if artist_data.get('genre'):
-                    response_data['genre'] = artist_data['genre']
-                    app.logger.info(f"Adding genre to response: {artist_data['genre']}")
-                else:
-                    app.logger.warning(f"No genre found in artist_data for: {author}")
+                try:
+                    response_data = {
+                        'message': 'Image fetched successfully', 
+                        'image': saved_filename
+                    }
+                    if artist_data.get('genre'):
+                        response_data['genre'] = artist_data['genre']
+                        app.logger.info(f"Adding genre to response: {artist_data['genre']}")
+                    else:
+                        app.logger.warning(f"No genre found in artist_data for: {author}")
+                        
+                    if artist_data.get('language'):
+                        response_data['language'] = artist_data['language']
+                        app.logger.info(f"Adding language to response: {artist_data['language']}")
+                    else:
+                        app.logger.warning(f"No language found in artist_data for: {author}")
                     
-                if artist_data.get('language'):
-                    response_data['language'] = artist_data['language']
-                    app.logger.info(f"Adding language to response: {artist_data['language']}")
-                else:
-                    app.logger.warning(f"No language found in artist_data for: {author}")
-                
-                app.logger.info(f"Final response data: {response_data}")
-                return jsonify(response_data), 200
+                    app.logger.info(f"Final response data: {response_data}")
+                    return jsonify(response_data), 200
+                except Exception as response_error:
+                    app.logger.error(f"Error building response for '{author}': {response_error}", exc_info=True)
+                    return jsonify({'message': 'Error processing response. Please try again.'}), 500
             else:
                 return jsonify({'message': 'Failed to download image due to SSL/connection error. Image URL found but download failed.'}), 500
         return jsonify({'message': 'Artist not found on Spotify. Check the spelling or try a different name.'}), 404
+    except TimeoutError:
+        app.logger.error(f"Request timeout for '{author}' on PythonAnywhere")
+        return jsonify({'message': 'Request timeout. Please try again with a shorter artist name or try again later.'}), 408
     except Exception as e:
-        app.logger.error(f"Error in fetch_spotify_image: {e}")
-        return jsonify({'message': f'Error fetching from Spotify: {str(e)}'}), 500
+        app.logger.error(f"Unexpected error in fetch_spotify_image: {e}", exc_info=True)
+        import traceback
+        app.logger.error(f"Traceback: {traceback.format_exc()}")
+        return jsonify({'message': f'Unexpected error: {str(e)}'}), 500
+    finally:
+        # Always cancel timeout
+        if hasattr(signal, 'SIGALRM'):
+            try:
+                signal.alarm(0)
+            except:
+                pass
 
 def process_bulk_fetch_job(job_id, tenant_id, tenant_slug, batch_size):
     """Background worker function to process bulk Spotify fetch."""
@@ -727,7 +904,9 @@ def process_bulk_fetch_job(job_id, tenant_id, tenant_slug, batch_size):
                 # If image field has a value, check if file actually exists on disk
                 if not needs_image and song['image']:
                     import os
-                    image_path = os.path.join('static', 'tenants', tenant_slug, 'author_images', song['image'])
+                    # Use absolute path for file check
+                    app_dir = os.path.dirname(os.path.abspath(__file__))
+                    image_path = os.path.join(app_dir, 'static', 'tenants', tenant_slug, 'author_images', song['image'])
                     if not os.path.exists(image_path):
                         app.logger.info(f"Image file missing for {song['title']}: {image_path}")
                         needs_image = True  # File doesn't exist, need to download
@@ -826,6 +1005,7 @@ def tenant_bulk_fetch_count(tenant_slug):
         
         # Get absolute path to the app directory
         app_dir = os.path.dirname(os.path.abspath(__file__))
+        app.logger.info(f"[Tenant Bulk] app_dir: {app_dir}")
         
         # First, count TOTAL songs in database for this tenant
         cursor.execute('SELECT COUNT(*) as total FROM songs WHERE tenant_id = ?', (tenant_id,))
@@ -922,20 +1102,14 @@ def tenant_bulk_fetch_spotify(tenant_slug):
     request_data = request.json if request.json else {}
     requested_batch_size = int(request_data.get('batch_size', max_batch_size))
     
-    # Detect PythonAnywhere and limit batch size automatically (30-second server timeout)
-    # Check hostname or environment variable
-    is_pythonanywhere = (
-        'pythonanywhere.com' in request.host or 
-        os.environ.get('PYTHONANYWHERE', '').lower() == 'true' or
-        os.path.exists('/home/vittorioviarengo')  # PythonAnywhere user directory
-    )
-    
-    if is_pythonanywhere:
-        # PythonAnywhere has strict 30-second timeout, use smaller batches
-        max_batch_size = min(max_batch_size, 10)  # Cap at 10 for PythonAnywhere
-        app.logger.info(f"[Tenant Bulk] PythonAnywhere detected - limiting batch size to {max_batch_size}")
-    
+    # Use the batch size from settings directly (user can configure it)
+    # PythonAnywhere has 30-second timeout, but user can set lower batch size if needed
     batch_size = min(requested_batch_size, max_batch_size)
+    
+    # Log the batch size being used
+    app.logger.info(f"[Tenant Bulk] Batch size: {batch_size} (requested: {requested_batch_size}, max from settings: {max_batch_size})")
+    
+    app.logger.info(f"[Tenant Bulk] Final batch size: {batch_size} (requested: {requested_batch_size}, max: {max_batch_size}, from settings: {get_system_setting('spotify_batch_size', default=20, value_type=int)})")
     
     try:
         # First, count total songs that might need data
@@ -948,12 +1122,8 @@ def tenant_bulk_fetch_spotify(tenant_slug):
         # Use multiplier from settings (default 2x for safety, can be increased)
         batch_multiplier = get_system_setting('spotify_batch_multiplier', default=2, value_type=int)
         
-        # PythonAnywhere needs smaller multiplier to avoid timeout
-        if is_pythonanywhere:
-            batch_multiplier = min(batch_multiplier, 1.5)  # Cap at 1.5x for PythonAnywhere (10 * 1.5 = 15 songs)
-            app.logger.info(f"[Tenant Bulk] PythonAnywhere detected - limiting multiplier to {batch_multiplier}x")
-        
         extended_batch = int(batch_size * batch_multiplier)
+        app.logger.info(f"[Tenant Bulk] Extended batch: {extended_batch} (batch_size: {batch_size}, multiplier: {batch_multiplier})")
         
         # First, get songs that match the obvious patterns OR have missing genre/language
         # This query finds songs with obvious missing data
@@ -1072,21 +1242,27 @@ def tenant_bulk_fetch_spotify(tenant_slug):
                 image_file_missing = False
                 if not needs_image and song['image']:
                     image_path = os.path.join(app_dir, 'static', 'tenants', tenant_slug, 'author_images', song['image'])
-                    if not os.path.exists(image_path):
+                    image_exists = os.path.exists(image_path)
+                    if not image_exists:
                         needs_image = True
                         image_file_missing = True
-                        app.logger.debug(f"[Tenant Bulk] Song {song['id']} ({song['title']}) has image '{song['image']}' in DB but file doesn't exist")
+                        app.logger.info(f"[Tenant Bulk] Song {song['id']} ({song['title']}) has image '{song['image']}' in DB but file doesn't exist at {image_path}")
+                    else:
+                        app.logger.debug(f"[Tenant Bulk] Song {song['id']} ({song['title']}) has image file at {image_path}")
                 
                 needs_genre = not song['genre'] or song['genre'] == ''
                 needs_language = not song['language'] or song['language'] in ['', 'unknown']
                 
+                # Log details for every song to understand why they're skipped
+                app.logger.info(f"[Tenant Bulk] Song {song['id']} ({song['title']}): image='{song['image']}', needs_image={needs_image}, genre='{song['genre']}', needs_genre={needs_genre}, language='{song['language']}', needs_language={needs_language}")
+                
                 if not (needs_image or needs_genre or needs_language):
                     stats['skipped'] += 1
+                    app.logger.info(f"[Tenant Bulk] SKIPPING song {song['id']} ({song['title']}): already has all data (image='{song['image']}', genre='{song['genre']}', language='{song['language']}')")
                     continue
                 
                 # Log what we're processing
-                if needs_image:
-                    app.logger.debug(f"[Tenant Bulk] Processing song {song['id']} ({song['title']}): needs_image={needs_image} (file_missing={image_file_missing}), needs_genre={needs_genre}, needs_language={needs_language}")
+                app.logger.info(f"[Tenant Bulk] Processing song {song['id']} ({song['title']}): needs_image={needs_image} (file_missing={image_file_missing}), needs_genre={needs_genre}, needs_language={needs_language}")
                 
                 # Check if we already processed this artist
                 artist_name = song['author']
@@ -1237,8 +1413,9 @@ def tenant_bulk_fetch_spotify(tenant_slug):
             if needs_language:
                 remaining_languages += 1
         
-        remaining = max(remaining_images, remaining_genres, remaining_languages)
-        has_more = remaining > 0
+        # Use remaining_images as the primary count (since that's usually what's missing)
+        remaining = remaining_images
+        has_more = remaining_images > 0 or remaining_genres > 0 or remaining_languages > 0
         
         app.logger.info(f"Bulk fetch completed for {tenant_slug}: {message}")
         app.logger.info(f"[Tenant Bulk] Remaining: {remaining_images} images, {remaining_genres} genres, {remaining_languages} languages. Has more: {has_more}")
@@ -1523,14 +1700,39 @@ def tenant_home(tenant_slug):
     session['tenant_id'] = tenant['id']
     session['tenant_name'] = tenant['name']
     
+    # Check if there's an active gig (only if gigs table exists)
+    # If no active gig, redirect to scan_qr page with message
+    try:
+        if not has_active_gig(tenant['id']):
+            flash(_('No active gig. Please wait for the musician to start the gig.'), 'info')
+            return redirect(url_for('tenant_scan_qr', tenant_slug=tenant_slug))
+    except Exception:
+        # If gigs table doesn't exist yet, allow access (backward compatibility)
+        pass
+    
     # Generate unique session_id for tracking user activity
     # Format: tenant_id-YYYYMMDDHHMMSS-random
     if 'user_session_id' not in session:
+        from utils.audit_logger import log_event
         import secrets
         from datetime import datetime
         timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
         random_suffix = secrets.token_hex(4)
         session['user_session_id'] = f"{tenant['id']}-{timestamp}-{random_suffix}"
+        
+        # Log session start (async - non-blocking)
+        log_event(
+            action='user_session_start',
+            entity_type='session',
+            tenant_id=tenant['id'],
+            user_type='end_user',
+            user_session_id=session['user_session_id'],
+            details={
+                'tenant_slug': tenant_slug,
+                'entry_point': 'home',
+                'user_name': request.args.get('user', '')
+            }
+        )
     
     user_name = request.args.get('user', '')
     return render_template('index.html', user_name=user_name, tenant=tenant)
@@ -1563,6 +1765,8 @@ def tenant_login(tenant_slug):
         return redirect(url_for('index'))
     
     if request.method == 'POST':
+        from utils.audit_logger import log_event
+        
         email = request.form.get('email')
         password = request.form.get('password')
         
@@ -1594,12 +1798,39 @@ def tenant_login(tenant_slug):
             
             conn.close()
             
+            # Log successful login (async - non-blocking)
+            log_event(
+                action='tenant_login',
+                entity_type='tenant',
+                entity_id=tenant['id'],
+                tenant_id=tenant['id'],
+                user_type='tenant_admin',
+                details={
+                    'tenant_slug': tenant_slug,
+                    'login_method': 'password',
+                    'success': True,
+                    'wizard_completed': bool(wizard_completed and has_essential_data)
+                }
+            )
+            
             # Redirect to wizard if not completed or missing essential data
             if not wizard_completed or not has_essential_data:
                 return redirect(url_for('wizard', tenant_slug=tenant_slug))
             
             return redirect(url_for('tenant_admin', tenant_slug=tenant_slug))
         else:
+            # Log failed login attempt (async - non-blocking)
+            log_event(
+                action='tenant_login_failed',
+                entity_type='tenant',
+                tenant_id=tenant['id'],
+                user_type='tenant_admin',
+                details={
+                    'tenant_slug': tenant_slug,
+                    'email_attempted': email,
+                    'failure_reason': 'invalid_credentials'
+                }
+            )
             flash('Invalid email or password')
     
     conn.close()
@@ -2675,6 +2906,115 @@ def tenant_update_bio(tenant_slug):
     finally:
         conn.close()
 
+@app.route('/<tenant_slug>/start_gig', methods=['POST'])
+def tenant_start_gig(tenant_slug):
+    """Start a new gig for the tenant."""
+    from utils.audit_logger import log_tenant_admin_action
+    
+    if not session.get('is_tenant_admin') or session.get('tenant_slug') != tenant_slug:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+    
+    data = request.get_json()
+    gig_name = data.get('gig_name', '').strip() if data else None
+    
+    tenant_id = session.get('tenant_id')
+    if not tenant_id:
+        return jsonify({'success': False, 'message': 'Tenant ID not found'}), 400
+    
+    gig_id = start_gig(tenant_id, gig_name if gig_name else None)
+    
+    if gig_id:
+        active_gig = get_active_gig(tenant_id)
+        
+        # Log gig started (async - non-blocking)
+        log_tenant_admin_action(
+            action='gig_started',
+            entity_type='gig',
+            entity_id=gig_id,
+            gig_name=active_gig['name'],
+            gig_start_time=active_gig['start_time']
+        )
+        
+        return jsonify({
+            'success': True, 
+            'message': 'Gig started successfully',
+            'gig': {
+                'id': active_gig['id'],
+                'name': active_gig['name'],
+                'start_time': active_gig['start_time']
+            }
+        })
+    else:
+        return jsonify({'success': False, 'message': 'Failed to start gig. Make sure the gigs table exists.'}), 500
+
+@app.route('/<tenant_slug>/end_gig', methods=['POST'])
+def tenant_end_gig(tenant_slug):
+    """End the currently active gig for the tenant."""
+    from utils.audit_logger import log_tenant_admin_action
+    
+    if not session.get('is_tenant_admin') or session.get('tenant_slug') != tenant_slug:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+    
+    tenant_id = session.get('tenant_id')
+    if not tenant_id:
+        return jsonify({'success': False, 'message': 'Tenant ID not found'}), 400
+    
+    # Get gig info before ending
+    active_gig = get_active_gig(tenant_id)
+    gig_id = active_gig['id'] if active_gig else None
+    gig_name = active_gig['name'] if active_gig else None
+    
+    success = end_gig(tenant_id)
+    
+    if success:
+        # Get request count for this gig
+        request_count = None
+        if gig_id:
+            conn = create_connection()
+            cursor = conn.cursor()
+            try:
+                cursor.execute('SELECT COUNT(*) as count FROM requests WHERE gig_id = ?', (gig_id,))
+                result = cursor.fetchone()
+                request_count = result['count'] if result else 0
+            except:
+                request_count = None
+            finally:
+                conn.close()
+        
+        # Log gig ended (async - non-blocking)
+        log_tenant_admin_action(
+            action='gig_ended',
+            entity_type='gig',
+            entity_id=gig_id,
+            gig_name=gig_name,
+            total_requests=request_count
+        )
+        
+        return jsonify({'success': True, 'message': 'Gig ended successfully'})
+    else:
+        return jsonify({'success': False, 'message': 'No active gig to end or gigs table does not exist'}), 400
+
+@app.route('/<tenant_slug>/get_active_gig', methods=['GET'])
+def tenant_get_active_gig(tenant_slug):
+    """Get the currently active gig for the tenant."""
+    tenant_id = session.get('tenant_id')
+    if not tenant_id:
+        return jsonify({'success': False, 'message': 'Tenant ID not found'}), 400
+    
+    active_gig = get_active_gig(tenant_id)
+    
+    if active_gig:
+        return jsonify({
+            'success': True,
+            'gig': {
+                'id': active_gig['id'],
+                'name': active_gig['name'],
+                'start_time': active_gig['start_time']
+            }
+        })
+    else:
+        return jsonify({'success': True, 'gig': None})
+
 @app.route('/<tenant_slug>/update_default_language', methods=['POST'])
 def tenant_update_default_language(tenant_slug):
     """Update tenant default language."""
@@ -2755,7 +3095,10 @@ def tenant_queue(tenant_slug):
     venue_name = get_venue_name(tenant_id)
     max_requests = get_setting('max_requests_per_user', tenant_id)
     
-    return render_template('queue.html', is_admin=is_admin, current_datetime=current_datetime, venue_name=venue_name, max_requests=max_requests, tenant=tenant)
+    # Get active gig info
+    active_gig = get_active_gig(tenant_id)
+    
+    return render_template('queue.html', is_admin=is_admin, current_datetime=current_datetime, venue_name=venue_name, max_requests=max_requests, tenant=tenant, active_gig=active_gig)
 
 @app.route('/<tenant_slug>/help')
 def tenant_help(tenant_slug):
@@ -2782,6 +3125,41 @@ def tenant_help(tenant_slug):
 @app.route('/<tenant_slug>/logout_user', methods=['GET', 'POST'])
 def tenant_logout_user(tenant_slug):
     """Logout end user - clear name and return to home."""
+    from utils.audit_logger import log_event
+    
+    # Get session info before clearing
+    user_session_id = session.get('user_session_id')
+    tenant_id = session.get('tenant_id')
+    user_name = session.get('user_name')
+    
+    # Calculate session duration if we have session start time
+    session_duration = None
+    if user_session_id and 'user_session_id' in session:
+        try:
+            # Extract timestamp from session_id (format: tenant_id-YYYYMMDDHHMMSS-random)
+            timestamp_str = user_session_id.split('-')[1] if len(user_session_id.split('-')) > 1 else None
+            if timestamp_str and len(timestamp_str) == 14:
+                from datetime import datetime
+                session_start = datetime.strptime(timestamp_str, '%Y%m%d%H%M%S')
+                session_duration = int((datetime.now() - session_start).total_seconds())
+        except:
+            pass
+    
+    # Log session end before clearing (async - non-blocking)
+    if user_session_id:
+        log_event(
+            action='user_session_end',
+            entity_type='session',
+            tenant_id=tenant_id,
+            user_type='end_user',
+            user_session_id=user_session_id,
+            details={
+                'tenant_slug': tenant_slug,
+                'user_name': user_name,
+                'session_duration_seconds': session_duration
+            }
+        )
+    
     # Clear user name from session
     session.pop('user_name', None)
     session.pop('last_visited', None)
@@ -2793,6 +3171,11 @@ def tenant_logout_user(tenant_slug):
 @app.route('/<tenant_slug>/search', methods=['GET', 'POST'])
 def tenant_search(tenant_slug):
     """Tenant-specific search page."""
+    from utils.audit_logger import log_user_action
+    import time
+    
+    start_time = time.time()
+    
     # Get tenant info
     conn = create_connection()
     cursor = conn.cursor()
@@ -2807,6 +3190,24 @@ def tenant_search(tenant_slug):
     # Ensure tenant_id is in session
     session['tenant_id'] = tenant['id']
     session['tenant_slug'] = tenant_slug
+    
+    # Get active gig info (for displaying status to users)
+    active_gig = get_active_gig(tenant['id'])
+    
+    # Check if there's an active gig when user tries to access search page
+    # If no active gig and user has a name (wants to request songs), redirect to scan_qr
+    try:
+        if not has_active_gig(tenant['id']):
+            user_name = request.form.get('user_name', request.args.get('user_name', session.get('user_name', '')))
+            # If user has a name, they're trying to request songs - redirect them
+            if user_name:
+                flash(_('No active gig. Please wait for the musician to start the gig.'), 'info')
+                session['user_name'] = ''  # Clear user name to force re-scan
+                return redirect(url_for('tenant_scan_qr', tenant_slug=tenant_slug))
+            # If no name, allow access to see the page (they need to enter name first)
+    except Exception:
+        # If gigs table doesn't exist yet, allow access (backward compatibility)
+        pass
     
     user_name = request.form.get('user_name', request.args.get('user_name', session.get('user_name', '')))
     language = request.form.get('lang', request.args.get('lang', session.get('language', 'en')))
@@ -2823,7 +3224,20 @@ def tenant_search(tenant_slug):
         app.logger.debug(f'Rendering Search.html without request ability for tenant_id: {tenant["id"]}')
         songs = fetch_songs('all', search_query, language, tenant_id=tenant['id'])
         app.logger.debug(f'Found {len(songs)} songs for tenant_id: {tenant["id"]}')
-        return render_template('search.html', user_name=user_name, language=language, songs=songs, can_request_songs=False, tenant=tenant)
+        
+        # Log search if query is provided (async - non-blocking)
+        if search_query:
+            duration_ms = int((time.time() - start_time) * 1000)
+            log_user_action(
+                action='search_performed',
+                entity_type='search',
+                search_query=search_query,
+                language=language,
+                results_count=len(songs),
+                duration_ms=duration_ms
+            )
+        
+        return render_template('search.html', user_name=user_name, language=language, songs=songs, can_request_songs=False, tenant=tenant, active_gig=active_gig)
     
     # If username is not empty, check if the session is valid
     if not is_session_valid():
@@ -2835,7 +3249,20 @@ def tenant_search(tenant_slug):
     # If session is valid and username is not empty, fetch and render the search page with song data
     # Pass user_name to exclude songs already requested by this user
     songs = fetch_songs('all', search_query, language, tenant_id=tenant['id'], user_name=user_name)
-    return render_template('search.html', user_name=user_name, language=language, songs=songs, can_request_songs=True, tenant=tenant)
+    
+    # Log search if query is provided (async - non-blocking)
+    if search_query:
+        duration_ms = int((time.time() - start_time) * 1000)
+        log_user_action(
+            action='search_performed',
+            entity_type='search',
+            search_query=search_query,
+            language=language,
+            results_count=len(songs),
+            duration_ms=duration_ms
+        )
+    
+    return render_template('search.html', user_name=user_name, language=language, songs=songs, can_request_songs=True, tenant=tenant, active_gig=active_gig)
 
 
 @app.route('/popular')
@@ -3205,12 +3632,29 @@ def tenant_scan_qr(tenant_slug):
 def search_mobile():
     session.pop('last_visited', None)
     tenant = None
+    tenant_id = None
     if session.get('tenant_id'):
+        tenant_id = session.get('tenant_id')
         conn = create_connection()
         cursor = conn.cursor()
-        cursor.execute('SELECT * FROM tenants WHERE id = ?', (session.get('tenant_id'),))
+        cursor.execute('SELECT * FROM tenants WHERE id = ?', (tenant_id,))
         tenant = cursor.fetchone()
         conn.close()
+        
+        # Check if there's an active gig (only if gigs table exists)
+        # If no active gig, redirect to scan_qr page with message
+        try:
+            if tenant and not has_active_gig(tenant_id):
+                tenant_slug = session.get('tenant_slug')
+                if tenant_slug:
+                    flash(_('No active gig. Please wait for the musician to start the gig.'), 'info')
+                    return redirect(url_for('tenant_scan_qr', tenant_slug=tenant_slug))
+                else:
+                    flash(_('No active gig. Please wait for the musician to start the gig.'), 'info')
+                    return redirect(url_for('scan_qr'))
+        except Exception:
+            # If gigs table doesn't exist yet, allow access (backward compatibility)
+            pass
     return render_template('search-mobile.html', tenant=tenant)
 
 def is_session_valid():
@@ -3265,34 +3709,62 @@ def get_user_requested_song_ids():
 @app.route('/request_song/<int:song_id>', methods=['POST'])
 @limiter.limit("10 per minute")
 def request_song(song_id):
-
+    from utils.audit_logger import log_user_action
 
     if not is_session_valid():
         return jsonify({'redirect': url_for('scan_qr')})
 
+    # Get tenant_id from session
+    tenant_id = session.get('tenant_id')
+    
+    # Check if there's an active gig (only if gigs table exists)
+    if tenant_id:
+        try:
+            if not has_active_gig(tenant_id):
+                return jsonify({
+                    'error': _('No active gig'),
+                    'message': _('The musician has not started a gig yet. Please wait for the gig to begin.')
+                }), 403
+        except Exception:
+            # If gigs table doesn't exist yet, allow requests (backward compatibility)
+            pass
 
     try:
         data = request.get_json()
         user_name = data.get('user')
         if not user_name:
             return jsonify({'error': _('User Required')}), 400
-
-        # Get tenant_id from session
-        tenant_id = session.get('tenant_id')
         
         max_requests = int(get_setting('max_requests_per_user', tenant_id))  # Ensure max_requests is an integer with tenant isolation
         user_requests = count_user_requests(user_name, tenant_id)
 
         if user_requests >= max_requests:
+            # Log failed request - max requests reached
+            log_user_action(
+                action='song_request_failed',
+                entity_type='request',
+                song_id=song_id,
+                failure_reason='max_requests_reached',
+                user_current_requests_count=user_requests,
+                max_requests_allowed=max_requests
+            )
             return jsonify({'error': _('Maximum Request Reached')}), 400
 
         conn = create_connection()
         cursor = conn.cursor()
         
-        # Fetch the current number of requests for the song (with tenant isolation)
-        cursor.execute('SELECT requests FROM songs WHERE id = ? AND tenant_id = ?', (song_id, tenant_id))
+        # Fetch song info for logging
+        cursor.execute('SELECT title, author, requests FROM songs WHERE id = ? AND tenant_id = ?', (song_id, tenant_id))
         song = cursor.fetchone()
         if not song:
+            conn.close()
+            # Log failed request - song not found
+            log_user_action(
+                action='song_request_failed',
+                entity_type='request',
+                song_id=song_id,
+                failure_reason='song_not_found'
+            )
             return jsonify({'error': 'Song not found'}), 404
 
         # Check if the user has already requested the song
@@ -3300,7 +3772,22 @@ def request_song(song_id):
         user_requested_song = cursor.fetchone()
 
         if user_requested_song['count'] > 0:
+            conn.close()
+            # Log failed request - already requested
+            log_user_action(
+                action='song_request_failed',
+                entity_type='request',
+                song_id=song_id,
+                song_title=song['title'],
+                song_author=song['author'],
+                failure_reason='already_requested'
+            )
             return jsonify({'error': _('Song Already Requested')}), 400
+
+        # Get current queue size (pending requests) for position calculation
+        cursor.execute('SELECT COUNT(*) as count FROM requests WHERE tenant_id = ? AND status = ?', (tenant_id, 'pending'))
+        pending_count = cursor.fetchone()['count']
+        queue_position = pending_count + 1  # Will be this position after insertion
 
         # Increment the request count
         cursor.execute('UPDATE songs SET requests = requests + 1 WHERE id = ? AND tenant_id = ?', (song_id, tenant_id))
@@ -3308,25 +3795,72 @@ def request_song(song_id):
         # Get session_id for tracking
         user_session_id = session.get('user_session_id', 'unknown')
         
-        # Add the song to the queue with tenant_id, session_id, and default status
-        cursor.execute(
-            'INSERT INTO requests (song_id, requester, tenant_id, session_id, status, tip_amount) VALUES (?, ?, ?, ?, ?, ?)', 
-            (song_id, user_name, tenant_id, user_session_id, 'pending', 0.0)
-        )
+        # Get active gig_id if available
+        active_gig = get_active_gig(tenant_id)
+        gig_id = active_gig['id'] if active_gig else None
+        
+        # Add the song to the queue with tenant_id, session_id, gig_id, and default status
+        try:
+            cursor.execute(
+                'INSERT INTO requests (song_id, requester, tenant_id, session_id, gig_id, status, tip_amount) VALUES (?, ?, ?, ?, ?, ?, ?)', 
+                (song_id, user_name, tenant_id, user_session_id, gig_id, 'pending', 0.0)
+            )
+        except sqlite3.OperationalError:
+            # If gig_id column doesn't exist yet, insert without it (backward compatibility)
+            cursor.execute(
+                'INSERT INTO requests (song_id, requester, tenant_id, session_id, status, tip_amount) VALUES (?, ?, ?, ?, ?, ?)', 
+                (song_id, user_name, tenant_id, user_session_id, 'pending', 0.0)
+            )
+        request_id = cursor.lastrowid
 
         conn.commit()
         conn.close()
+
+        # Log successful song request (async - non-blocking)
+        log_data = {
+            'song_id': song_id,
+            'song_title': song['title'],
+            'song_author': song['author'],
+            'request_position_in_queue': queue_position,
+            'user_current_requests_count': user_requests,
+            'max_requests_allowed': max_requests,
+            'total_song_requests': song['requests'] + 1  # After increment
+        }
+        
+        # Add gig_id if available
+        active_gig = get_active_gig(tenant_id)
+        if active_gig:
+            log_data['gig_id'] = active_gig['id']
+            log_data['gig_name'] = active_gig['name']
+        
+        log_user_action(
+            action='song_requested',
+            entity_type='request',
+            entity_id=request_id,
+            **log_data
+        )
 
         # Return success message
         return jsonify({'success': True, 'message': _('Song request successful')}), 200
 
     except Exception as e:
+        # Log error
+        log_user_action(
+            action='song_request_failed',
+            entity_type='request',
+            song_id=song_id,
+            failure_reason='error',
+            error_message=str(e)
+        )
         app.logger.error(f"Error incrementing request: {e}")
         return jsonify({'error': _('Song Request Error')}), 500
 
 @app.route('/api/mark_request_fulfilled/<int:request_id>', methods=['POST'])
 def mark_request_fulfilled(request_id):
     """Mark a song request as fulfilled (played) by the artist."""
+    from utils.audit_logger import log_tenant_admin_action
+    from datetime import datetime, timezone
+    
     try:
         # Verify tenant admin is logged in
         if not session.get('is_tenant_admin'):
@@ -3337,21 +3871,57 @@ def mark_request_fulfilled(request_id):
         conn = create_connection()
         cursor = conn.cursor()
         
-        # Verify request belongs to this tenant
-        cursor.execute('SELECT id FROM requests WHERE id = ? AND tenant_id = ?', (request_id, tenant_id))
-        if not cursor.fetchone():
+        # Get request and song info before updating
+        cursor.execute('''
+            SELECT r.*, s.title, s.author, s.id as song_id, r.request_time
+            FROM requests r
+            JOIN songs s ON r.song_id = s.id
+            WHERE r.id = ? AND r.tenant_id = ?
+        ''', (request_id, tenant_id))
+        
+        request_data = cursor.fetchone()
+        if not request_data:
             conn.close()
             return jsonify({'error': 'Request not found'}), 404
         
+        # Calculate time in queue
+        try:
+            request_time = datetime.fromisoformat(request_data['request_time'].replace('Z', '+00:00'))
+            if request_time.tzinfo is None:
+                request_time = request_time.replace(tzinfo=timezone.utc)
+            time_in_queue_seconds = int((datetime.now(timezone.utc) - request_time).total_seconds())
+        except:
+            time_in_queue_seconds = None
+        
+        # Get queue position before marking as fulfilled
+        cursor.execute('''
+            SELECT COUNT(*) as position FROM requests
+            WHERE tenant_id = ? AND status = 'pending' 
+            AND request_time <= ?
+        ''', (tenant_id, request_data['request_time']))
+        queue_position = cursor.fetchone()['position']
+        
         # Update status to 'fulfilled' and set played_at timestamp
-        from datetime import datetime
         cursor.execute(
             'UPDATE requests SET status = ?, played_at = ? WHERE id = ? AND tenant_id = ?',
-            ('fulfilled', datetime.now().isoformat(), request_id, tenant_id)
+            ('fulfilled', datetime.now(timezone.utc).isoformat(), request_id, tenant_id)
         )
         
         conn.commit()
         conn.close()
+        
+        # Log request fulfilled (async - non-blocking)
+        log_tenant_admin_action(
+            action='request_marked_fulfilled',
+            entity_type='request',
+            entity_id=request_id,
+            song_id=request_data['song_id'],
+            song_title=request_data['title'],
+            song_author=request_data['author'],
+            requester=request_data['requester'],
+            queue_position=queue_position,
+            time_in_queue_seconds=time_in_queue_seconds
+        )
         
         return jsonify({'success': True, 'message': 'Request marked as fulfilled'}), 200
         
@@ -3397,15 +3967,30 @@ def delete_all_requests():
     conn = create_connection()
     cursor = conn.cursor()
     
-    # Filter by tenant_id if available
-    if tenant_id:
-        cursor.execute('DELETE FROM requests WHERE tenant_id = ?', (tenant_id,))
-    else:
-        cursor.execute('DELETE FROM requests')
-    
-    conn.commit()
-    conn.close()
-    return render_queue()
+    try:
+        # Filter by tenant_id if available
+        if tenant_id:
+            cursor.execute('DELETE FROM requests WHERE tenant_id = ?', (tenant_id,))
+            deleted_count = cursor.rowcount
+        else:
+            cursor.execute('DELETE FROM requests')
+            deleted_count = cursor.rowcount
+        
+        conn.commit()
+        return jsonify({
+            'success': True,
+            'message': f'Deleted {deleted_count} request(s)',
+            'deleted_count': deleted_count
+        })
+    except Exception as e:
+        conn.rollback()
+        app.logger.error(f"Error deleting all requests: {e}")
+        return jsonify({
+            'success': False,
+            'message': f'Error deleting requests: {str(e)}'
+        }), 500
+    finally:
+        conn.close()
 
 
 @app.route('/delete_request/<int:song_id>', methods=['POST'])
@@ -3676,6 +4261,8 @@ def update_song_new(id):
 
 @app.route('/delete_song/<int:id>', methods=['DELETE'])
 def delete_song(id):
+    from utils.audit_logger import log_tenant_admin_action
+    
     # Get tenant_id from session for data isolation
     tenant_id = session.get('tenant_id')
     
@@ -3683,6 +4270,16 @@ def delete_song(id):
     cursor = conn.cursor()
     
     try:
+        # Get song info before deletion for logging
+        if tenant_id:
+            cursor.execute('SELECT title, author FROM songs WHERE id = ? AND tenant_id = ?', (id, tenant_id))
+        else:
+            cursor.execute('SELECT title, author FROM songs WHERE id = ?', (id,))
+        
+        song_data = cursor.fetchone()
+        song_title = song_data['title'] if song_data else None
+        song_author = song_data['author'] if song_data else None
+        
         # First, delete any associated requests for this song
         if tenant_id:
             cursor.execute('DELETE FROM requests WHERE song_id = ? AND tenant_id = ?', (id, tenant_id))
@@ -3698,6 +4295,7 @@ def delete_song(id):
             cursor.execute('DELETE FROM songs WHERE id = ?', (id,))
         
         conn.commit()
+        conn.close()
         
         message = f'Song deleted successfully'
         if requests_deleted > 0:
@@ -3705,10 +4303,23 @@ def delete_song(id):
         
         app.logger.info(f"Deleted song {id} and {requests_deleted} associated requests for tenant {tenant_id}")
         
+        # Log song deletion (async - non-blocking)
+        if song_data:  # Only log if song was found
+            log_tenant_admin_action(
+                action='song_deleted',
+                entity_type='song',
+                entity_id=id,
+                song_title=song_title,
+                song_author=song_author,
+                total_requests_removed=requests_deleted
+            )
+        
         return jsonify({'message': message}), 200
         
     except Exception as e:
-        conn.rollback()
+        if conn:
+            conn.rollback()
+            conn.close()
         app.logger.error(f"Error deleting song {id}: {e}")
         return jsonify({'error': 'Failed to delete song'}), 500
     finally:
