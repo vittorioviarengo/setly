@@ -39,7 +39,7 @@ app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Allow cookies when navigating f
 limiter = Limiter(
     app=app,
     key_func=get_remote_address,
-    default_limits=["200 per day", "50 per hour"],
+    default_limits=["2000 per day", "500 per hour"],  # Increased limits for normal app usage
     storage_uri="memory://",
     strategy="fixed-window"
 )
@@ -3004,6 +3004,7 @@ def get_queue():
 
 
 @app.route('/get_user_requests', methods=['GET'])
+@limiter.limit("1000 per hour")  # High limit for frequent polling
 def get_user_requests():
     app.logger.debug("Accessed /get_user_requests")
     user_name = session.get('user_name')
@@ -3187,6 +3188,7 @@ def is_session_valid():
     return True
 
 @app.route('/check_session', methods=['GET'])
+@limiter.limit("1000 per hour")  # High limit for frequent session checks
 def check_session():
     if not is_session_valid():
         return jsonify({'redirect': url_for('scan_qr')})
@@ -4100,6 +4102,7 @@ def search():
 #     pass
 
 @app.route('/get_all_songs', methods=['GET'])
+@limiter.limit("1000 per hour")  # High limit for frequent song list refreshes
 def get_all_songs():
     # SECURITY: Require tenant session for data isolation
     # Without this, the endpoint would return ALL songs from ALL tenants
@@ -4211,6 +4214,7 @@ def zero_popularity():
 
 
 @app.route('/search_songs')
+@limiter.limit("1000 per hour")  # High limit for frequent searches
 def search_songs():
     query = request.args.get('s', '').strip().lower()
     language = request.args.get('language', 'All').lower()
