@@ -692,7 +692,7 @@ msgid "Back to Song List"
 msgstr "Torna all'Elenco delle Canzoni"
 
 msgid "How to Use"
-msgstr "Come Usare"
+msgstr "Istruzioni"
 
 msgid "Forgot Password"
 msgstr "Password Dimenticata"
@@ -1247,7 +1247,7 @@ msgid "Scan to Request Your Favorite Songs"
 msgstr "Scansiona per Richiedere le Tue Canzoni Preferite"
 
 msgid "How to Use"
-msgstr "Come Usare"
+msgstr "Istruzioni"
 
 msgid "Open your phone camera app"
 msgstr "Apri l'app fotocamera del tuo telefono"

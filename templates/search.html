@@ -49,10 +49,10 @@
                                 🎟️ {{ _('Upcoming Shows') }}
                             </a>
                             {% endif %}
-                            <!-- <a href="/queue">{{ _('All Requests') }}</a>
-                            <a href="/popular">{{ _('Most Popular') }}</a> -->
-                            {% if tenant and tenant.slug == 'sergio' %}
-                            <a href="http://sergiochiappa.com">{{ _('About') }} {{ tenant.name }}</a>
+                            {% if tenant and tenant.website_url %}
+                            <a href="{{ tenant.website_url }}" target="_blank">
+                                🌐 {{ _('About') }} {{ tenant.name }}
+                            </a>
                             {% endif %}
                             <div class="menu-divider"></div> <!-- Divider -->
                             {% if user_name %}

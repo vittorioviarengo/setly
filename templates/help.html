@@ -1,11 +1,13 @@
 <!DOCTYPE html>
-<html lang="{{ session.get('language', 'en') if session else 'en' }}">
+<html lang="{{ language if language else (session.get('language', 'en') if session else 'en') }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ _('How to Use') }} - {{ tenant.name if tenant else _('Music Universe') }}</title>
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename=favicon) }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/globals.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/search-mobile.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styleguide.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='search.css') }}">
     
     <style>
@@ -34,11 +36,24 @@
         }
         
         .help-container {
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 20px;
             width: 100%;
+            margin: 0;
+            padding: 10px 20px 20px 20px;
             box-sizing: border-box;
+        }
+        
+        .container-center-horizontal {
+            width: 100%;
+            overflow: visible;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        /* Ensure search-mobile contains all help content */
+        .search-mobile {
+            width: 368px;
         }
         
         .help-header {
@@ -48,7 +63,7 @@
         }
         
         .help-header h1 {
-            font-size: 2.5rem;
+            font-size: 1.1rem;
             margin: 0 0 10px 0;
             color: var(--teal);
             font-weight: 700;
@@ -267,13 +282,17 @@
             display: inline-block;
             color: var(--teal);
             text-decoration: none;
-            margin-bottom: 20px;
-            padding: 10px 15px;
+            margin: 15px 0;
+            padding: 12px 20px;
             border: 1px solid var(--teal);
             border-radius: var(--radius);
             transition: all 0.3s ease;
             font-weight: 600;
             font-size: 0.95rem;
+            background: transparent;
+            width: 100%;
+            text-align: center;
+            box-sizing: border-box;
         }
         
         .back-to-search:hover {
@@ -283,12 +302,28 @@
         }
         
         .back-to-search-link-wrapper {
-            text-align: left;
-            margin-bottom: 10px;
+            width: 100%;
+            padding: 10px;
+            box-sizing: border-box;
+            background-color: #000000;
+            position: sticky;
+            top: 0;
+            z-index: 999;
+        }
+        
+        /* Ensure menu works properly */
+        .menu {
+            display: none;
+        }
+        
+        .menu.show {
+            display: block;
         }
         
         @media (max-width: 768px) {
             .help-container {
+                width: 100%;
+                max-width: 368px;
                 padding: 15px;
             }
             
@@ -390,11 +425,23 @@
                 font-size: 0.9rem;
                 padding: 12px 15px;
             }
+            
+            .back-to-search-link-wrapper {
+                width: 100%;
+                padding: 0 15px;
+            }
         }
         
         @media (max-width: 480px) {
             .help-container {
+                width: 100%;
+                max-width: 368px;
                 padding: 10px;
+            }
+            
+            .back-to-search-link-wrapper {
+                width: 100%;
+                padding: 0 10px;
             }
             
             .help-header h1 {
@@ -425,14 +472,57 @@
         }
     </style>
 </head>
-<body>
-    {% set current_lang = session.get('language', 'en') if session else (g.lang_code if g.lang_code else 'en') %}
-    <div class="help-container">
-        <div class="back-to-search-link-wrapper">
-            <a href="{% if tenant %}/{{ tenant.slug }}/search{% else %}/search{% endif %}" class="back-to-search">
-                ← {{ _('Back to Song List') }}
-            </a>
-        </div>
+<body style="margin: 0; background: #000000">
+    {% set current_lang = language if language else (session.get('language', 'en') if session else (g.lang_code if g.lang_code else 'en')) %}
+    <div class="container-center-horizontal">
+        <div class="search-mobile">
+            <div class="top-bar">
+                <div class="title-div" id="title-div">
+                    <img class="setly-logo-title" src="{{ url_for('static', filename='img/setly-logo.png') }}" alt="Setly logo" />
+                    <div class="title">{{ tenant.name if tenant else _('Music Universe') }}</div>
+                    <img class="interface-hamburger-menu-color" src="{{ url_for('static', filename='img/interface-hamburger-menu-color.svg') }}" alt="interface/Hamburger Menu Color" id="hamburgerMenu" />
+                    
+                    <!-- Hidden menu -->
+                    <div class="menu" id="menu">
+                        <a href="{% if tenant %}/{{ tenant.slug }}/search{% else %}/search{% endif %}">
+                            🎵 {{ _('Song List') }}
+                        </a>
+                        <a href="{% if tenant %}/{{ tenant.slug }}/help{% else %}/help{% endif %}">
+                            ❓ {{ _('How to Use') }}
+                        </a>
+                        {% if tenant and tenant.events_link %}
+                        <a href="{{ tenant.events_link }}" target="_blank">
+                            🎟️ {{ _('Upcoming Shows') }}
+                        </a>
+                        {% endif %}
+                        {% if tenant and tenant.website_url %}
+                        <a href="{{ tenant.website_url }}" target="_blank">
+                            🌐 {{ _('About') }} {{ tenant.name }}
+                        </a>
+                        {% endif %}
+                        <div class="menu-divider"></div>
+                        {% if user_name %}
+                        <a href="{% if tenant %}/{{ tenant.slug }}/logout_user{% else %}/logout_user{% endif %}">
+                            🚪 {{ _('Logout') }}
+                        </a>
+                        <div class="menu-divider"></div>
+                        {% endif %}
+                        <div class="menu-item" data-lang="en">English</div>
+                        <div class="menu-item" data-lang="it">Italiano</div>
+                        <div class="menu-item" data-lang="es">Espanol</div>
+                        <div class="menu-item" data-lang="fr">Français</div>
+                        <div class="menu-item" data-lang="de">Deutsch</div>
+                    </div>
+                </div>
+                
+                <div class="back-to-search-link-wrapper">
+                    <a href="{% if tenant %}/{{ tenant.slug }}/search{% else %}/search{% endif %}" class="back-to-search">
+                        ← {{ _('Back to Song List') }}
+                    </a>
+                </div>
+            </div>
+            
+            <div class="help-container">
         <div class="help-header">
             <h1>🎵 {{ _('How to Request Songs') }}</h1>
             <p>{{ _('Your guide to using the music request system') }}</p>
@@ -440,13 +530,6 @@
         
         <!-- Main Steps Card -->
         <div class="help-card">
-            <div class="help-card-header">
-                <div class="help-card-icon">📋</div>
-                <div class="help-card-title">
-                    <h2>{{ _('Getting Started') }}</h2>
-                    <p>{{ _('Follow these simple steps to request your favorite songs') }}</p>
-                </div>
-            </div>
             <div class="help-card-body">
                 <div class="step">
                     <div class="step-number">1</div>
@@ -526,19 +609,6 @@
                     </div>
                 </div>
                 
-                <div class="step">
-                    <div class="step-number">7</div>
-                    <div class="step-content">
-                        <h3>{{ _('Reset Search') }}</h3>
-                        <p>{{ _('To reset your search and start fresh, click the X icon in the search bar to clear all filters.') }}</p>
-                        <!-- Screenshot will be loaded when image file is available -->
-                        <img src="{{ url_for('static', filename='img/help-screenshots/' ~ current_lang ~ '/06-reset-search.png') }}" 
-                             alt="Reset Search" 
-                             class="help-screenshot"
-                             style="display: none;"
-                             onerror="this.style.display='none';">
-                    </div>
-                </div>
                 
                 <div class="tip-box">
                     <strong>💡 {{ _('Pro Tip') }}:</strong>
@@ -610,12 +680,55 @@
             {% if tenant and tenant.website_url %}
             <a href="{{ tenant.website_url }}" target="_blank">{{ _('Artist Website') }}</a>
             {% endif %}
+            </div>
         </div>
     </div>
     
     <script>
-        // Show help screenshots if they load successfully
+        // Menu toggle functionality
         document.addEventListener('DOMContentLoaded', function() {
+            const hamburgerMenu = document.querySelector('#hamburgerMenu');
+            const menu = document.querySelector('#menu');
+            
+            if (hamburgerMenu && menu) {
+                hamburgerMenu.addEventListener('click', (event) => {
+                    event.stopPropagation();
+                    menu.classList.toggle('show');
+                });
+            }
+            
+            // Close menu when clicking outside
+            document.addEventListener('click', (event) => {
+                if (menu && !menu.contains(event.target) && hamburgerMenu && !hamburgerMenu.contains(event.target)) {
+                    menu.classList.remove('show');
+                }
+            });
+            
+            // Language selection
+            const menuItems = document.querySelectorAll('.menu-item');
+            menuItems.forEach(item => {
+                item.addEventListener('click', function(event) {
+                    const selectedLanguage = event.target.getAttribute('data-lang');
+                    if (selectedLanguage) {
+                        // Update language using the same mechanism as search page
+                        {% if tenant %}
+                        window.location.href = '/{{ tenant.slug }}/change_language/' + selectedLanguage;
+                        {% else %}
+                        window.location.href = '/change_language/' + selectedLanguage;
+                        {% endif %}
+                    }
+                });
+            });
+            
+            // Highlight selected language
+            const currentLang = '{{ language if language else "en" }}';
+            menuItems.forEach(item => {
+                if (item.getAttribute('data-lang') === currentLang) {
+                    item.classList.add('selected');
+                }
+            });
+            
+            // Show help screenshots if they load successfully
             const helpScreenshots = document.querySelectorAll('img.help-screenshot');
             
             helpScreenshots.forEach(function(img) {

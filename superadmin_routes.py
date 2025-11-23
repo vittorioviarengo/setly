@@ -103,12 +103,25 @@ def dashboard():
     cursor.execute('SELECT COUNT(*) as song_count FROM songs')
     song_count = cursor.fetchone()['song_count']
     
+    # Total requests all-time (all statuses)
     cursor.execute('SELECT COUNT(*) as request_count FROM requests')
     total_request_count = cursor.fetchone()['request_count']
     
-    # Since requests table doesn't have a status column, all requests are considered active
-    # In the future, we could add a status column to track completed vs pending requests
-    open_request_count = total_request_count
+    # Currently open requests (pending status only, excluding fulfilled/cancelled)
+    # Check if status column exists
+    try:
+        cursor.execute("SELECT COUNT(*) as open_count FROM requests WHERE status = 'pending'")
+        open_request_count = cursor.fetchone()['open_count']
+        # If no pending requests but status column exists, check for NULL (old requests before migration)
+        if open_request_count == 0:
+            cursor.execute("SELECT COUNT(*) as null_count FROM requests WHERE status IS NULL")
+            null_count = cursor.fetchone()['null_count']
+            if null_count > 0:
+                # Old requests without status - consider them as pending for now
+                open_request_count = null_count
+    except sqlite3.OperationalError:
+        # If status column doesn't exist yet, all requests are considered open
+        open_request_count = total_request_count
     
     # Get recent tenants with song and request counts
     cursor.execute('''

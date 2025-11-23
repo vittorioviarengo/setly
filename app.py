@@ -2746,7 +2746,13 @@ def tenant_help(tenant_slug):
         flash('Tenant not found or inactive')
         return redirect(url_for('index'))
     
-    return render_template('help.html', tenant=tenant)
+    # Get user_name from session
+    user_name = session.get('user_name', '')
+    # Get language from request parameter or session
+    language = request.args.get('lang', session.get('language', 'en'))
+    session['language'] = language
+    
+    return render_template('help.html', tenant=tenant, user_name=user_name, language=language)
 
 @app.route('/<tenant_slug>/logout_user', methods=['GET', 'POST'])
 def tenant_logout_user(tenant_slug):
@@ -3390,17 +3396,18 @@ def delete_request(song_id):
         user_name = data.get('user')
         
         if user_name:
-            # End user is removing their own request - delete only their request
+            # End user is removing their own request - mark as cancelled instead of deleting
+            # This preserves the request history for analytics
             # Note: The column name in requests table is 'requester', not 'user_name'
             if tenant_id:
                 cursor.execute(
-                    "DELETE FROM requests WHERE song_id = ? AND tenant_id = ? AND requester = ? AND status = ?",
-                    (song_id, tenant_id, user_name, 'pending')
+                    "UPDATE requests SET status = ? WHERE song_id = ? AND tenant_id = ? AND requester = ? AND status = ?",
+                    ('cancelled', song_id, tenant_id, user_name, 'pending')
                 )
             else:
                 cursor.execute(
-                    "DELETE FROM requests WHERE song_id = ? AND requester = ? AND status = ?",
-                    (song_id, user_name, 'pending')
+                    "UPDATE requests SET status = ? WHERE song_id = ? AND requester = ? AND status = ?",
+                    ('cancelled', song_id, user_name, 'pending')
                 )
             
             conn.commit()
@@ -4143,13 +4150,13 @@ def get_all_songs():
     
     # SECURITY: Always filter by tenant_id (already verified above)
     # This ensures data isolation between tenants
-        query = f'''
-            SELECT * FROM songs
-            WHERE (title LIKE ? OR author LIKE ? OR language LIKE ?) AND tenant_id = ?
-            ORDER BY {sort_by} {sort_order}
-            LIMIT {per_page} OFFSET {offset}
-        '''
-        cursor.execute(query, (f'%{search_query}%', f'%{search_query}%', f'%{search_query}%', tenant_id))
+    query = f'''
+        SELECT * FROM songs
+        WHERE (title LIKE ? OR author LIKE ? OR language LIKE ?) AND tenant_id = ?
+        ORDER BY {sort_by} {sort_order}
+        LIMIT {per_page} OFFSET {offset}
+    '''
+    cursor.execute(query, (f'%{search_query}%', f'%{search_query}%', f'%{search_query}%', tenant_id))
     
     songs = cursor.fetchall()
     conn.close()
@@ -4187,11 +4194,11 @@ def update_song(song_id):
         cursor = conn.cursor()
         
         # SECURITY: Always filter by tenant_id to prevent cross-tenant modification
-            cursor.execute("""
-                UPDATE songs
-                SET title = ?, author = ?, language = ?, popularity = ?, image = ?, genre = ?, playlist = ?
-                WHERE id = ? AND tenant_id = ?
-            """, (title, author, language, popularity, image, genre, playlist, song_id, tenant_id))
+        cursor.execute("""
+            UPDATE songs
+            SET title = ?, author = ?, language = ?, popularity = ?, image = ?, genre = ?, playlist = ?
+            WHERE id = ? AND tenant_id = ?
+        """, (title, author, language, popularity, image, genre, playlist, song_id, tenant_id))
         
         conn.commit()
         conn.close()

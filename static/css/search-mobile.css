@@ -91,7 +91,7 @@
   margin: 5px 0;
   cursor: pointer; /* Indicate that menu items are clickable */
   font-family: var(--font-family-century_gothic-regular);
-  font-size: 20px;
+  font-size: 14px;
 }
 
 .menu.show {
