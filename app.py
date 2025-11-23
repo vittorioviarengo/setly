@@ -528,6 +528,11 @@ def get_spotify_image(author_name):
     Get Spotify artist image URL, genre, and language.
     Returns a dict with 'image_url', 'genre', and 'language', or None if not found.
     """
+    # Check if credentials are available
+    if not client_id or not client_secret:
+        app.logger.error("Cannot fetch Spotify data: credentials not configured")
+        return None
+    
     try:
         # Set timeout for Spotify API calls
         # Note: Cache warnings are expected on PythonAnywhere and can be ignored
