@@ -61,6 +61,49 @@
       {% endif %}
     </div>
   </div>
+  
+  <script>
+    // Check periodically if a gig becomes active and redirect user
+    {% if tenant %}
+    (function() {
+      const tenantSlug = '{{ tenant.slug }}';
+      let checkInterval;
+      let checkCount = 0;
+      const maxChecks = 300; // Check for 5 minutes (300 * 1 second)
+      
+      function checkActiveGig() {
+        checkCount++;
+        
+        // Stop checking after max attempts
+        if (checkCount > maxChecks) {
+          clearInterval(checkInterval);
+          return;
+        }
+        
+        fetch(`/${tenantSlug}/get_active_gig`)
+          .then(response => response.json())
+          .then(data => {
+            // If gig exists in response, it means there's an active gig
+            if (data && data.gig) {
+              // Gig is active! Redirect to home page (not search) so user can enter name first
+              clearInterval(checkInterval);
+              window.location.href = `/${tenantSlug}/`;
+            }
+          })
+          .catch(error => {
+            // Silently fail - don't spam console with errors
+            console.debug('Checking for active gig...');
+          });
+      }
+      
+      // Start checking every 1 second
+      checkInterval = setInterval(checkActiveGig, 1000);
+      
+      // Also check immediately
+      checkActiveGig();
+    })();
+    {% endif %}
+  </script>
 </body>
 
 </html>

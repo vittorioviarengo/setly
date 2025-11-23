@@ -1744,9 +1744,18 @@ def tenant_home(tenant_slug):
     # Check if there's an active gig (only if gigs table exists)
     # If no active gig, redirect to scan_qr page with message
     try:
-        if not has_active_gig(tenant['id']):
+        active_gig = get_active_gig(tenant['id'])
+        if not active_gig:
             flash(_('No active gig. Please wait for the musician to start the gig.'), 'info')
             return redirect(url_for('tenant_scan_qr', tenant_slug=tenant_slug))
+        else:
+            # Verify user has scanned QR code for the current active gig
+            # Don't auto-update gig_id - user must scan QR code to verify presence
+            session_gig_id = session.get('gig_id')
+            if session_gig_id != active_gig['id']:
+                # User hasn't scanned QR code for this gig - redirect to scan_qr
+                flash(_('A new musical event has started. Please scan the QR code to participate.'), 'info')
+                return redirect(url_for('tenant_scan_qr', tenant_slug=tenant_slug))
     except Exception:
         # If gigs table doesn't exist yet, allow access (backward compatibility)
         pass
@@ -3280,7 +3289,7 @@ def tenant_search(tenant_slug):
     # Check if there's an active gig when user tries to access search page
     # If no active gig and user has a name (wants to request songs), redirect to scan_qr
     try:
-        if not has_active_gig(tenant['id']):
+        if not active_gig:
             user_name = request.form.get('user_name', request.args.get('user_name', session.get('user_name', '')))
             # If user has a name, they're trying to request songs - redirect them
             if user_name:
@@ -3288,6 +3297,14 @@ def tenant_search(tenant_slug):
                 session['user_name'] = ''  # Clear user name to force re-scan
                 return redirect(url_for('tenant_scan_qr', tenant_slug=tenant_slug))
             # If no name, allow access to see the page (they need to enter name first)
+        else:
+            # Verify user has scanned QR code for the current active gig
+            session_gig_id = session.get('gig_id')
+            if session_gig_id != active_gig['id']:
+                # User hasn't scanned QR code for this gig - redirect to scan_qr
+                flash(_('A new musical event has started. Please scan the QR code to participate.'), 'info')
+                session.pop('user_name', None)  # Clear user name to force re-entry
+                return redirect(url_for('tenant_scan_qr', tenant_slug=tenant_slug))
     except Exception:
         # If gigs table doesn't exist yet, allow access (backward compatibility)
         pass
@@ -3709,6 +3726,21 @@ def tenant_scan_qr(tenant_slug):
     session['tenant_id'] = tenant['id']
     session['tenant_slug'] = tenant['slug']
     
+    # If there's an active gig, store its ID in session to verify user presence
+    # This ensures users must scan QR code for each new gig
+    try:
+        active_gig = get_active_gig(tenant['id'])
+        if active_gig:
+            session['gig_id'] = active_gig['id']
+            session['gig_verified_at'] = datetime.now().isoformat()
+        else:
+            # No active gig - clear any old gig_id
+            session.pop('gig_id', None)
+            session.pop('gig_verified_at', None)
+    except Exception:
+        # If gigs table doesn't exist yet, skip (backward compatibility)
+        pass
+    
     return render_template('scan_qr.html', tenant=tenant)
 
 @app.route('/search_mobile')
@@ -3776,10 +3808,24 @@ def get_user_requested_song_ids():
     try:
         conn = create_connection()
         cursor = conn.cursor()
-        cursor.execute(
-            'SELECT song_id FROM requests WHERE requester = ? AND tenant_id = ? AND status = ?', 
-            (user_name, tenant_id, 'pending')
-        )
+        
+        # Get active gig_id to filter requests by current gig only
+        active_gig = get_active_gig(tenant_id)
+        gig_id = active_gig['id'] if active_gig else None
+        
+        if gig_id:
+            # Only return requests from the current active gig
+            cursor.execute(
+                'SELECT song_id FROM requests WHERE requester = ? AND tenant_id = ? AND gig_id = ? AND status = ?', 
+                (user_name, tenant_id, gig_id, 'pending')
+            )
+        else:
+            # Fallback: return all pending requests if no gig system (backward compatibility)
+            cursor.execute(
+                'SELECT song_id FROM requests WHERE requester = ? AND tenant_id = ? AND status = ?', 
+                (user_name, tenant_id, 'pending')
+            )
+        
         requests = cursor.fetchall()
         conn.close()
         
@@ -3803,10 +3849,22 @@ def request_song(song_id):
     # Check if there's an active gig (only if gigs table exists)
     if tenant_id:
         try:
-            if not has_active_gig(tenant_id):
+            active_gig = get_active_gig(tenant_id)
+            if not active_gig:
                 return jsonify({
                     'error': _('No active gig'),
                     'message': _('The musician has not started a gig yet. Please wait for the gig to begin.')
+                }), 403
+            
+            # Verify user has scanned QR code for the current active gig
+            session_gig_id = session.get('gig_id')
+            if session_gig_id != active_gig['id']:
+                # User hasn't scanned QR code for this gig - they need to rescan
+                tenant_slug = session.get('tenant_slug', '')
+                return jsonify({
+                    'error': _('Gig Changed'),
+                    'message': _('A new musical event has started. Please scan the QR code to participate.'),
+                    'redirect': url_for('tenant_scan_qr', tenant_slug=tenant_slug) if tenant_slug else url_for('scan_qr')
                 }), 403
         except Exception:
             # If gigs table doesn't exist yet, allow requests (backward compatibility)
@@ -3850,8 +3908,20 @@ def request_song(song_id):
             )
             return jsonify({'error': 'Song not found'}), 404
 
-        # Check if the user has already requested the song
-        cursor.execute('SELECT COUNT(*) as count FROM requests WHERE song_id = ? AND requester = ? AND tenant_id = ?', (song_id, user_name, tenant_id))
+        # Check if the user has already requested the song in the current active gig
+        # Get active gig_id if available
+        active_gig = get_active_gig(tenant_id)
+        gig_id = active_gig['id'] if active_gig else None
+        
+        if gig_id:
+            # Check only within the current gig
+            cursor.execute('SELECT COUNT(*) as count FROM requests WHERE song_id = ? AND requester = ? AND tenant_id = ? AND gig_id = ? AND status = ?', 
+                         (song_id, user_name, tenant_id, gig_id, 'pending'))
+        else:
+            # Fallback: check all pending requests if no gig system (backward compatibility)
+            cursor.execute('SELECT COUNT(*) as count FROM requests WHERE song_id = ? AND requester = ? AND tenant_id = ? AND status = ?', 
+                         (song_id, user_name, tenant_id, 'pending'))
+        
         user_requested_song = cursor.fetchone()
 
         if user_requested_song['count'] > 0:
@@ -5114,6 +5184,77 @@ def fetch_songs_old(start_letter, query='', language='all', sortBy='title', page
     return [dict(song) for song in songs]
 
 
+
+def ensure_gigs_table():
+    """Ensure the gigs table exists. Called at app startup."""
+    conn = create_connection()
+    if not conn:
+        app.logger.error("Failed to create database connection for gigs table check")
+        return
+    
+    cursor = conn.cursor()
+    try:
+        # Check if table exists
+        cursor.execute("""
+            SELECT name FROM sqlite_master 
+            WHERE type='table' AND name='gigs'
+        """)
+        if cursor.fetchone():
+            app.logger.info("Gigs table already exists")
+            conn.close()
+            return
+        
+        # Create gigs table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS gigs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                tenant_id INTEGER NOT NULL,
+                name TEXT,
+                start_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                end_time TIMESTAMP NULL,
+                is_active INTEGER DEFAULT 1,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(tenant_id) REFERENCES tenants(id),
+                CHECK(is_active IN (0, 1))
+            )
+        """)
+        
+        # Create indexes
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_gigs_tenant_active 
+            ON gigs(tenant_id, is_active)
+        """)
+        
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_gigs_start_time 
+            ON gigs(start_time)
+        """)
+        
+        # Add gig_id column to requests table if it doesn't exist
+        try:
+            cursor.execute("ALTER TABLE requests ADD COLUMN gig_id INTEGER NULL")
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_requests_gig_id 
+                ON requests(gig_id)
+            """)
+            app.logger.info("Added gig_id column to requests table")
+        except sqlite3.OperationalError as e:
+            if "duplicate column name" in str(e).lower():
+                app.logger.info("Column gig_id already exists in requests table")
+            else:
+                raise
+        
+        conn.commit()
+        app.logger.info("Successfully created 'gigs' table and indexes")
+    except sqlite3.Error as e:
+        app.logger.error(f"Error creating gigs table: {e}")
+        conn.rollback()
+    finally:
+        conn.close()
+
+# Ensure gigs table exists at startup
+with app.app_context():
+    ensure_gigs_table()
 
 if __name__ == '__main__':
     #app.run(debug=True)

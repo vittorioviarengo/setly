@@ -1542,3 +1542,33 @@ msgstr "canzoni non hanno immagini. Il PDF mostrerà icone predefinite per quest
 
 msgid "Missing Images"
 msgstr "Immagini Mancanti"
+
+msgid "No active gig"
+msgstr "Nessuna serata musicale attiva"
+
+msgid "No active gig. Please wait for the musician to start the gig."
+msgstr "Nessuna serata musicale attiva. Attendi che il musicista inizi la serata."
+
+msgid "Already fetching image for this song. Please wait..."
+msgstr "Sto già scaricando l'immagine per questa canzone. Attendi..."
+
+msgid "Gig Active:"
+msgstr "Serata musicale attiva:"
+
+msgid "Start Gig"
+msgstr "Inizia Serata"
+
+msgid "End Gig"
+msgstr "Termina Serata"
+
+msgid "Gig name (optional)"
+msgstr "Nome serata (opzionale)"
+
+msgid "A new musical event has started. Please scan the QR code again to participate."
+msgstr "È iniziata una nuova serata musicale. Scansiona di nuovo il codice QR per partecipare."
+
+msgid "A new musical event has started. Please scan the QR code to participate."
+msgstr "È iniziata una nuova serata musicale. Scansiona il codice QR per partecipare."
+
+msgid "Gig Changed"
+msgstr "Serata Cambiata"

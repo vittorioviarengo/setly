@@ -37,6 +37,20 @@
                 <input type="text" id="venueName" placeholder="{{ _('Enter venue name') }}">
                 <button id="updateVenueButton" class="button">{{ _('Update Venue Button') }}</button>
             </div>
+            <div class="action-item">
+                {% if active_gig %}
+                    <label>{{ _('Gig Active:') }}</label>
+                    <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+                        <span style="font-weight: 500;">{{ active_gig.name }}</span>
+                        <span style="font-size: 0.85em; color: #6c757d;">({{ _('Started') }}: {{ active_gig.start_time }})</span>
+                    </div>
+                    <button id="endGigButton" class="button danger">{{ _('End Gig') }}</button>
+                {% else %}
+                    <label>{{ _('No active gig') }}</label>
+                    <input type="text" id="gigNameInput" placeholder="{{ _('Gig name (optional)') }}" style="display: none;">
+                    <button id="startGigButton" class="button">{{ _('Start Gig') }}</button>
+                {% endif %}
+            </div>
         </div>
         {% endif %}
 
@@ -214,9 +228,17 @@
             fetch('/delete_all_requests', { method: 'POST' })
                 .then(response => response.json())
                 .then(data => {
-                    fetchQueue();  // Refresh the queue
+                    if (data.success) {
+                        showSuccess(data.message || 'Queue emptied successfully');
+                        fetchQueue();  // Refresh the queue
+                    } else {
+                        showError(data.message || 'Failed to empty queue');
+                    }
                 })
-                .catch(error => console.error('Error emptying queue:', error));
+                .catch(error => {
+                    console.error('Error emptying queue:', error);
+                    showError('Error emptying queue: ' + error.message);
+                });
         }
 
         function showMessage(message, type) {
@@ -368,7 +390,85 @@
             );
         });
 
-        
+        // Gig management
+        {% if is_admin and tenant %}
+        (function() {
+            const tenantSlug = '{{ tenant.slug }}';
+            const startGigButton = document.getElementById('startGigButton');
+            const endGigButton = document.getElementById('endGigButton');
+            const gigNameInput = document.getElementById('gigNameInput');
+            
+            // Get tenant slug from URL if not available in template
+            function getTenantSlug() {
+                const path = window.location.pathname;
+                const match = path.match(/\/([^\/]+)\/queue/);
+                return match ? match[1] : tenantSlug;
+            }
+            
+            if (startGigButton) {
+                startGigButton.addEventListener('click', function() {
+                    const slug = getTenantSlug();
+                    const gigName = gigNameInput ? gigNameInput.value.trim() : null;
+                    
+                    fetch(`/${slug}/start_gig`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            gig_name: gigName || null
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            showSuccess(data.message);
+                            // Reload page to update gig status
+                            setTimeout(() => window.location.reload(), 1000);
+                        } else {
+                            showError(data.message || 'Failed to start gig');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error starting gig:', error);
+                        showError('Error starting gig: ' + error.message);
+                    });
+                });
+            }
+            
+            if (endGigButton) {
+                endGigButton.addEventListener('click', function() {
+                    const slug = getTenantSlug();
+                    
+                    showConfirm(
+                        '{{ _("Are you sure you want to end the current gig?") }}',
+                        () => {
+                            fetch(`/${slug}/end_gig`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                }
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    showSuccess(data.message);
+                                    // Reload page to update gig status
+                                    setTimeout(() => window.location.reload(), 1000);
+                                } else {
+                                    showError(data.message || 'Failed to end gig');
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error ending gig:', error);
+                                showError('Error ending gig: ' + error.message);
+                            });
+                        }
+                    );
+                });
+            }
+        })();
+        {% endif %}
 
         });
     </script>
