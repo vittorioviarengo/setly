@@ -3366,33 +3366,60 @@ def delete_all_requests():
 
 @app.route('/delete_request/<int:song_id>', methods=['POST'])
 def delete_request(song_id):
-    """Mark all pending requests for a song as fulfilled (played)."""
+    """Mark all pending requests for a song as fulfilled (played) OR remove a specific user's request."""
     try:
         tenant_id = session.get('tenant_id')
         conn = create_connection()
         cursor = conn.cursor()
         
-        from datetime import datetime
-        played_at = datetime.now().isoformat()
+        # Check if this is a user-specific request removal (from end user UI)
+        data = request.get_json(silent=True) or {}
+        user_name = data.get('user')
         
-        # Mark all pending requests for this song as fulfilled
-        if tenant_id:
-            cursor.execute(
-                "UPDATE requests SET status = ?, played_at = ? WHERE song_id = ? AND tenant_id = ? AND status = ?",
-                ('fulfilled', played_at, song_id, tenant_id, 'pending')
-            )
+        if user_name:
+            # End user is removing their own request - delete only their request
+            from datetime import datetime
+            played_at = datetime.now().isoformat()
+            
+            # Delete or mark as cancelled only the requests from this specific user
+            if tenant_id:
+                cursor.execute(
+                    "DELETE FROM requests WHERE song_id = ? AND tenant_id = ? AND user_name = ? AND status = ?",
+                    (song_id, tenant_id, user_name, 'pending')
+                )
+            else:
+                cursor.execute(
+                    "DELETE FROM requests WHERE song_id = ? AND user_name = ? AND status = ?",
+                    (song_id, user_name, 'pending')
+                )
+            
+            conn.commit()
+            conn.close()
+            return jsonify({"message": "Song removed from queue successfully"})
         else:
-            cursor.execute(
-                "UPDATE requests SET status = ?, played_at = ? WHERE song_id = ? AND status = ?",
-                ('fulfilled', played_at, song_id, 'pending')
-            )
-        
-        conn.commit()
-        conn.close()
-        return jsonify({"message": "Song marked as played successfully"})
+            # Tenant admin is marking song as played - mark all pending requests as fulfilled
+            from datetime import datetime
+            played_at = datetime.now().isoformat()
+            
+            # Mark all pending requests for this song as fulfilled
+            if tenant_id:
+                cursor.execute(
+                    "UPDATE requests SET status = ?, played_at = ? WHERE song_id = ? AND tenant_id = ? AND status = ?",
+                    ('fulfilled', played_at, song_id, tenant_id, 'pending')
+                )
+            else:
+                cursor.execute(
+                    "UPDATE requests SET status = ?, played_at = ? WHERE song_id = ? AND status = ?",
+                    ('fulfilled', played_at, song_id, 'pending')
+                )
+            
+            conn.commit()
+            conn.close()
+            return jsonify({"message": "Song marked as played successfully"})
     except Exception as e:
-        print(f"Error marking song as played: {e}")
-        return jsonify({"message": "Error marking song as played"}), 500
+        app.logger.error(f"Error in delete_request: {e}")
+        conn.close()
+        return jsonify({"message": "Error processing request"}), 500
 
 
 @app.route('/update_max_requests', methods=['POST'])

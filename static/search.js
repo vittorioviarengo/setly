@@ -939,7 +939,7 @@ function deleteRequest(songId, username) {
         })
         .then(data => {
             console.log('Delete response data:', data); // Debugging log
-            if (data.message === 'Song removed from queue successfully') {
+            if (data.message === 'Song removed from queue successfully' || data.message === 'Song marked as played successfully') {
                 // Re-fetch the user requests to re-render the list
                 fetchUserRequests(username);
                 // Re-fetch the songs to update the song list
@@ -949,6 +949,7 @@ function deleteRequest(songId, username) {
                 fetchSongs(searchQuery, selectedSearchLanguage, currentLetter, sortBy);
             } else {
                 console.error('Error deleting request:', data.message);
+                showMessage(data.message || 'Error removing request', 'error');
             }
         })
         .catch(error => {
