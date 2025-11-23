@@ -1234,44 +1234,9 @@ def tenant_bulk_fetch_spotify(tenant_slug):
         # Track unique artists to avoid duplicate API calls
         processed_artists = {}
         
-        # First pass: filter songs to only those that need processing
-        # This avoids processing songs with existing files
-        songs_to_process = []
         for idx, song in enumerate(songs):
-            # Check if song needs any data
-            needs_image = (not song['image'] or song['image'] == '' or 
-                          (song['image'] and (
-                              'placeholder' in song['image'].lower() or 
-                              song['image'].startswith('http') or
-                              'setly' in song['image'].lower() or
-                              'music-icon' in song['image'].lower() or
-                              'default' in song['image'].lower()
-                          )))
-            
-            # If image field has a value, check if file actually exists on disk
-            if not needs_image and song['image']:
-                image_path = os.path.join(app_dir, 'static', 'tenants', tenant_slug, 'author_images', song['image'])
-                if not os.path.exists(image_path):
-                    needs_image = True
-                    # Log first 10 missing files
-                    if len(songs_to_process) < 10:
-                        app.logger.info(f"[Tenant Bulk] ✅ FILE MISSING - Song {song['id']} ({song['title']}) has image '{song['image']}' in DB but file doesn't exist at {image_path}")
-            
-            needs_genre = not song['genre'] or song['genre'] == ''
-            needs_language = not song['language'] or song['language'] in ['', 'unknown']
-            
-            # Only add songs that need processing
-            if needs_image or needs_genre or needs_language:
-                songs_to_process.append(song)
-            else:
-                stats['skipped'] += 1
-        
-        app.logger.info(f"[Tenant Bulk] Filtered {len(songs)} songs down to {len(songs_to_process)} that need processing (skipped {stats['skipped']} with all data)")
-        
-        # Now process only the songs that need data
-        for idx, song in enumerate(songs_to_process):
             try:
-                # Check if song needs any data (re-check for logging)
+                # Check if song needs any data
                 needs_image = (not song['image'] or song['image'] == '' or 
                               (song['image'] and (
                                   'placeholder' in song['image'].lower() or 
@@ -1281,6 +1246,7 @@ def tenant_bulk_fetch_spotify(tenant_slug):
                                   'default' in song['image'].lower()
                               )))
                 
+                # If image field has a value, check if file actually exists on disk
                 image_file_missing = False
                 if not needs_image and song['image']:
                     image_path = os.path.join(app_dir, 'static', 'tenants', tenant_slug, 'author_images', song['image'])
@@ -1291,8 +1257,12 @@ def tenant_bulk_fetch_spotify(tenant_slug):
                 needs_genre = not song['genre'] or song['genre'] == ''
                 needs_language = not song['language'] or song['language'] in ['', 'unknown']
                 
-                # Log what we're processing
-                if idx < 5:
+                if not (needs_image or needs_genre or needs_language):
+                    stats['skipped'] += 1
+                    continue
+                
+                # Log what we're processing (only first few to avoid spam)
+                if idx < 3:
                     app.logger.info(f"[Tenant Bulk] Processing song {song['id']} ({song['title']}): needs_image={needs_image} (file_missing={image_file_missing}), needs_genre={needs_genre}, needs_language={needs_language}")
                 
                 # Log what we're processing
