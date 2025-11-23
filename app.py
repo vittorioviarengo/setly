@@ -1265,9 +1265,6 @@ def tenant_bulk_fetch_spotify(tenant_slug):
                 if idx < 3:
                     app.logger.info(f"[Tenant Bulk] Processing song {song['id']} ({song['title']}): needs_image={needs_image} (file_missing={image_file_missing}), needs_genre={needs_genre}, needs_language={needs_language}")
                 
-                # Log what we're processing
-                app.logger.info(f"[Tenant Bulk] Processing song {song['id']} ({song['title']}): needs_image={needs_image} (file_missing={image_file_missing}), needs_genre={needs_genre}, needs_language={needs_language}")
-                
                 # Check if we already processed this artist
                 artist_name = song['author']
                 if artist_name in processed_artists:
