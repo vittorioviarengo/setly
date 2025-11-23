@@ -1200,12 +1200,13 @@ def tenant_bulk_fetch_spotify(tenant_slug):
                 songs.extend(additional_songs)
                 app.logger.info(f"[Tenant Bulk] Added {len(additional_songs)} more songs with missing genre/language")
         
-        # If still not enough, also get songs that have image values (even if they don't match patterns)
+        # ALWAYS also get songs that have image values (even if they don't match patterns)
         # These might have images in DB but missing physical files
-        if len(songs) < extended_batch:
-            remaining = extended_batch - len(songs)
-            song_ids = [song['id'] for song in songs] if songs else []
-            
+        # We need to check ALL songs with images to see if files exist
+        song_ids = [song['id'] for song in songs] if songs else []
+        remaining = extended_batch - len(songs)
+        
+        if remaining > 0:
             if song_ids:
                 placeholders = ','.join(['?'] * len(song_ids))
                 cursor.execute(f'''
@@ -1215,6 +1216,11 @@ def tenant_bulk_fetch_spotify(tenant_slug):
                     AND id NOT IN ({placeholders})
                     AND image IS NOT NULL 
                     AND image != ''
+                    AND image NOT LIKE '%placeholder%'
+                    AND image NOT LIKE 'http%'
+                    AND image NOT LIKE '%setly%'
+                    AND image NOT LIKE '%music-icon%'
+                    AND image NOT LIKE '%default%'
                     LIMIT ?
                 ''', [tenant_id] + song_ids + [remaining])
             else:
@@ -1224,6 +1230,11 @@ def tenant_bulk_fetch_spotify(tenant_slug):
                     WHERE tenant_id = ?
                     AND image IS NOT NULL 
                     AND image != ''
+                    AND image NOT LIKE '%placeholder%'
+                    AND image NOT LIKE 'http%'
+                    AND image NOT LIKE '%setly%'
+                    AND image NOT LIKE '%music-icon%'
+                    AND image NOT LIKE '%default%'
                     LIMIT ?
                 ''', (tenant_id, remaining))
             
@@ -1275,12 +1286,15 @@ def tenant_bulk_fetch_spotify(tenant_slug):
                 needs_genre = not song['genre'] or song['genre'] == ''
                 needs_language = not song['language'] or song['language'] in ['', 'unknown']
                 
-                # Log details for every song to understand why they're skipped
-                app.logger.info(f"[Tenant Bulk] Song {song['id']} ({song['title']}): image='{song['image']}', needs_image={needs_image}, genre='{song['genre']}', needs_genre={needs_genre}, language='{song['language']}', needs_language={needs_language}")
+                # Log details for every song to understand why they're skipped (only first 10 to avoid spam)
+                if idx < 10:
+                    app.logger.info(f"[Tenant Bulk] Song {song['id']} ({song['title']}): image='{song['image']}', needs_image={needs_image} (file_missing={image_file_missing}), genre='{song['genre']}', needs_genre={needs_genre}, language='{song['language']}', needs_language={needs_language}")
                 
                 if not (needs_image or needs_genre or needs_language):
                     stats['skipped'] += 1
-                    app.logger.info(f"[Tenant Bulk] SKIPPING song {song['id']} ({song['title']}): already has all data (image='{song['image']}', genre='{song['genre']}', language='{song['language']}')")
+                    # Only log first 5 skipped songs to avoid spam
+                    if stats['skipped'] <= 5:
+                        app.logger.info(f"[Tenant Bulk] SKIPPING song {song['id']} ({song['title']}): already has all data (image='{song['image']}', genre='{song['genre']}', language='{song['language']}')")
                     continue
                 
                 # Log what we're processing
