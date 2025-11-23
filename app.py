@@ -2977,6 +2977,7 @@ def set_timestamp():
 
 
 @app.route('/get_queue', methods=['GET'])
+@limiter.exempt  # Exempt from rate limiting - read-only endpoint, called frequently for queue updates
 def get_queue():
     tenant_id = session.get('tenant_id')
     conn = create_connection()
@@ -3196,6 +3197,7 @@ def check_session():
 
 
 @app.route('/api/user_requested_song_ids', methods=['GET'])
+@limiter.exempt  # Exempt from rate limiting - read-only endpoint, called frequently for polling
 def get_user_requested_song_ids():
     """Get list of song IDs currently requested by the user (for polling). Only returns pending requests."""
     user_name = session.get('user_name')
@@ -3459,6 +3461,7 @@ def fetch_max_requests():
 
 
 @app.route('/api/queued_songs', methods=['GET'])
+@limiter.exempt  # Exempt from rate limiting - read-only endpoint, called frequently
 def get_queued_songs():
     try:
         requests = (db.session.query(Requests)
