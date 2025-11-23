@@ -1279,21 +1279,28 @@ def tenant_bulk_fetch_spotify(tenant_slug):
                     if not image_exists:
                         needs_image = True
                         image_file_missing = True
-                        app.logger.info(f"[Tenant Bulk] Song {song['id']} ({song['title']}) has image '{song['image']}' in DB but file doesn't exist at {image_path}")
+                        # Log first 10 missing files to understand the pattern
+                        if stats.get('images_fetched', 0) + stats.get('skipped', 0) < 10:
+                            app.logger.info(f"[Tenant Bulk] Song {song['id']} ({song['title']}) has image '{song['image']}' in DB but file doesn't exist at {image_path}")
                     else:
-                        app.logger.debug(f"[Tenant Bulk] Song {song['id']} ({song['title']}) has image file at {image_path}")
+                        # Log first 5 existing files to confirm path is correct
+                        if stats.get('skipped', 0) < 5:
+                            app.logger.info(f"[Tenant Bulk] Song {song['id']} ({song['title']}) has image file EXISTS at {image_path}")
                 
                 needs_genre = not song['genre'] or song['genre'] == ''
                 needs_language = not song['language'] or song['language'] in ['', 'unknown']
                 
-                # Log details for every song to understand why they're skipped (only first 10 to avoid spam)
-                if idx < 10:
+                # Log details for first few songs to understand the pattern
+                if idx < 5:
                     app.logger.info(f"[Tenant Bulk] Song {song['id']} ({song['title']}): image='{song['image']}', needs_image={needs_image} (file_missing={image_file_missing}), genre='{song['genre']}', needs_genre={needs_genre}, language='{song['language']}', needs_language={needs_language}")
                 
                 if not (needs_image or needs_genre or needs_language):
                     stats['skipped'] += 1
-                    # Only log first 5 skipped songs to avoid spam
-                    if stats['skipped'] <= 5:
+                    # Log summary every 50 skipped songs
+                    if stats['skipped'] % 50 == 0:
+                        app.logger.info(f"[Tenant Bulk] Skipped {stats['skipped']} songs so far (all have images, genres, and languages)")
+                    # Only log first 3 skipped songs in detail
+                    elif stats['skipped'] <= 3:
                         app.logger.info(f"[Tenant Bulk] SKIPPING song {song['id']} ({song['title']}): already has all data (image='{song['image']}', genre='{song['genre']}', language='{song['language']}')")
                     continue
                 
