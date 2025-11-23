@@ -602,29 +602,38 @@
     </div>
     
     <script>
-        // Load help screenshots only if they exist (prevents 404 errors)
+        // Load help screenshots silently (images will show when they exist)
+        // No error checking to avoid 404 errors in console
         document.addEventListener('DOMContentLoaded', function() {
             const helpScreenshots = document.querySelectorAll('img.help-screenshot[data-src]');
             
             helpScreenshots.forEach(function(img) {
                 const imageUrl = img.getAttribute('data-src');
                 
-                // Use fetch HEAD request to check if image exists without loading it
-                fetch(imageUrl, { method: 'HEAD' })
-                    .then(function(response) {
-                        if (response.ok) {
-                            // Image exists, load it
-                            img.src = imageUrl;
-                            img.style.display = '';
-                        } else {
-                            // Image doesn't exist, keep hidden
-                            img.style.display = 'none';
-                        }
-                    })
-                    .catch(function(error) {
-                        // Error checking (network issue, etc.), keep hidden
+                // Create a test image that loads silently
+                const testImg = new Image();
+                
+                // Only set src and show if image loads successfully
+                testImg.onload = function() {
+                    img.src = imageUrl;
+                    img.style.display = '';
+                };
+                
+                // Silently fail if image doesn't exist (no console error)
+                testImg.onerror = function() {
+                    // Keep image hidden, no error logged
+                    img.style.display = 'none';
+                };
+                
+                // Set a timeout to prevent hanging
+                setTimeout(function() {
+                    if (testImg.complete === false) {
                         img.style.display = 'none';
-                    });
+                    }
+                }, 1000);
+                
+                // Start loading (this will trigger onload or onerror)
+                testImg.src = imageUrl;
             });
         });
     </script>
