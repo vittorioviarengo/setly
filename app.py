@@ -2687,6 +2687,10 @@ def tenant_songs(tenant_slug):
         flash('This tenant account has been deactivated')
         return redirect(url_for('index'))
     
+    # Ensure tenant_id is in session for API endpoints
+    session['tenant_id'] = tenant['id']
+    session['tenant_slug'] = tenant_slug
+    
     conn.close()
     return render_template('songs.html', tenant=tenant)
 

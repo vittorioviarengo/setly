@@ -110,10 +110,17 @@ def dashboard():
     # In the future, we could add a status column to track completed vs pending requests
     open_request_count = total_request_count
     
-    # Get recent tenants
+    # Get recent tenants with song and request counts
     cursor.execute('''
-        SELECT * FROM tenants 
-        ORDER BY created_at DESC 
+        SELECT 
+            t.*,
+            COALESCE(COUNT(DISTINCT s.id), 0) as song_count,
+            COALESCE(COUNT(DISTINCT r.id), 0) as request_count
+        FROM tenants t
+        LEFT JOIN songs s ON s.tenant_id = t.id
+        LEFT JOIN requests r ON r.tenant_id = t.id
+        GROUP BY t.id
+        ORDER BY t.created_at DESC 
         LIMIT 5
     ''')
     recent_tenants = cursor.fetchall()

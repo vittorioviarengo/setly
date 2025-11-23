@@ -60,7 +60,8 @@
                     <thead>
                         <tr>
                             <th>Name</th>
-                            <th>Email</th>
+                            <th>Songs</th>
+                            <th>Total Requests</th>
                             <th>Status</th>
                             <th>Last Login</th>
                             <th>Actions</th>
@@ -91,7 +92,8 @@
                                 {% endif %}
                                 {{ tenant.name }}
                             </td>
-                            <td>{{ tenant.email }}</td>
+                            <td>{{ tenant.song_count if tenant.song_count else 0 }}</td>
+                            <td>{{ tenant.request_count if tenant.request_count else 0 }}</td>
                             <td>
                                 <span class="status-badge {% if tenant.active %}active{% else %}inactive{% endif %}">
                                     {{ 'Active' if tenant.active else 'Inactive' }}
@@ -108,7 +110,7 @@
                         </tr>
                         {% else %}
                         <tr>
-                            <td colspan="5" class="no-data">No tenants found</td>
+                            <td colspan="6" class="no-data">No tenants found</td>
                         </tr>
                         {% endfor %}
                     </tbody>
