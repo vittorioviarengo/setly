@@ -428,3 +428,9 @@ msgstr "Besuchen Sie die Künstler-Website"
 
 msgid "Thank you for attending!"
 msgstr "Danke fürs Kommen!"
+
+msgid "No active gig"
+msgstr "Kein aktives Event"
+
+msgid "No active gig. Please wait for the musician to start the gig."
+msgstr "Kein aktives Event. Bitte warten Sie, bis der Musiker das Konzert beginnt."

@@ -744,3 +744,9 @@ msgstr "songs are missing images. The PDF will show default icons for these song
 
 msgid "Missing Images"
 msgstr "Missing Images"
+
+msgid "No active gig"
+msgstr "No active gig"
+
+msgid "No active gig. Please wait for the musician to start the gig."
+msgstr "No active gig. Please wait for the musician to start the gig."
