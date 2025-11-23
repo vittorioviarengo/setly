@@ -46,10 +46,17 @@ limiter = Limiter(
     strategy="fixed-window"
 )
 
-# Exempt static files from rate limiting
+# Exempt static files and all GET requests from rate limiting
+# GET requests are read-only and should not be rate limited
 @limiter.request_filter
-def exempt_static_files():
-    return request.path.startswith('/static/')
+def exempt_static_files_and_get():
+    # Exempt static files
+    if request.path.startswith('/static/'):
+        return True
+    # Exempt all GET requests (read-only operations)
+    if request.method == 'GET':
+        return True
+    return False
 
 # Rate Limit Error Handler
 @app.errorhandler(429)
