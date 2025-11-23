@@ -619,6 +619,24 @@ msgstr "Le canzoni richieste appaiono nella casella in alto nella pagina. Puoi v
 msgid "Remove Requests"
 msgstr "Rimuovi Richieste"
 
+msgid "Click on the X icon to clear the search"
+msgstr "Clicca sull'icona X per cancellare la ricerca"
+
+msgid "To clear your search and see all songs again, click the X icon next to the search box."
+msgstr "Per cancellare la ricerca e vedere di nuovo tutte le canzoni, clicca sull'icona X accanto alla casella di ricerca."
+
+msgid "Click on the Song to Request"
+msgstr "Clicca sulla Canzone per Richiederla"
+
+msgid "Found a song you like? Simply click anywhere on the song card. The song will be added to your request queue!"
+msgstr "Trovata una canzone che ti piace? Basta cliccare ovunque sulla card della canzone. La canzone verrà aggiunta alla tua coda di richieste!"
+
+msgid "Reset Search"
+msgstr "Reimposta Ricerca"
+
+msgid "To reset your search and start fresh, click the X icon in the search bar to clear all filters."
+msgstr "Per reimpostare la ricerca e ricominciare, clicca sull'icona X nella barra di ricerca per cancellare tutti i filtri."
+
 msgid "Changed your mind? No problem! Click the ✖ button next to any song in your request box to remove it from the queue."
 msgstr "Hai cambiato idea? Nessun problema! Clicca sul pulsante ✖ accanto a qualsiasi canzone nella tua casella delle richieste per rimuoverla dalla coda."
 

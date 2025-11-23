@@ -3378,18 +3378,15 @@ def delete_request(song_id):
         
         if user_name:
             # End user is removing their own request - delete only their request
-            from datetime import datetime
-            played_at = datetime.now().isoformat()
-            
-            # Delete or mark as cancelled only the requests from this specific user
+            # Note: The column name in requests table is 'requester', not 'user_name'
             if tenant_id:
                 cursor.execute(
-                    "DELETE FROM requests WHERE song_id = ? AND tenant_id = ? AND user_name = ? AND status = ?",
+                    "DELETE FROM requests WHERE song_id = ? AND tenant_id = ? AND requester = ? AND status = ?",
                     (song_id, tenant_id, user_name, 'pending')
                 )
             else:
                 cursor.execute(
-                    "DELETE FROM requests WHERE song_id = ? AND user_name = ? AND status = ?",
+                    "DELETE FROM requests WHERE song_id = ? AND requester = ? AND status = ?",
                     (song_id, user_name, 'pending')
                 )
             

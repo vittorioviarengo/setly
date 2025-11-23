@@ -158,6 +158,21 @@
             box-shadow: var(--shadow-md);
         }
         
+        .help-screenshot {
+            width: 100%;
+            max-width: 500px;
+            margin: 15px auto;
+            display: block;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border-color);
+        }
+        
+        .step-content img.help-screenshot {
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
+        
         .feature-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -337,6 +352,11 @@
                 font-size: 0.9rem;
             }
             
+            .help-screenshot {
+                max-width: 100%;
+                margin: 12px auto;
+            }
+            
             .feature-grid {
                 grid-template-columns: 1fr;
                 gap: 15px;
@@ -440,30 +460,70 @@
                     <div class="step-content">
                         <h3>{{ _('Search by Title or Artist') }}</h3>
                         <p>{{ _('Type in the search box to filter songs. You can search by song title, artist name, or even language!') }}</p>
+                        <img src="{{ url_for('static', filename='img/help-screenshots/01-search-by-title-or-artist.png') }}" 
+                             alt="Search by Title or Artist" 
+                             class="help-screenshot"
+                             onerror="this.style.display='none';">
                     </div>
                 </div>
                 
                 <div class="step">
                     <div class="step-number">3</div>
                     <div class="step-content">
-                        <h3>{{ _('Click the Music Icon to Request') }}</h3>
-                        <p>{{ _('Found a song you like? Simply click the music note icon 🎵 next to the song. The song will be added to your request queue!') }}</p>
+                        <h3>{{ _('Click on the X icon to clear the search') }}</h3>
+                        <p>{{ _('To clear your search and see all songs again, click the X icon next to the search box.') }}</p>
+                        <img src="{{ url_for('static', filename='img/help-screenshots/03-clear-search.png') }}" 
+                             alt="Clear Search" 
+                             class="help-screenshot"
+                             onerror="this.style.display='none';">
                     </div>
                 </div>
                 
                 <div class="step">
                     <div class="step-number">4</div>
                     <div class="step-content">
-                        <h3>{{ _('View Your Requests') }}</h3>
-                        <p>{{ _('Your requested songs appear in the box at the top of the page. You can see all the songs you have requested during this session.') }}</p>
+                        <h3>{{ _('Click on the Song to Request') }}</h3>
+                        <p>{{ _('Found a song you like? Simply click anywhere on the song card. The song will be added to your request queue!') }}</p>
+                        <img src="{{ url_for('static', filename='img/help-screenshots/02-click-song-to-request.png') }}" 
+                             alt="Click on Song to Request" 
+                             class="help-screenshot"
+                             onerror="this.style.display='none';">
                     </div>
                 </div>
                 
                 <div class="step">
                     <div class="step-number">5</div>
                     <div class="step-content">
+                        <h3>{{ _('View Your Requests') }}</h3>
+                        <p>{{ _('Your requested songs appear in the box at the top of the page. You can see all the songs you have requested during this session.') }}</p>
+                        <img src="{{ url_for('static', filename='img/help-screenshots/04-view-your-requests.png') }}" 
+                             alt="View Your Requests" 
+                             class="help-screenshot"
+                             onerror="this.style.display='none';">
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">6</div>
+                    <div class="step-content">
                         <h3>{{ _('Remove Requests') }}</h3>
                         <p>{{ _('Changed your mind? No problem! Click the ✖ button next to any song in your request box to remove it from the queue.') }}</p>
+                        <img src="{{ url_for('static', filename='img/help-screenshots/05-remove-requests.png') }}" 
+                             alt="Remove Requests" 
+                             class="help-screenshot"
+                             onerror="this.style.display='none';">
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">7</div>
+                    <div class="step-content">
+                        <h3>{{ _('Reset Search') }}</h3>
+                        <p>{{ _('To reset your search and start fresh, click the X icon in the search bar to clear all filters.') }}</p>
+                        <img src="{{ url_for('static', filename='img/help-screenshots/06-reset-search.png') }}" 
+                             alt="Reset Search" 
+                             class="help-screenshot"
+                             onerror="this.style.display='none';">
                     </div>
                 </div>
                 
