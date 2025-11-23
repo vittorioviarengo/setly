@@ -609,19 +609,22 @@
             helpScreenshots.forEach(function(img) {
                 const imageUrl = img.getAttribute('data-src');
                 
-                // Check if image exists before setting src
-                const testImg = new Image();
-                testImg.onload = function() {
-                    // Image exists, show it
-                    img.src = imageUrl;
-                    img.style.display = '';
-                };
-                testImg.onerror = function() {
-                    // Image doesn't exist, keep it hidden (no 404 error)
-                    img.style.display = 'none';
-                };
-                // Start loading test
-                testImg.src = imageUrl;
+                // Use fetch HEAD request to check if image exists without loading it
+                fetch(imageUrl, { method: 'HEAD' })
+                    .then(function(response) {
+                        if (response.ok) {
+                            // Image exists, load it
+                            img.src = imageUrl;
+                            img.style.display = '';
+                        } else {
+                            // Image doesn't exist, keep hidden
+                            img.style.display = 'none';
+                        }
+                    })
+                    .catch(function(error) {
+                        // Error checking (network issue, etc.), keep hidden
+                        img.style.display = 'none';
+                    });
             });
         });
     </script>
