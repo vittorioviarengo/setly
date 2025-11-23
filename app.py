@@ -766,8 +766,21 @@ def fetch_spotify_image():
         # Get tenant_slug from session if available
         tenant_slug = session.get('tenant_slug')
         
+        # If tenant_slug is not in session, try to get it from the request URL or form
+        if not tenant_slug:
+            # Try to extract from referrer or form data
+            referrer = request.headers.get('Referer', '')
+            if '/vittorio/' in referrer:
+                tenant_slug = 'vittorio'
+            elif '/roberto/' in referrer:
+                tenant_slug = 'roberto'
+            else:
+                # Try to get from form data
+                tenant_slug = request.form.get('tenant_slug')
+        
+        app.logger.info(f"Fetching Spotify data for: {author}, tenant_slug: {tenant_slug}")
+        
         try:
-            app.logger.info(f"Fetching Spotify data for: {author}")
             artist_data = get_spotify_image(author)
         except Exception as spotify_error:
             app.logger.error(f"Error calling get_spotify_image for '{author}': {spotify_error}", exc_info=True)
