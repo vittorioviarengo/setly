@@ -430,7 +430,7 @@ def get_spotify_image(author_name):
             retries=2
         )
         results = sp.search(q=author_name, type="artist", limit=1)
-        items = results.get("artists", {}).get("items", [])
+    items = results.get("artists", {}).get("items", [])
     except Exception as e:
         error_str = str(e).lower()
         
@@ -463,25 +463,25 @@ def get_spotify_image(author_name):
         # Infer language from genre only (removed top_tracks call to avoid timeout)
         # The artist_top_tracks() call was causing timeouts on PythonAnywhere
         language = None
-        genre_lower = genre.lower() if genre else ''
+                    genre_lower = genre.lower() if genre else ''
         
         try:
             # Check genre for language hints (faster, no additional API call)
-            if 'italian' in genre_lower or 'italiano' in genre_lower:
-                language = 'it'
-                app.logger.info(f"Language detected from genre: {language}")
-            elif 'spanish' in genre_lower or 'latin' in genre_lower or 'latino' in genre_lower:
-                language = 'es'
-                app.logger.info(f"Language detected from genre: {language}")
-            elif 'german' in genre_lower or 'deutsch' in genre_lower:
-                language = 'de'
-                app.logger.info(f"Language detected from genre: {language}")
-            elif 'french' in genre_lower or 'chanson' in genre_lower:
-                language = 'fr'
-                app.logger.info(f"Language detected from genre: {language}")
-            else:
+                    if 'italian' in genre_lower or 'italiano' in genre_lower:
+                        language = 'it'
+                        app.logger.info(f"Language detected from genre: {language}")
+                    elif 'spanish' in genre_lower or 'latin' in genre_lower or 'latino' in genre_lower:
+                        language = 'es'
+                        app.logger.info(f"Language detected from genre: {language}")
+                    elif 'german' in genre_lower or 'deutsch' in genre_lower:
+                        language = 'de'
+                        app.logger.info(f"Language detected from genre: {language}")
+                    elif 'french' in genre_lower or 'chanson' in genre_lower:
+                        language = 'fr'
+                        app.logger.info(f"Language detected from genre: {language}")
+                else:
                 # Default to English if no genre hint
-                language = 'en'
+                    language = 'en'
                 app.logger.info(f"No language detected from genre, defaulting to: {language}")
         except Exception as e:
             app.logger.error(f"Error inferring language: {e}")
@@ -1245,9 +1245,9 @@ def tenant_bulk_fetch_spotify(tenant_slug):
         
         # Include error details (limit to first 20 for performance)
         error_details = stats.get('error_details', [])[:20]
-        
-        return jsonify({
-            'success': True,
+    
+    return jsonify({
+        'success': True,
             'message': message,
             'stats': stats,
             'total_in_db': total_in_db,
@@ -3392,20 +3392,20 @@ def delete_request(song_id):
         if user_name:
             # End user is removing their own request - delete only their request
             # Note: The column name in requests table is 'requester', not 'user_name'
-            if tenant_id:
+        if tenant_id:
                 cursor.execute(
                     "DELETE FROM requests WHERE song_id = ? AND tenant_id = ? AND requester = ? AND status = ?",
                     (song_id, tenant_id, user_name, 'pending')
                 )
-            else:
+        else:
                 cursor.execute(
                     "DELETE FROM requests WHERE song_id = ? AND requester = ? AND status = ?",
                     (song_id, user_name, 'pending')
                 )
-            
-            conn.commit()
-            conn.close()
-            return jsonify({"message": "Song removed from queue successfully"})
+        
+        conn.commit()
+        conn.close()
+        return jsonify({"message": "Song removed from queue successfully"})
         else:
             # Tenant admin is marking song as played - mark all pending requests as fulfilled
             from datetime import datetime
@@ -3652,9 +3652,9 @@ def delete_song(id):
     
     try:
         # First, delete any associated requests for this song
-        if tenant_id:
+    if tenant_id:
             cursor.execute('DELETE FROM requests WHERE song_id = ? AND tenant_id = ?', (id, tenant_id))
-        else:
+    else:
             cursor.execute('DELETE FROM requests WHERE song_id = ?', (id,))
         
         requests_deleted = cursor.rowcount
@@ -3664,8 +3664,8 @@ def delete_song(id):
             cursor.execute('DELETE FROM songs WHERE id = ? AND tenant_id = ?', (id, tenant_id))
         else:
             cursor.execute('DELETE FROM songs WHERE id = ?', (id,))
-        
-        conn.commit()
+    
+    conn.commit()
         
         message = f'Song deleted successfully'
         if requests_deleted > 0:
@@ -3844,7 +3844,7 @@ def tenant_upload_csv(tenant_slug):
                 # Try to detect format by column count
                 if len(first_row) >= 6:
                     csv_format = 'old'  # Probably has Image column
-                else:
+            else:
                     csv_format = 'new'
         
         # Add remaining rows
@@ -3878,9 +3878,9 @@ def tenant_upload_csv(tenant_slug):
                 elif csv_format == 'old':
                     # OLD format: title,author,language,image,popularity,genre,playlist
                     image = row[3].strip() if len(row) > 3 else ''
-                    popularity = int(row[4]) if len(row) > 4 and row[4].strip() and row[4].strip().isdigit() else 0
-                    genre = row[5].strip() if len(row) > 5 else ''
-                    playlist = row[6].strip() if len(row) > 6 else ''
+                popularity = int(row[4]) if len(row) > 4 and row[4].strip() and row[4].strip().isdigit() else 0
+                genre = row[5].strip() if len(row) > 5 else ''
+                playlist = row[6].strip() if len(row) > 6 else ''
                 else:
                     # NEW format: title,author,language,genre,playlist
                     genre = row[3].strip() if len(row) > 3 else ''
@@ -3922,7 +3922,7 @@ def tenant_upload_csv(tenant_slug):
         elif songs_added > 0 and songs_skipped > 0:
             # Partial success
             message = f"CSV upload complete! Added {songs_added} song(s), skipped {songs_skipped} row(s)."
-            if errors:
+        if errors:
                 error_preview = '; '.join(errors[:3])  # Show first 3 errors
                 if len(errors) > 3:
                     message += f"<br><br><strong>Sample errors:</strong> {error_preview}... and {len(errors) - 3} more."
@@ -3936,7 +3936,7 @@ def tenant_upload_csv(tenant_slug):
             message = f"❌ CSV upload failed. No songs were added."
             if errors:
                 error_preview = '; '.join(errors[:5])
-                if len(errors) > 5:
+            if len(errors) > 5:
                     message += f"<br><br><strong>Errors:</strong> {error_preview}... and {len(errors) - 5} more."
                 else:
                     message += f"<br><br><strong>Errors:</strong> {error_preview}"
@@ -4143,13 +4143,13 @@ def get_all_songs():
     
     # SECURITY: Always filter by tenant_id (already verified above)
     # This ensures data isolation between tenants
-    query = f'''
-        SELECT * FROM songs
-        WHERE (title LIKE ? OR author LIKE ? OR language LIKE ?) AND tenant_id = ?
-        ORDER BY {sort_by} {sort_order}
-        LIMIT {per_page} OFFSET {offset}
-    '''
-    cursor.execute(query, (f'%{search_query}%', f'%{search_query}%', f'%{search_query}%', tenant_id))
+        query = f'''
+            SELECT * FROM songs
+            WHERE (title LIKE ? OR author LIKE ? OR language LIKE ?) AND tenant_id = ?
+            ORDER BY {sort_by} {sort_order}
+            LIMIT {per_page} OFFSET {offset}
+        '''
+        cursor.execute(query, (f'%{search_query}%', f'%{search_query}%', f'%{search_query}%', tenant_id))
     
     songs = cursor.fetchall()
     conn.close()
@@ -4187,11 +4187,11 @@ def update_song(song_id):
         cursor = conn.cursor()
         
         # SECURITY: Always filter by tenant_id to prevent cross-tenant modification
-        cursor.execute("""
-            UPDATE songs
-            SET title = ?, author = ?, language = ?, popularity = ?, image = ?, genre = ?, playlist = ?
-            WHERE id = ? AND tenant_id = ?
-        """, (title, author, language, popularity, image, genre, playlist, song_id, tenant_id))
+            cursor.execute("""
+                UPDATE songs
+                SET title = ?, author = ?, language = ?, popularity = ?, image = ?, genre = ?, playlist = ?
+                WHERE id = ? AND tenant_id = ?
+            """, (title, author, language, popularity, image, genre, playlist, song_id, tenant_id))
         
         conn.commit()
         conn.close()
