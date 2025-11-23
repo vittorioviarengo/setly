@@ -3923,11 +3923,11 @@ def tenant_upload_csv(tenant_slug):
             # Partial success
             message = f"CSV upload complete! Added {songs_added} song(s), skipped {songs_skipped} row(s)."
         if errors:
-                error_preview = '; '.join(errors[:3])  # Show first 3 errors
-                if len(errors) > 3:
-                    message += f"<br><br><strong>Sample errors:</strong> {error_preview}... and {len(errors) - 3} more."
-                else:
-                    message += f"<br><br><strong>Errors:</strong> {error_preview}"
+            error_preview = '; '.join(errors[:3])  # Show first 3 errors
+            if len(errors) > 3:
+                message += f"<br><br><strong>Sample errors:</strong> {error_preview}... and {len(errors) - 3} more."
+            else:
+                message += f"<br><br><strong>Errors:</strong> {error_preview}"
             if is_ajax:
                 return jsonify({'success': True, 'message': message, 'songs_added': songs_added, 'songs_skipped': songs_skipped, 'errors': errors})
             flash(message, 'warning')
@@ -3936,7 +3936,7 @@ def tenant_upload_csv(tenant_slug):
             message = f"❌ CSV upload failed. No songs were added."
             if errors:
                 error_preview = '; '.join(errors[:5])
-            if len(errors) > 5:
+                if len(errors) > 5:
                     message += f"<br><br><strong>Errors:</strong> {error_preview}... and {len(errors) - 5} more."
                 else:
                     message += f"<br><br><strong>Errors:</strong> {error_preview}"
