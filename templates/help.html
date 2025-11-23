@@ -461,10 +461,12 @@
                     <div class="step-content">
                         <h3>{{ _('Search by Title or Artist') }}</h3>
                         <p>{{ _('Type in the search box to filter songs. You can search by song title, artist name, or even language!') }}</p>
-                        <img data-src="{{ url_for('static', filename='img/help-screenshots/' ~ current_lang ~ '/01-search-by-title-or-artist.png') }}" 
+                        <!-- Screenshot will be loaded when image file is available -->
+                        <img src="{{ url_for('static', filename='img/help-screenshots/' ~ current_lang ~ '/01-search-by-title-or-artist.png') }}" 
                              alt="Search by Title or Artist" 
                              class="help-screenshot"
-                             style="display: none;">
+                             style="display: none;"
+                             onerror="this.style.display='none';">
                     </div>
                 </div>
                 
@@ -473,10 +475,12 @@
                     <div class="step-content">
                         <h3>{{ _('Click on the X icon to clear the search') }}</h3>
                         <p>{{ _('To clear your search and see all songs again, click the X icon next to the search box.') }}</p>
-                        <img data-src="{{ url_for('static', filename='img/help-screenshots/' ~ current_lang ~ '/03-clear-search.png') }}" 
+                        <!-- Screenshot will be loaded when image file is available -->
+                        <img src="{{ url_for('static', filename='img/help-screenshots/' ~ current_lang ~ '/03-clear-search.png') }}" 
                              alt="Clear Search" 
                              class="help-screenshot"
-                             style="display: none;">
+                             style="display: none;"
+                             onerror="this.style.display='none';">
                     </div>
                 </div>
                 
@@ -485,10 +489,12 @@
                     <div class="step-content">
                         <h3>{{ _('Click on the Song to Request') }}</h3>
                         <p>{{ _('Found a song you like? Simply click anywhere on the song card. The song will be added to your request queue!') }}</p>
-                        <img data-src="{{ url_for('static', filename='img/help-screenshots/' ~ current_lang ~ '/02-click-song-to-request.png') }}" 
+                        <!-- Screenshot will be loaded when image file is available -->
+                        <img src="{{ url_for('static', filename='img/help-screenshots/' ~ current_lang ~ '/02-click-song-to-request.png') }}" 
                              alt="Click on Song to Request" 
                              class="help-screenshot"
-                             style="display: none;">
+                             style="display: none;"
+                             onerror="this.style.display='none';">
                     </div>
                 </div>
                 
@@ -497,10 +503,12 @@
                     <div class="step-content">
                         <h3>{{ _('View Your Requests') }}</h3>
                         <p>{{ _('Your requested songs appear in the box at the top of the page. You can see all the songs you have requested during this session.') }}</p>
-                        <img data-src="{{ url_for('static', filename='img/help-screenshots/' ~ current_lang ~ '/04-view-your-requests.png') }}" 
+                        <!-- Screenshot will be loaded when image file is available -->
+                        <img src="{{ url_for('static', filename='img/help-screenshots/' ~ current_lang ~ '/04-view-your-requests.png') }}" 
                              alt="View Your Requests" 
                              class="help-screenshot"
-                             style="display: none;">
+                             style="display: none;"
+                             onerror="this.style.display='none';">
                     </div>
                 </div>
                 
@@ -509,10 +517,12 @@
                     <div class="step-content">
                         <h3>{{ _('Remove Requests') }}</h3>
                         <p>{{ _('Changed your mind? No problem! Click the ✖ button next to any song in your request box to remove it from the queue.') }}</p>
-                        <img data-src="{{ url_for('static', filename='img/help-screenshots/' ~ current_lang ~ '/05-remove-requests.png') }}" 
+                        <!-- Screenshot will be loaded when image file is available -->
+                        <img src="{{ url_for('static', filename='img/help-screenshots/' ~ current_lang ~ '/05-remove-requests.png') }}" 
                              alt="Remove Requests" 
                              class="help-screenshot"
-                             style="display: none;">
+                             style="display: none;"
+                             onerror="this.style.display='none';">
                     </div>
                 </div>
                 
@@ -521,10 +531,12 @@
                     <div class="step-content">
                         <h3>{{ _('Reset Search') }}</h3>
                         <p>{{ _('To reset your search and start fresh, click the X icon in the search bar to clear all filters.') }}</p>
-                        <img data-src="{{ url_for('static', filename='img/help-screenshots/' ~ current_lang ~ '/06-reset-search.png') }}" 
+                        <!-- Screenshot will be loaded when image file is available -->
+                        <img src="{{ url_for('static', filename='img/help-screenshots/' ~ current_lang ~ '/06-reset-search.png') }}" 
                              alt="Reset Search" 
                              class="help-screenshot"
-                             style="display: none;">
+                             style="display: none;"
+                             onerror="this.style.display='none';">
                     </div>
                 </div>
                 
@@ -602,38 +614,21 @@
     </div>
     
     <script>
-        // Load help screenshots silently (images will show when they exist)
-        // No error checking to avoid 404 errors in console
+        // Show help screenshots if they load successfully
         document.addEventListener('DOMContentLoaded', function() {
-            const helpScreenshots = document.querySelectorAll('img.help-screenshot[data-src]');
+            const helpScreenshots = document.querySelectorAll('img.help-screenshot');
             
             helpScreenshots.forEach(function(img) {
-                const imageUrl = img.getAttribute('data-src');
-                
-                // Create a test image that loads silently
-                const testImg = new Image();
-                
-                // Only set src and show if image loads successfully
-                testImg.onload = function() {
-                    img.src = imageUrl;
-                    img.style.display = '';
+                // Only show image if it loads successfully
+                img.onload = function() {
+                    this.style.display = '';
                 };
                 
-                // Silently fail if image doesn't exist (no console error)
-                testImg.onerror = function() {
-                    // Keep image hidden, no error logged
-                    img.style.display = 'none';
+                // Keep hidden if image fails to load
+                // Note: Browser will still log 404 in console, but image stays hidden
+                img.onerror = function() {
+                    this.style.display = 'none';
                 };
-                
-                // Set a timeout to prevent hanging
-                setTimeout(function() {
-                    if (testImg.complete === false) {
-                        img.style.display = 'none';
-                    }
-                }, 1000);
-                
-                // Start loading (this will trigger onload or onerror)
-                testImg.src = imageUrl;
             });
         });
     </script>
