@@ -1251,16 +1251,24 @@ def tenant_bulk_fetch_spotify(tenant_slug):
                 if not needs_image and song['image']:
                     image_path = os.path.join(app_dir, 'static', 'tenants', tenant_slug, 'author_images', song['image'])
                     image_exists = os.path.exists(image_path)
+                    
+                    # ALWAYS log first 10 checks to see what's happening
+                    if idx < 10:
+                        app.logger.info(f"[Tenant Bulk] Checking file for song {song['id']} ({song['title']}): image='{song['image']}', path='{image_path}', exists={image_exists}")
+                    
                     if not image_exists:
                         needs_image = True
                         image_file_missing = True
-                        # Log first 10 missing files to understand the pattern
-                        if stats.get('images_fetched', 0) + stats.get('skipped', 0) < 10:
-                            app.logger.info(f"[Tenant Bulk] Song {song['id']} ({song['title']}) has image '{song['image']}' in DB but file doesn't exist at {image_path}")
+                        # Count how many files are missing
+                        if 'missing_files_count' not in stats:
+                            stats['missing_files_count'] = 0
+                        stats['missing_files_count'] += 1
+                        # Log all missing files (they're the ones we need to process!)
+                        app.logger.info(f"[Tenant Bulk] ✅ FILE MISSING - Song {song['id']} ({song['title']}) has image '{song['image']}' in DB but file doesn't exist at {image_path}")
                     else:
-                        # Log first 5 existing files to confirm path is correct
-                        if stats.get('skipped', 0) < 5:
-                            app.logger.info(f"[Tenant Bulk] Song {song['id']} ({song['title']}) has image file EXISTS at {image_path}")
+                        # Log first 3 existing files to confirm path is correct
+                        if idx < 3:
+                            app.logger.info(f"[Tenant Bulk] ⚠️ FILE EXISTS - Song {song['id']} ({song['title']}) has image file at {image_path}")
                 
                 needs_genre = not song['genre'] or song['genre'] == ''
                 needs_language = not song['language'] or song['language'] in ['', 'unknown']
@@ -1381,10 +1389,11 @@ def tenant_bulk_fetch_spotify(tenant_slug):
         conn.close()
         
         # Log final summary
+        missing_files = stats.get('missing_files_count', 0)
         app.logger.info(f"[Tenant Bulk] Tenant {tenant_slug} batch complete: " +
                        f"Total={stats['total']}, Images={stats['images_fetched']}, " +
                        f"Genres={stats['genres_added']}, Languages={stats['languages_added']}, " +
-                       f"Skipped={stats['skipped']}, Errors={stats['errors']}")
+                       f"Skipped={stats['skipped']}, Errors={stats['errors']}, MissingFiles={missing_files}")
         
         # Build message with info about remaining songs
         message = f"Processed {stats['total']} songs: {stats['images_fetched']} images, {stats['genres_added']} genres, {stats['languages_added']} languages"
