@@ -1107,19 +1107,31 @@ def tenant_bulk_fetch_spotify(tenant_slug):
     
     # Get max batch size from system settings (default 20 for safety, can be increased)
     # User can set spotify_batch_size in superadmin settings
-    # PythonAnywhere needs smaller batches (5-10), local can handle 20-500
+    # PythonAnywhere needs smaller batches due to 30-second timeout limit
     max_batch_size = get_system_setting('spotify_batch_size', default=20, value_type=int)
     request_data = request.json if request.json else {}
     requested_batch_size = int(request_data.get('batch_size', max_batch_size))
     
+    # Detect PythonAnywhere and limit batch size to prevent timeouts
+    # PythonAnywhere has strict 30-second timeout, so we cap at 50 to be safe
+    # (with multiplier of 2x, that's 100 songs max, which should complete in ~25-28 seconds)
+    is_pythonanywhere = (
+        'pythonanywhere.com' in request.host or 
+        os.environ.get('PYTHONANYWHERE', '').lower() == 'true' or
+        os.path.exists('/home/vittorioviarengo')  # PythonAnywhere user directory
+    )
+    
+    if is_pythonanywhere:
+        # Cap at 50 for PythonAnywhere to avoid timeouts (30s server limit)
+        # With multiplier of 2x, that's 100 songs max per batch
+        max_batch_size = min(max_batch_size, 50)
+        app.logger.info(f"[Tenant Bulk] PythonAnywhere detected - capping batch size at {max_batch_size} (requested: {requested_batch_size}, original max: {get_system_setting('spotify_batch_size', default=20, value_type=int)})")
+    
     # Use the batch size from settings directly (user can configure it)
-    # PythonAnywhere has 30-second timeout, but user can set lower batch size if needed
     batch_size = min(requested_batch_size, max_batch_size)
     
     # Log the batch size being used
-    app.logger.info(f"[Tenant Bulk] Batch size: {batch_size} (requested: {requested_batch_size}, max from settings: {max_batch_size})")
-    
-    app.logger.info(f"[Tenant Bulk] Final batch size: {batch_size} (requested: {requested_batch_size}, max: {max_batch_size}, from settings: {get_system_setting('spotify_batch_size', default=20, value_type=int)})")
+    app.logger.info(f"[Tenant Bulk] Final batch size: {batch_size} (requested: {requested_batch_size}, max: {max_batch_size})")
     
     try:
         # First, count total songs that might need data

@@ -691,12 +691,21 @@
             fileInput.click();
         }
 
+        // Track active fetches to prevent multiple simultaneous requests
+        const activeFetches = new Set();
+        
         function fetchSpotifyImageForSong(id, button) {
             const row = button.closest('tr');
             const author = row.cells[1].innerText.trim(); // Get the author name from the Author column
 
             if (!author) {
                 showAlert({{ _('Please enter the author name to fetch the image from Spotify') | tojson }}, 'warning');
+                return;
+            }
+
+            // Prevent multiple simultaneous requests for the same song
+            if (activeFetches.has(id)) {
+                showAlert({{ _('Already fetching image for this song. Please wait...') | tojson }}, 'info');
                 return;
             }
 
@@ -707,29 +716,85 @@
             const originalText = button.innerHTML;
             button.disabled = true;
             button.innerHTML = '⏳';
+            
+            // Mark this fetch as active
+            activeFetches.add(id);
 
-            // Add 15 second timeout
+            // Add timeout - shorter on PythonAnywhere (which has 30s limit)
+            const isPythonAnywhere = window.location.hostname.includes('pythonanywhere.com');
+            const timeoutMs = isPythonAnywhere ? 25000 : 30000; // 25s on PA, 30s elsewhere
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 15000);
+            const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
-            fetch('/fetch_spotify_image', {
-                method: 'POST',
-                body: formData,
-                signal: controller.signal
-            })
-                .then(response => {
-                    clearTimeout(timeoutId);
-                    if (!response.ok) {
-                        return response.json().then(data => {
-                            throw new Error(data.message || `HTTP error ${response.status}`);
-                        }).catch(() => {
-                            throw new Error(`HTTP error ${response.status}`);
-                        });
+            // Retry function with exponential backoff
+            const fetchWithRetry = async (retries = 2, delay = 1000) => {
+                for (let i = 0; i <= retries; i++) {
+                    try {
+                        let response;
+                        try {
+                            response = await fetch('/fetch_spotify_image', {
+                                method: 'POST',
+                                body: formData,
+                                signal: controller.signal
+                            });
+                        } catch (fetchError) {
+                            // Network error - server not reachable
+                            // Check if it's a connection error (ERR_ADDRESS_INVALID, etc.)
+                            const isConnectionError = fetchError.message.includes('Failed to fetch') || 
+                                                   fetchError.message.includes('ERR_ADDRESS_INVALID') ||
+                                                   fetchError.message.includes('NetworkError');
+                            
+                            if (isConnectionError && i < retries) {
+                                // Only retry once for connection errors, with a longer delay
+                                if (i === 0) {
+                                    const waitTime = delay * 3; // 3 seconds for first retry
+                                    button.innerHTML = `⏳ Retrying in ${Math.ceil(waitTime/1000)}s...`;
+                                    await new Promise(resolve => setTimeout(resolve, waitTime));
+                                    continue;
+                                }
+                            }
+                            throw new Error('Server not reachable. Please check your connection and try again.');
+                        }
+                        
+                        clearTimeout(timeoutId);
+                        
+                        if (!response.ok) {
+                            const errorData = await response.json().catch(() => ({}));
+                            // If rate limited, wait longer before retry
+                            if (response.status === 429 || response.status === 408) {
+                                if (i < retries) {
+                                    const waitTime = delay * Math.pow(2, i) * 2; // Exponential backoff with extra delay for rate limits
+                                    button.innerHTML = `⏳ Retrying in ${Math.ceil(waitTime/1000)}s...`;
+                                    await new Promise(resolve => setTimeout(resolve, waitTime));
+                                    continue;
+                                }
+                            }
+                            throw new Error(errorData.message || `HTTP error ${response.status}`);
+                        }
+                        
+                        return await response.json();
+                    } catch (error) {
+                        if (error.name === 'AbortError') {
+                            throw error; // Don't retry on timeout
+                        }
+                        // If it's the last retry, throw the error
+                        if (i >= retries) {
+                            throw error;
+                        }
+                        // Don't retry on "not found" errors
+                        if (error.message && error.message.includes('not found')) {
+                            throw error;
+                        }
+                        // Retry on other errors
+                        const waitTime = delay * Math.pow(2, i);
+                        button.innerHTML = `⏳ Retrying in ${Math.ceil(waitTime/1000)}s...`;
+                        await new Promise(resolve => setTimeout(resolve, waitTime));
                     }
-                    return response.json();
-                })
+                }
+            };
+
+            fetchWithRetry()
                 .then(data => {
-                    console.log('Spotify response:', data);
                     if (data.message === 'Image fetched successfully') {
                         const imgElement = row.querySelector('img');
                         if (data.image) {
@@ -743,35 +808,21 @@
 
                         // Update language if provided
                         if (data.language) {
-                            console.log('Updating language to:', data.language);
                             const languageDropdown = row.querySelector('.language-dropdown');
                             if (languageDropdown) {
-                                console.log('Current language:', languageDropdown.value);
                                 languageDropdown.value = data.language;
-                                console.log('New language:', languageDropdown.value);
                                 updated = true;
-                            } else {
-                                console.log('Language dropdown not found');
                             }
-                        } else {
-                            console.log('No language in response');
                         }
 
                         // Update genre if provided
                         if (data.genre) {
-                            console.log('Updating genre to:', data.genre);
                             // Genre is now an input within cells[2] (the colspan cell)
                             const genreInput = row.cells[2].querySelector('input[type="text"]');
                             if (genreInput) {
-                                console.log('Current genre:', genreInput.value);
                                 genreInput.value = data.genre;
-                                console.log('New genre:', genreInput.value);
                                 updated = true;
-                            } else {
-                                console.log('Genre input not found');
                             }
-                        } else {
-                            console.log('No genre in response');
                         }
 
                         // Mark the row as changed if any field was updated
@@ -920,29 +971,24 @@
                     return response.json();
                 })
                 .then(data => {
-                    console.log('Spotify fetch response:', data);
                     if (data.message === 'Image fetched successfully') {
                         const imagePreview = document.getElementById('imagePreview');
                         imagePreview.src = getAuthorImageUrl(data.image);
                         
                         // Also populate genre if available
                         if (data.genre) {
-                            console.log('Setting genre to:', data.genre);
                             const genreInput = document.getElementById('newSongGenre');
-                            genreInput.value = data.genre;
-                            console.log('Genre input value is now:', genreInput.value);
-                        } else {
-                            console.log('No genre in response data');
+                            if (genreInput) {
+                                genreInput.value = data.genre;
+                            }
                         }
                         
                         // Also populate language if available
                         if (data.language) {
-                            console.log('Setting language to:', data.language);
                             const languageSelect = document.getElementById('languageSelect');
-                            languageSelect.value = data.language;
-                            console.log('Language select value is now:', languageSelect.value);
-                        } else {
-                            console.log('No language in response data');
+                            if (languageSelect) {
+                                languageSelect.value = data.language;
+                            }
                         }
                         
                         // Success is visible from the updated image preview and fields - no alert needed
@@ -961,9 +1007,11 @@
                     }
                 })
                 .finally(() => {
-                    if (fetchButton && originalText) {
-                        fetchButton.disabled = false;
-                        fetchButton.innerHTML = originalText;
+                    // Remove from active fetches
+                    activeFetches.delete(id);
+                    if (button && originalText) {
+                        button.disabled = false;
+                        button.innerHTML = originalText;
                     }
                 });
         }
@@ -1371,7 +1419,7 @@
                     // DON'T close the dialog - UPDATE it instead!
                     const existingDialog = document.querySelector('.app-dialog');
                     
-                    if (existingDialog && data.success) {
+                    if (existingDialog && data && data.success) {
                         // Hide ALL existing buttons and footer immediately
                         existingDialog.querySelectorAll('button, .dialog-button, .dialog-footer, .dialog-actions').forEach(el => {
                             el.style.display = 'none';
@@ -1518,13 +1566,14 @@
                         }
                     }, 50);
                     
-                } else if (!existingDialog || !data.success) {
+                } else if (!existingDialog || !data || !data.success) {
                     // Fallback: close everything and show new dialog
                     document.querySelectorAll('.dialog-overlay').forEach(el => el.remove());
                     document.body.style.overflow = '';
                     document.body.style.position = '';
                     
-                    showAlert('❌ Error: ' + (data.message || 'Failed to fetch from Spotify'), 'error');
+                    const errorMsg = data && data.message ? data.message : 'Failed to fetch from Spotify';
+                    showAlert('❌ Error: ' + errorMsg, 'error');
                 }
             }, 1000); // 1 second delay to show loading animation
             })
