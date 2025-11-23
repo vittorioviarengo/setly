@@ -5253,8 +5253,30 @@ def ensure_gigs_table():
         conn.close()
 
 # Ensure gigs table exists at startup
-with app.app_context():
-    ensure_gigs_table()
+# This is called when the module is imported, which happens on PythonAnywhere
+_gigs_table_ensured = False
+
+def ensure_gigs_table_once():
+    """Ensure gigs table exists, but only once per app instance."""
+    global _gigs_table_ensured
+    if _gigs_table_ensured:
+        return
+    
+    try:
+        with app.app_context():
+            ensure_gigs_table()
+            _gigs_table_ensured = True
+    except Exception as e:
+        app.logger.error(f"Error ensuring gigs table at startup: {e}")
+
+# Call immediately when module loads
+ensure_gigs_table_once()
+
+# Also ensure on first request (fallback for PythonAnywhere)
+@app.before_request
+def ensure_gigs_table_before_request():
+    """Ensure gigs table exists before each request (only runs once due to flag)."""
+    ensure_gigs_table_once()
 
 if __name__ == '__main__':
     #app.run(debug=True)

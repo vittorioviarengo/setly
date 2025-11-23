@@ -176,7 +176,7 @@ body {
 
 .action-item {
     display: grid !important;
-    grid-template-columns: auto 1fr auto;
+    grid-template-columns: 180px 1fr auto;
     gap: 1rem;
     align-items: center;
     padding: 10px 12px;
@@ -192,8 +192,11 @@ body {
     color: #495057;
     font-size: 14px;
     white-space: nowrap;
-    text-align: left;
-    justify-self: start;
+    text-align: right;
+    justify-self: end;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .action-item input,
