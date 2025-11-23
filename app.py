@@ -36,10 +36,12 @@ app.config['SESSION_COOKIE_SECURE'] = os.environ.get('FLASK_ENV') == 'production
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Allow cookies when navigating from external sites
 
 # Configure Rate Limiting
+# Note: Read-only GET endpoints are exempted individually
+# Default limits apply only to POST/PUT/DELETE endpoints that modify data
 limiter = Limiter(
     app=app,
     key_func=get_remote_address,
-    default_limits=["2000 per day", "500 per hour"],  # Increased limits for normal app usage
+    default_limits=["10000 per day", "2000 per hour"],  # Very high limits - most GET endpoints are exempted
     storage_uri="memory://",
     strategy="fixed-window"
 )
