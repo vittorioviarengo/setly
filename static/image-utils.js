@@ -136,29 +136,79 @@ function setupGlobalImageErrorHandler() {
     // Default image path
     const defaultImagePath = '/static/img/music-music-note-2.svg';
     
-    // Use event delegation to catch all image errors
-    document.addEventListener('error', function(e) {
-        const img = e.target;
+    // Use window error handler to catch image load errors
+    window.addEventListener('error', function(e) {
+        const target = e.target;
         // Check if this is an image element
-        if (img && img.tagName === 'IMG') {
+        if (target && target.tagName === 'IMG') {
             // Check if this is an author/artist image (has author_images in path or author-image class)
-            const src = img.src || '';
-            const isAuthorImage = src.includes('author_images') || 
+            const src = target.src || '';
+            const isAuthorImage = (src.includes('author_images') || 
                                   src.includes('/tenants/') ||
-                                  img.classList.contains('author-image');
+                                  target.classList.contains('author-image')) &&
+                                 !src.includes('music-music-note-2.svg'); // Not already the default
             
             if (isAuthorImage) {
                 // Check if we haven't already tried to set the fallback
-                if (img.dataset.fallbackAttempted !== 'true') {
-                    img.dataset.fallbackAttempted = 'true';
-                    // Only set fallback if current src is not already the default
-                    if (!src.includes('music-music-note-2.svg')) {
-                        img.src = defaultImagePath;
-                    }
+                if (target.dataset.fallbackAttempted !== 'true') {
+                    target.dataset.fallbackAttempted = 'true';
+                    target.src = defaultImagePath;
+                    e.preventDefault(); // Prevent default error handling
                 }
             }
         }
     }, true); // Use capture phase to catch errors early
+    
+    // Also use MutationObserver to add error handlers to dynamically added images
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            mutation.addedNodes.forEach(function(node) {
+                // Check if the added node is an img element
+                if (node.tagName === 'IMG') {
+                    addErrorHandlerToImage(node);
+                }
+                // Check for img elements inside the added node
+                if (node.querySelectorAll) {
+                    const images = node.querySelectorAll('img');
+                    images.forEach(addErrorHandlerToImage);
+                }
+            });
+        });
+    });
+    
+    // Start observing
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true
+    });
+    
+    // Helper function to add error handler to an image
+    function addErrorHandlerToImage(img) {
+        // Skip if already has handler or is not an author image
+        if (img.dataset.errorHandlerAdded === 'true') {
+            return;
+        }
+        
+        const src = img.src || '';
+        const isAuthorImage = src.includes('author_images') || 
+                             src.includes('/tenants/') ||
+                             img.classList.contains('author-image');
+        
+        if (isAuthorImage) {
+            img.dataset.errorHandlerAdded = 'true';
+            // Add onerror handler
+            img.addEventListener('error', function() {
+                if (this.dataset.fallbackAttempted !== 'true' && 
+                    !this.src.includes('music-music-note-2.svg')) {
+                    this.dataset.fallbackAttempted = 'true';
+                    this.src = defaultImagePath;
+                }
+            });
+        }
+    }
+    
+    // Add handlers to existing images
+    document.querySelectorAll('img').forEach(addErrorHandlerToImage);
 }
 
 // Set up the handler when the DOM is ready
