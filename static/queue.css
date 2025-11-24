@@ -202,7 +202,8 @@ body {
 
 .admin-actions-container {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    flex-wrap: wrap;
     gap: 0.5rem;
     margin: 0 0 0.75rem 0;
     padding: 0.75rem;
@@ -210,6 +211,12 @@ body {
     border: 1px solid #ddd;
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+/* Buttons inside admin-actions-container should be side by side on desktop */
+.admin-actions-container > .button {
+    flex: 0 1 auto;
+    min-width: 150px;
 }
 
 .action-item {
@@ -363,6 +370,15 @@ body {
         padding: 0 0.5rem;
         max-width: 368px;
         margin: 0 auto;
+    }
+    
+    .admin-actions-container {
+        flex-direction: column;
+    }
+    
+    .admin-actions-container > .button {
+        width: 100%;
+        min-width: 100%;
     }
     
     #songCountContainer {
