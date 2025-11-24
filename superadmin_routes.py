@@ -1662,6 +1662,7 @@ def bulk_spotify_process():
         
         # First, get songs that match the obvious patterns OR have missing genre/language
         # This query finds songs with obvious missing data
+        # Use ORDER BY RANDOM() to avoid selecting the same songs repeatedly
         cursor.execute('''
             SELECT id, title, author, image, genre, language 
             FROM songs 
@@ -1676,6 +1677,7 @@ def bulk_spotify_process():
                 genre IS NULL OR genre = '' OR 
                 language IS NULL OR language = '' OR language = 'unknown'
             )
+            ORDER BY RANDOM()
             LIMIT ?
         ''', (tenant_id, extended_batch))
         
@@ -1689,6 +1691,7 @@ def bulk_spotify_process():
             
             # Get additional songs that have missing genre/language (even if they have image values)
             # We'll check if the image file exists in the loop
+            # Use ORDER BY RANDOM() to avoid selecting the same songs repeatedly
             if song_ids:
                 placeholders = ','.join(['?'] * len(song_ids))
                 cursor.execute(f'''
@@ -1697,6 +1700,7 @@ def bulk_spotify_process():
                     WHERE tenant_id = ?
                     AND id NOT IN ({placeholders})
                     AND (genre IS NULL OR genre = '' OR language IS NULL OR language = '' OR language = 'unknown')
+                    ORDER BY RANDOM()
                     LIMIT ?
                 ''', [tenant_id] + song_ids + [remaining])
             else:
@@ -1705,6 +1709,7 @@ def bulk_spotify_process():
                     FROM songs 
                     WHERE tenant_id = ?
                     AND (genre IS NULL OR genre = '' OR language IS NULL OR language = '' OR language = 'unknown')
+                    ORDER BY RANDOM()
                     LIMIT ?
                 ''', (tenant_id, remaining))
             
