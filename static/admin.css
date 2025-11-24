@@ -712,6 +712,19 @@ select {
         width: 100%;
     }
     
+    .announcement-item {
+        grid-template-columns: 1fr;
+    }
+    
+    .announcement-buttons {
+        justify-content: stretch;
+    }
+    
+    .announcement-buttons .button {
+        width: 100%;
+        flex: 1;
+    }
+    
     .wizard-banner {
         flex-direction: column;
         text-align: center;
