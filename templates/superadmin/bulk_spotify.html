@@ -259,6 +259,7 @@
         let isProcessing = false;
         let shouldStop = false;
         let tenantsData = [];
+        let globalAbortController = null; // Global AbortController to cancel all fetches
         let globalStats = {
             processed: 0,
             imagesFetched: 0,
@@ -384,10 +385,13 @@
             
             isProcessing = true;
             shouldStop = false;
+            globalAbortController = new AbortController(); // Create new AbortController for this run
             globalStats = { processed: 0, imagesFetched: 0, genresAdded: 0, languagesAdded: 0 };
             
             document.getElementById('startBtn').style.display = 'none';
             document.getElementById('stopBtn').style.display = 'inline-block';
+            document.getElementById('stopBtn').disabled = false; // Keep button enabled so user can click again
+            document.getElementById('stopBtn').textContent = '⏸️ Stop Processing'; // Reset button text
             document.getElementById('batchSize').disabled = true;
             document.getElementById('tenantDelay').disabled = true;
             document.querySelectorAll('.tenant-checkbox').forEach(cb => cb.disabled = true);
@@ -441,6 +445,12 @@
                         const controller = new AbortController();
                         const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
                         
+                        // Combine both abort signals: timeout and global stop
+                        const combinedSignal = AbortSignal.any([
+                            controller.signal,
+                            globalAbortController.signal
+                        ]);
+                        
                         const response = await fetch('{{ url_for("superadmin.bulk_spotify_process") }}', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
@@ -448,7 +458,7 @@
                                 tenant_id: tenant.id,
                                 batch_size: batchSize
                             }),
-                            signal: controller.signal
+                            signal: combinedSignal
                         }).finally(() => clearTimeout(timeoutId));
                         
                         const result = await response.json();
@@ -559,12 +569,20 @@
 
         async function stopBulkFetch() {
             shouldStop = true;
-            document.getElementById('stopBtn').disabled = true;
+            
+            // Abort all ongoing fetches immediately
+            if (globalAbortController) {
+                globalAbortController.abort();
+                console.log('[Superadmin Bulk] Aborted all ongoing fetches');
+            }
+            
+            // Update button to show we're stopping
             document.getElementById('stopBtn').textContent = 'Stopping...';
+            // Keep button enabled in case user wants to click again or see status
+            // The button will be reset when isProcessing becomes false
             
             // The loop will check shouldStop and exit at the next iteration
-            // The button will be reset when isProcessing becomes false
-            // No need to wait here, the main loop will handle cleanup
+            // All fetches are already aborted, so it should stop quickly
         }
 
         function updateTenantStatus(tenantId, status, message, progress) {
