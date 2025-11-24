@@ -26,41 +26,47 @@
         </div>
 
         {% if is_admin %}
-        <div class="admin-actions-container">
-            <div class="action-item">
-                <label for="maxRequests">{{ _('Max requests per user:') }}</label>
-                <input class="max-requests-input" type="number" id="maxRequests" value="{{ max_requests }}">
-                <button id="updateMaxRequestsButton" class="button">{{ _('Update Max Requests Button') }}</button>
-            </div>
-            <div class="action-item">
-                <label for="venueName">{{ _('Venue:') }}</label>
-                <input type="text" id="venueName" placeholder="{{ _('Enter venue name') }}">
-                <button id="updateVenueButton" class="button">{{ _('Update Venue Button') }}</button>
-            </div>
-            <div class="action-item">
+        <div class="admin-actions-wrapper">
+            <button class="admin-actions-toggle" id="adminActionsToggle">
+                <span class="toggle-icon">▼</span>
+                <span class="toggle-text">{{ _('Settings') }}</span>
+            </button>
+            <div class="admin-actions-container" id="adminActionsContainer">
+                <div class="action-item">
+                    <label for="maxRequests">{{ _('Max requests per user:') }}</label>
+                    <input class="max-requests-input" type="number" id="maxRequests" value="{{ max_requests }}">
+                    <button id="updateMaxRequestsButton" class="button">{{ _('Update Max Requests Button') }}</button>
+                </div>
+                <div class="action-item">
+                    <label for="venueName">{{ _('Venue:') }}</label>
+                    <input type="text" id="venueName" placeholder="{{ _('Enter venue name') }}">
+                    <button id="updateVenueButton" class="button">{{ _('Update Venue Button') }}</button>
+                </div>
+                <div class="action-item">
+                    {% if active_gig %}
+                        <label>{{ _('Gig Active:') }}</label>
+                        <div class="gig-info">
+                            <span class="gig-name">{{ active_gig.name }}</span>
+                            <span class="gig-time">({{ _('Started') }}: {{ active_gig.start_time }})</span>
+                        </div>
+                        <button id="endGigButton" class="button danger">{{ _('End Gig') }}</button>
+                    {% else %}
+                        <label>{{ _('No active gig') }}</label>
+                        <input type="text" id="gigNameInput" placeholder="{{ _('Gig name (optional)') }}" style="display: none;">
+                        <button id="startGigButton" class="button">{{ _('Start Gig') }}</button>
+                    {% endif %}
+                </div>
                 {% if active_gig %}
-                    <label>{{ _('Gig Active:') }}</label>
-                    <div style="display: flex; flex-direction: column; gap: 0.25rem;">
-                        <span style="font-weight: 500;">{{ active_gig.name }}</span>
-                        <span style="font-size: 0.85em; color: #6c757d;">({{ _('Started') }}: {{ active_gig.start_time }})</span>
+                <div class="action-item announcement-item">
+                    <label for="announcementInput">{{ _('Send Message to Audience:') }}</label>
+                    <textarea id="announcementInput" placeholder="{{ _('Type your message here...') }}" rows="3">{{ active_gig.announcement if active_gig.announcement else '' }}</textarea>
+                    <div class="announcement-buttons">
+                        <button id="sendAnnouncementButton" class="button">{{ _('Send Message') }}</button>
+                        <button id="clearAnnouncementButton" class="button button-secondary">{{ _('Clear') }}</button>
                     </div>
-                    <button id="endGigButton" class="button danger">{{ _('End Gig') }}</button>
-                {% else %}
-                    <label>{{ _('No active gig') }}</label>
-                    <input type="text" id="gigNameInput" placeholder="{{ _('Gig name (optional)') }}" style="display: none;">
-                    <button id="startGigButton" class="button">{{ _('Start Gig') }}</button>
+                </div>
                 {% endif %}
             </div>
-            {% if active_gig %}
-            <div class="action-item" style="flex-direction: column; align-items: flex-start;">
-                <label for="announcementInput">{{ _('Send Message to Audience:') }}</label>
-                <textarea id="announcementInput" placeholder="{{ _('Type your message here...') }}" rows="3" style="width: 100%; padding: 8px; margin: 5px 0; border: 1px solid #ddd; border-radius: 4px; font-family: inherit; resize: vertical;">{{ active_gig.announcement if active_gig.announcement else '' }}</textarea>
-                <div style="display: flex; gap: 10px; margin-top: 5px;">
-                    <button id="sendAnnouncementButton" class="button">{{ _('Send Message') }}</button>
-                    <button id="clearAnnouncementButton" class="button" style="background: #6c757d;">{{ _('Clear') }}</button>
-                </div>
-            </div>
-            {% endif %}
         </div>
         {% endif %}
 
@@ -99,6 +105,34 @@
         };
         
         document.addEventListener('DOMContentLoaded', function () {
+            // Collapsible admin actions
+            const adminActionsToggle = document.getElementById('adminActionsToggle');
+            const adminActionsContainer = document.getElementById('adminActionsContainer');
+            
+            if (adminActionsToggle && adminActionsContainer) {
+                // Check localStorage for saved state
+                const isCollapsed = localStorage.getItem('adminActionsCollapsed') === 'true';
+                
+                if (isCollapsed) {
+                    adminActionsContainer.classList.add('collapsed');
+                    adminActionsToggle.classList.add('collapsed');
+                }
+                
+                adminActionsToggle.addEventListener('click', function() {
+                    const isCurrentlyCollapsed = adminActionsContainer.classList.contains('collapsed');
+                    
+                    if (isCurrentlyCollapsed) {
+                        adminActionsContainer.classList.remove('collapsed');
+                        adminActionsToggle.classList.remove('collapsed');
+                        localStorage.setItem('adminActionsCollapsed', 'false');
+                    } else {
+                        adminActionsContainer.classList.add('collapsed');
+                        adminActionsToggle.classList.add('collapsed');
+                        localStorage.setItem('adminActionsCollapsed', 'true');
+                    }
+                });
+            }
+            
             const noSongsMessage = '{{ _("No songs in the queue.") }}';
             const artistName = '{{ tenant.name if tenant else "" }}';
 

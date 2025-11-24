@@ -792,3 +792,6 @@ msgstr "No active gig. Start a gig first."
 
 msgid "Close"
 msgstr "Close"
+
+msgid "Settings"
+msgstr "Settings"

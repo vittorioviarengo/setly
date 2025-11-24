@@ -459,48 +459,143 @@ select {
     border-color: rgba(255, 255, 255, 0.3);
 }
 
-/* Admin Actions Container */
-.admin-actions-container {
-    display: flex;
-    gap: 1.5rem;
-    align-items: flex-start;
-    flex-wrap: wrap;
-    padding: 1.5rem;
-    background: var(--bg-card);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow-sm);
+/* Admin Actions Container - Collapsible */
+.admin-actions-wrapper {
     margin-bottom: 1.5rem;
 }
 
-.action-group {
+.admin-actions-toggle {
+    width: 100%;
     display: flex;
-    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    transition: all 0.2s;
+    box-shadow: var(--shadow-sm);
+}
+
+.admin-actions-toggle:hover {
+    background: var(--bg-main);
+    box-shadow: var(--shadow-md);
+}
+
+.toggle-icon {
+    transition: transform 0.3s ease;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.admin-actions-toggle.collapsed .toggle-icon {
+    transform: rotate(-90deg);
+}
+
+.admin-actions-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 1rem;
-    flex: 1;
-    min-width: 300px;
+    padding: 1rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    border-top: none;
+    border-radius: 0 0 var(--radius) var(--radius);
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+    transition: max-height 0.3s ease, padding 0.3s ease, opacity 0.3s ease;
+    max-height: 2000px;
+    opacity: 1;
+}
+
+.admin-actions-container.collapsed {
+    max-height: 0;
+    padding: 0 1rem;
+    margin-bottom: 0;
+    opacity: 0;
+    border: none;
 }
 
 .action-item {
-    display: grid;
-    grid-template-columns: 180px 200px auto;
-    align-items: center;
-    gap: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    background: var(--bg-main);
+    border-radius: var(--radius);
 }
 
 .action-item label {
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     color: var(--text-primary);
-    font-weight: 500;
-    text-align: right;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
 }
 
 .action-item input[type="text"],
-.action-item input[type="number"] {
+.action-item input[type="number"],
+.action-item textarea {
     padding: 0.5rem 0.75rem;
     border: 1px solid var(--border-color);
     border-radius: var(--radius);
     font-size: 0.9rem;
     width: 100%;
+    font-family: inherit;
+}
+
+.action-item textarea {
+    resize: vertical;
+    min-height: 60px;
+}
+
+.action-item .button {
+    margin: 0.25rem 0 0 0;
+    width: 100%;
+}
+
+.gig-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.gig-name {
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.gig-time {
+    font-size: 0.85em;
+    color: var(--text-secondary);
+}
+
+.announcement-item {
+    grid-column: 1 / -1;
+}
+
+.announcement-buttons {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.announcement-buttons .button {
+    flex: 1;
+}
+
+.button-secondary {
+    background-color: var(--text-secondary);
+    border-color: var(--text-secondary);
+}
+
+.button-secondary:hover {
+    background-color: #6c7a89;
+    border-color: #6c7a89;
 }
 
 .action-separator {
@@ -530,14 +625,30 @@ select {
         grid-template-columns: 1fr;
     }
     
+    .admin-header {
+        padding: 1rem;
+        margin: 0 -1rem 1rem -1rem;
+    }
+    
     .admin-header h1 {
         font-size: 1.5rem;
+    }
+    
+    .admin-actions-container {
+        grid-template-columns: 1fr;
+        padding: 0.75rem;
+        gap: 0.75rem;
+    }
+    
+    .action-item {
+        padding: 0.5rem;
     }
     
     .wizard-banner {
         flex-direction: column;
         text-align: center;
         gap: 1.5rem;
+        padding: 1rem;
     }
     
     .wizard-banner-content {

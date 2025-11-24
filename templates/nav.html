@@ -14,7 +14,15 @@
 {% endif %}
 
 <nav class="tenant-nav">
-    <ul>
+    <div class="tenant-nav-wrapper">
+        <button class="tenant-nav-toggle" id="navToggle" aria-label="Toggle menu">
+            <div class="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </button>
+        <ul id="navMenu">
         {% if tenant %}
         <li><a href="{{ url_for('tenant_queue', tenant_slug=tenant.slug) }}" class="{% if request.endpoint == 'tenant_queue' %}active{% endif %}">
             <span class="nav-icon">
@@ -75,7 +83,8 @@
                 <option value="fr" {{ 'selected' if g.lang_code == 'fr' else '' }}>{{ _('Français') }}</option>
             </select>
         </li>
-    </ul>
+        </ul>
+    </div>
 </nav>
 
 
@@ -88,4 +97,25 @@
         window.location.href = `/change_language/${lang}`;
         {% endif %}
     }
+    
+    // Mobile menu toggle
+    document.addEventListener('DOMContentLoaded', function() {
+        const navToggle = document.getElementById('navToggle');
+        const navMenu = document.getElementById('navMenu');
+        
+        if (navToggle && navMenu) {
+            navToggle.addEventListener('click', function() {
+                navToggle.classList.toggle('active');
+                navMenu.classList.toggle('active');
+            });
+            
+            // Close menu when clicking outside
+            document.addEventListener('click', function(event) {
+                if (!navToggle.contains(event.target) && !navMenu.contains(event.target)) {
+                    navToggle.classList.remove('active');
+                    navMenu.classList.remove('active');
+                }
+            });
+        }
+    });
 </script>

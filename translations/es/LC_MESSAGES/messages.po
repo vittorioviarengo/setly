@@ -486,3 +486,6 @@ msgstr "No hay evento activo. Inicia un evento primero."
 
 msgid "Close"
 msgstr "Cerrar"
+
+msgid "Settings"
+msgstr "Configuración"

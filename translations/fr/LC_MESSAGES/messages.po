@@ -484,3 +484,6 @@ msgstr "Aucun événement actif. Démarrez d'abord un événement."
 
 msgid "Close"
 msgstr "Fermer"
+
+msgid "Settings"
+msgstr "Paramètres"
