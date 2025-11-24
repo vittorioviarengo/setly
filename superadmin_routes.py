@@ -1608,8 +1608,11 @@ def bulk_spotify_process():
     import os
     from app import get_spotify_image, download_image
     
-    # Get absolute path to the app directory
+    # Get absolute path to the app directory (same method as bulk_spotify_status)
     app_dir = os.path.dirname(os.path.abspath(__file__))
+    # Use the same base directory logic as app.py for consistency
+    from app import app
+    app_dir = os.path.dirname(os.path.abspath(app.root_path)) if hasattr(app, 'root_path') else app_dir
     
     data = request.json
     tenant_id = data.get('tenant_id')
@@ -1942,13 +1945,6 @@ def bulk_spotify_process():
         has_more = remaining > 0
         
         app.logger.info(f"[Superadmin Bulk] Remaining: {remaining_images} images, {remaining_genres} genres, {remaining_languages} languages. Has more: {has_more}")
-        
-        # When few images remain, increase batch size to find them more efficiently
-        # This helps when ORDER BY RANDOM() might not find the remaining songs easily
-        if remaining_images > 0 and remaining_images < 50:
-            # Increase batch size when few images remain to be more efficient
-            extended_batch = max(extended_batch, remaining_images * 2)
-            app.logger.info(f"[Superadmin Bulk] Few images remaining ({remaining_images}), increasing batch size to {extended_batch}")
         
         # Remove skipped_reasons from stats before sending to frontend (too verbose)
         response_stats = {k: v for k, v in stats.items() if k != 'skipped_reasons'}
