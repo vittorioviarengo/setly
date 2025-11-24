@@ -118,7 +118,9 @@
                     adminActionsToggle.classList.add('collapsed');
                 }
                 
-                adminActionsToggle.addEventListener('click', function() {
+                adminActionsToggle.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
                     const isCurrentlyCollapsed = adminActionsContainer.classList.contains('collapsed');
                     
                     if (isCurrentlyCollapsed) {
@@ -130,6 +132,11 @@
                         adminActionsToggle.classList.add('collapsed');
                         localStorage.setItem('adminActionsCollapsed', 'true');
                     }
+                });
+            } else {
+                console.error('Admin actions toggle elements not found:', {
+                    toggle: adminActionsToggle,
+                    container: adminActionsContainer
                 });
             }
             

@@ -531,11 +531,13 @@ select {
 }
 
 .admin-actions-container.collapsed {
-    max-height: 0;
-    padding: 0 1rem;
-    margin-bottom: 0;
-    opacity: 0;
-    border: none;
+    max-height: 0 !important;
+    padding: 0 !important;
+    margin-bottom: 0 !important;
+    opacity: 0 !important;
+    border: none !important;
+    overflow: hidden !important;
+    visibility: hidden !important;
 }
 
 .action-item {
