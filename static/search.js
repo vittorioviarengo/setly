@@ -1000,13 +1000,13 @@ let lastAnnouncement = null;
 let lastGigId = null;
 
 function updateAnnouncementBanner(announcement, gigId) {
-    // Get or create the banner container
-    const titleDiv = document.getElementById('title-div');
-    if (!titleDiv) return;
+    // Get the search-mobile container (parent of top-bar)
+    const searchMobile = document.querySelector('.search-mobile');
+    if (!searchMobile) return;
     
     let announcementBanner = document.getElementById('announcementBanner');
     
-    // If no announcement, hide and remove banner if it exists
+    // If no announcement, hide banner if it exists
     if (!announcement || announcement.trim() === '') {
         if (announcementBanner) {
             announcementBanner.style.display = 'none';
@@ -1041,8 +1041,14 @@ function updateAnnouncementBanner(announcement, gigId) {
             announcementContent.appendChild(announcementClose);
             announcementBanner.appendChild(announcementContent);
             
-            // Insert after title-div
-            titleDiv.parentNode.insertBefore(announcementBanner, titleDiv.nextSibling);
+            // Insert after top-bar (first child of search-mobile)
+            const topBar = searchMobile.querySelector('.top-bar');
+            if (topBar && topBar.nextSibling) {
+                searchMobile.insertBefore(announcementBanner, topBar.nextSibling);
+            } else {
+                // Fallback: append to search-mobile
+                searchMobile.appendChild(announcementBanner);
+            }
             
             // Handle close button
             announcementClose.addEventListener('click', function() {
@@ -1053,10 +1059,13 @@ function updateAnnouncementBanner(announcement, gigId) {
             });
         }
         
-        // Update announcement text
+        // Update announcement text and gig ID
         const announcementText = announcementBanner.querySelector('.announcement-text');
         if (announcementText) {
             announcementText.textContent = announcement;
+        }
+        if (gigId) {
+            announcementBanner.setAttribute('data-gig-id', gigId);
         }
         
         // Check if user has closed this specific announcement
@@ -1075,20 +1084,21 @@ function updateAnnouncementBanner(announcement, gigId) {
 }
 
 function checkForPlayedSongs() {
-    // Only poll if user is logged in
-    if (!globalUserName) {
-        return;
-    }
-
+    // Always check for announcements, even if user is not logged in
     fetch('/api/user_requested_song_ids')
         .then(response => response.json())
         .then(data => {
             const currentRequestedIds = data.requested_song_ids || [];
             
-            // Check for announcement updates
+            // Check for announcement updates (always, regardless of login status)
             const announcement = data.announcement || null;
             const gigId = data.gig_id || null;
             updateAnnouncementBanner(announcement, gigId);
+            
+            // Only check for played songs if user is logged in
+            if (!globalUserName) {
+                return;
+            }
             
             // On first load, just store the current state
             if (lastRequestedSongIds.length === 0) {
@@ -1164,14 +1174,18 @@ document.addEventListener('DOMContentLoaded', function() {
         // Get interval from window (set by template) or use default 30 seconds
         const refreshInterval = window.autoRefreshInterval || 30000;
         
-        // Initial check after 5 seconds (give time for page to fully load)
-        setTimeout(() => {
-            checkForPlayedSongs();
-        }, 5000);
+        // Check immediately for announcements (don't wait 5 seconds)
+        checkForPlayedSongs();
         
         // Then check at configured interval
         setInterval(checkForPlayedSongs, refreshInterval);
         console.log(`✅ Auto-refresh enabled: checking for played songs every ${refreshInterval/1000} seconds`);
+    } else {
+        // Even if user is not logged in, check for announcements (they might log in later)
+        // But only check once, not continuously
+        setTimeout(() => {
+            checkForPlayedSongs();
+        }, 1000);
     }
 });
 

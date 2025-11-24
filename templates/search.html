@@ -68,16 +68,17 @@
                             <div class="menu-item" data-lang="de">Deutsch</div>
                           </div>
                       </div>
-                    <!-- Announcement Banner -->
-                    {% if active_gig and active_gig.announcement %}
-                    <div id="announcementBanner" class="announcement-banner" style="display: none;" data-gig-id="{{ active_gig.id }}">
-                        <div class="announcement-content">
-                            <span class="announcement-text">{{ active_gig.announcement }}</span>
-                            <button class="announcement-close" id="announcementClose" aria-label="{{ _('Close') }}">×</button>
-                        </div>
+                </div>
+                <!-- Announcement Banner -->
+                {% if active_gig and active_gig.announcement %}
+                <div id="announcementBanner" class="announcement-banner" style="display: none;" data-gig-id="{{ active_gig.id }}">
+                    <div class="announcement-content">
+                        <span class="announcement-text">{{ active_gig.announcement }}</span>
+                        <button class="announcement-close" id="announcementClose" aria-label="{{ _('Close') }}">×</button>
                     </div>
-                    {% endif %}
-                    <div class="welcome-div screen">
+                </div>
+                {% endif %}
+                <div class="welcome-div screen">
                         <div class="welcome-rectangle"></div>
                         <div class="welcome-name" id="welcome-name"></div>
                     </div>
