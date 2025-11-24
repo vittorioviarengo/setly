@@ -200,14 +200,33 @@ body {
 
 /* Responsive */
 @media screen and (max-width: 768px) {
+    .tenant-nav {
+        position: relative;
+    }
+    
+    .tenant-nav-wrapper {
+        max-width: 100%;
+    }
+    
     .tenant-nav-toggle {
         display: flex;
+        position: absolute;
+        right: 0;
+        top: 0;
+        z-index: 102;
     }
     
     .tenant-nav ul {
         display: none;
         flex-direction: column;
         width: 100%;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        background: #2c3e50;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        max-height: calc(100vh - 60px);
+        overflow-y: auto;
     }
     
     .tenant-nav ul.active {
@@ -222,6 +241,7 @@ body {
         min-height: auto;
         padding: 0.875rem 1.25rem;
         width: 100%;
+        box-sizing: border-box;
     }
     
     .tenant-nav li.right {
@@ -234,6 +254,7 @@ body {
         padding: 0.75rem 1.5rem;
         border-top: 1px solid rgba(255, 255, 255, 0.1);
         margin-left: 0;
+        box-sizing: border-box;
     }
 }
 
