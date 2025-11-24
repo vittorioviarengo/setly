@@ -100,6 +100,7 @@ def _ensure_audit_logs_table():
             columns = {row[1] for row in cursor.fetchall()}
             
             required_columns = {
+                'user_name': 'TEXT',
                 'ip_address': 'TEXT',
                 'user_agent': 'TEXT',
                 'referrer': 'TEXT',
