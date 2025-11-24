@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ _('Queued Songs') }}</title>
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename=favicon) }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='queue.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='queue.css') }}?v={{ config.get('VERSION', '1.0') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='nav.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='admin.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/dialog.css') }}">
@@ -203,14 +203,9 @@
                 const requester = document.createElement('p');
                 const requestTime = new Date(song.request_time);
 
-                const formattedRequestTime = requestTime.toLocaleString(undefined, {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
+                const formattedRequestTime = requestTime.toLocaleTimeString(undefined, {
                     hour: '2-digit',
-                    minute: '2-digit',
-                    second: '2-digit',
-                    timeZoneName: 'short'
+                    minute: '2-digit'
                 });
 
                 if (Array.isArray(song.requesters)) {
