@@ -1549,6 +1549,21 @@ msgstr "Nessuna serata musicale attiva"
 msgid "No active gig. Please wait for the musician to start the gig."
 msgstr "Nessuna serata musicale attiva. Attendi che il musicista inizi la serata."
 
+msgid "Are you sure you want to end the current gig?"
+msgstr "Sei sicuro di voler terminare la serata corrente?"
+
+msgid "Failed to start gig"
+msgstr "Impossibile avviare la serata"
+
+msgid "Error starting gig"
+msgstr "Errore nell'avvio della serata"
+
+msgid "Failed to end gig"
+msgstr "Impossibile terminare la serata"
+
+msgid "Error ending gig"
+msgstr "Errore nella terminazione della serata"
+
 msgid "Already fetching image for this song. Please wait..."
 msgstr "Sto già scaricando l'immagine per questa canzone. Attendi..."
 

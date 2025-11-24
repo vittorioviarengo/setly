@@ -442,3 +442,18 @@ msgstr "Aucun événement actif"
 
 msgid "No active gig. Please wait for the musician to start the gig."
 msgstr "Aucun événement actif. Veuillez attendre que le musicien commence le concert."
+
+msgid "Are you sure you want to end the current gig?"
+msgstr "Êtes-vous sûr de vouloir terminer l'événement actuel?"
+
+msgid "Failed to start gig"
+msgstr "Échec du démarrage de l'événement"
+
+msgid "Error starting gig"
+msgstr "Erreur lors du démarrage de l'événement"
+
+msgid "Failed to end gig"
+msgstr "Échec de la fin de l'événement"
+
+msgid "Error ending gig"
+msgstr "Erreur lors de la fin de l'événement"

@@ -750,3 +750,18 @@ msgstr "No active gig"
 
 msgid "No active gig. Please wait for the musician to start the gig."
 msgstr "No active gig. Please wait for the musician to start the gig."
+
+msgid "Are you sure you want to end the current gig?"
+msgstr "Are you sure you want to end the current gig?"
+
+msgid "Failed to start gig"
+msgstr "Failed to start gig"
+
+msgid "Error starting gig"
+msgstr "Error starting gig"
+
+msgid "Failed to end gig"
+msgstr "Failed to end gig"
+
+msgid "Error ending gig"
+msgstr "Error ending gig"

@@ -398,6 +398,14 @@
             const endGigButton = document.getElementById('endGigButton');
             const gigNameInput = document.getElementById('gigNameInput');
             
+            // Translations for JavaScript
+            const translations = {
+                failedToStartGig: {{ _('Failed to start gig') | tojson }},
+                errorStartingGig: {{ _('Error starting gig') | tojson }},
+                failedToEndGig: {{ _('Failed to end gig') | tojson }},
+                errorEndingGig: {{ _('Error ending gig') | tojson }}
+            };
+            
             // Get tenant slug from URL if not available in template
             function getTenantSlug() {
                 const path = window.location.pathname;
@@ -426,12 +434,12 @@
                             // Reload page to update gig status
                             setTimeout(() => window.location.reload(), 1000);
                         } else {
-                            showError(data.message || 'Failed to start gig');
+                            showError(data.message || translations.failedToStartGig);
                         }
                     })
                     .catch(error => {
                         console.error('Error starting gig:', error);
-                        showError('Error starting gig: ' + error.message);
+                        showError(translations.errorStartingGig + ': ' + error.message);
                     });
                 });
             }
@@ -441,7 +449,7 @@
                     const slug = getTenantSlug();
                     
                     showConfirm(
-                        '{{ _("Are you sure you want to end the current gig?") }}',
+                        {{ _('Are you sure you want to end the current gig?') | tojson }},
                         () => {
                             fetch(`/${slug}/end_gig`, {
                                 method: 'POST',
@@ -456,12 +464,12 @@
                                     // Reload page to update gig status
                                     setTimeout(() => window.location.reload(), 1000);
                                 } else {
-                                    showError(data.message || 'Failed to end gig');
+                                    showError(data.message || translations.failedToEndGig);
                                 }
                             })
                             .catch(error => {
                                 console.error('Error ending gig:', error);
-                                showError('Error ending gig: ' + error.message);
+                                showError(translations.errorEndingGig + ': ' + error.message);
                             });
                         }
                     );
