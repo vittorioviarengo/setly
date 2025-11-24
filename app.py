@@ -2959,22 +2959,34 @@ def tenant_update_bio(tenant_slug):
 @app.route('/<tenant_slug>/start_gig', methods=['POST'])
 def tenant_start_gig(tenant_slug):
     """Start a new gig for the tenant."""
-    from utils.audit_logger import log_tenant_admin_action
-    
-    if not session.get('is_tenant_admin') or session.get('tenant_slug') != tenant_slug:
-        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
-    
-    data = request.get_json()
-    if data and data.get('gig_name'):
-        gig_name = str(data.get('gig_name')).strip() or None
-    else:
-        gig_name = None
-    
-    tenant_id = session.get('tenant_id')
-    if not tenant_id:
-        return jsonify({'success': False, 'message': 'Tenant ID not found'}), 400
-    
     try:
+        from utils.audit_logger import log_tenant_admin_action
+    except ImportError:
+        log_tenant_admin_action = None
+        app.logger.warning("audit_logger not available, skipping logging")
+    
+    # Always return JSON, even on errors
+    try:
+        if not session.get('is_tenant_admin') or session.get('tenant_slug') != tenant_slug:
+            return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+        
+        data = request.get_json()
+        if data and data.get('gig_name'):
+            gig_name = str(data.get('gig_name')).strip() or None
+        else:
+            gig_name = None
+        
+        tenant_id = session.get('tenant_id')
+        if not tenant_id:
+            return jsonify({'success': False, 'message': 'Tenant ID not found'}), 400
+        
+        # Ensure gigs table exists before trying to start gig
+        try:
+            ensure_gigs_table_once()
+        except Exception as ensure_error:
+            app.logger.error(f"Error ensuring gigs table: {ensure_error}")
+            # Continue anyway, start_gig will handle the error
+        
         gig_id = start_gig(tenant_id, gig_name if gig_name else None)
         
         if gig_id:
@@ -2991,24 +3003,25 @@ def tenant_start_gig(tenant_slug):
                     conn.close()
                     return jsonify({'success': False, 'message': 'Gig started but could not be retrieved. Please refresh the page.'}), 500
             except Exception as db_error:
-                app.logger.error(f"Error retrieving gig {gig_id}: {db_error}")
+                app.logger.error(f"Error retrieving gig {gig_id}: {db_error}", exc_info=True)
                 conn.close()
-                return jsonify({'success': False, 'message': 'Error retrieving gig details.'}), 500
+                return jsonify({'success': False, 'message': f'Error retrieving gig details: {str(db_error)}'}), 500
             finally:
                 conn.close()
             
             # Log gig started (async - non-blocking)
-            try:
-                log_tenant_admin_action(
-                    action='gig_started',
-                    entity_type='gig',
-                    entity_id=gig_id,
-                    gig_name=active_gig['name'],
-                    gig_start_time=active_gig['start_time']
-                )
-            except Exception as log_error:
-                # Don't fail the request if logging fails
-                app.logger.warning(f"Failed to log gig started: {log_error}")
+            if log_tenant_admin_action:
+                try:
+                    log_tenant_admin_action(
+                        action='gig_started',
+                        entity_type='gig',
+                        entity_id=gig_id,
+                        gig_name=active_gig['name'],
+                        gig_start_time=active_gig['start_time']
+                    )
+                except Exception as log_error:
+                    # Don't fail the request if logging fails
+                    app.logger.warning(f"Failed to log gig started: {log_error}")
             
             return jsonify({
                 'success': True, 
@@ -3020,9 +3033,11 @@ def tenant_start_gig(tenant_slug):
                 }
             })
         else:
-            return jsonify({'success': False, 'message': 'Failed to start gig. Make sure the gigs table exists.'}), 500
+            return jsonify({'success': False, 'message': 'Failed to start gig. The gigs table may not exist. Please run the migration script.'}), 500
     except Exception as e:
         app.logger.error(f"Error in tenant_start_gig: {e}", exc_info=True)
+        import traceback
+        app.logger.error(f"Traceback: {traceback.format_exc()}")
         return jsonify({'success': False, 'message': f'Error starting gig: {str(e)}'}), 500
 
 @app.route('/<tenant_slug>/end_gig', methods=['POST'])
