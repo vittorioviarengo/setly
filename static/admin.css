@@ -497,8 +497,8 @@ select {
 }
 
 .admin-actions-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    display: flex;
+    flex-direction: column;
     gap: 0.75rem;
     padding: 0.75rem;
     background: var(--bg-card);
@@ -528,7 +528,8 @@ select {
     padding: 0.6rem;
     background: var(--bg-main);
     border-radius: var(--radius);
-    min-width: 0; /* Prevent overflow */
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .action-item label {
@@ -585,7 +586,7 @@ select {
 }
 
 .announcement-item {
-    grid-column: 1 / -1;
+    width: 100%;
 }
 
 .announcement-buttons {
