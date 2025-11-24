@@ -1718,13 +1718,51 @@ def bulk_spotify_process():
                 songs.extend(additional_songs)
                 app.logger.info(f"[Superadmin Bulk] Added {len(additional_songs)} more songs with missing genre/language")
         
-        # NOTE: We don't select songs with image IS NOT NULL here because:
-        # 1. We can't check file existence in SQL
-        # 2. Most songs with image values already have files
-        # 3. This causes infinite loops selecting the same songs
-        # Instead, we only select songs that definitely need images (NULL, placeholder, http, etc.)
-        # Songs with image values but missing files will be caught by the status check
-        # and can be processed manually or in a separate pass
+        # If still not enough, also get songs that have image values (even if they don't match patterns)
+        # These might have images in DB but missing physical files
+        # We'll check if the file exists in the loop and skip if it does
+        # Use ORDER BY RANDOM() to avoid selecting the same songs repeatedly
+        if len(songs) < extended_batch:
+            remaining = extended_batch - len(songs)
+            song_ids = [song['id'] for song in songs] if songs else []
+            
+            if song_ids:
+                placeholders = ','.join(['?'] * len(song_ids))
+                cursor.execute(f'''
+                    SELECT id, title, author, image, genre, language 
+                    FROM songs 
+                    WHERE tenant_id = ?
+                    AND id NOT IN ({placeholders})
+                    AND image IS NOT NULL 
+                    AND image != ''
+                    AND image NOT LIKE '%placeholder%'
+                    AND image NOT LIKE 'http%'
+                    AND image NOT LIKE '%setly%'
+                    AND image NOT LIKE '%music-icon%'
+                    AND image NOT LIKE '%default%'
+                    ORDER BY RANDOM()
+                    LIMIT ?
+                ''', [tenant_id] + song_ids + [remaining])
+            else:
+                cursor.execute('''
+                    SELECT id, title, author, image, genre, language 
+                    FROM songs 
+                    WHERE tenant_id = ?
+                    AND image IS NOT NULL 
+                    AND image != ''
+                    AND image NOT LIKE '%placeholder%'
+                    AND image NOT LIKE 'http%'
+                    AND image NOT LIKE '%setly%'
+                    AND image NOT LIKE '%music-icon%'
+                    AND image NOT LIKE '%default%'
+                    ORDER BY RANDOM()
+                    LIMIT ?
+                ''', (tenant_id, remaining))
+            
+            more_songs = cursor.fetchall()
+            if more_songs:
+                songs.extend(more_songs)
+                app.logger.info(f"[Superadmin Bulk] Added {len(more_songs)} more songs with image values (will check if files exist)")
         
         total_songs = len(songs)
         
