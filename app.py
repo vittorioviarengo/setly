@@ -3386,7 +3386,7 @@ def tenant_search(tenant_slug):
     songs = fetch_songs('all', search_query, language, tenant_id=tenant['id'], user_name=user_name)
     
     # Log search if query is provided (async - non-blocking)
-    if search_query:
+    if search_query and log_user_action:
         duration_ms = int((time.time() - start_time) * 1000)
         log_user_action(
             action='search_performed',
