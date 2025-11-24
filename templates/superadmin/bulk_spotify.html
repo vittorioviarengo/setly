@@ -410,18 +410,22 @@
                 }
                 
                 // Process this tenant with LOOP until all songs done
-                updateTenantStatus(tenant.id, 'processing', 'Fetching from Spotify...', 10);
+                updateTenantStatus(tenant.id, 'processing', 'Fetching from Spotify...', 5);
                 
                 let tenantTotalImages = 0;
                 let tenantTotalGenres = 0;
                 let tenantTotalLanguages = 0;
                 let batchCount = 0;
                 
+                // Store initial counts for progress calculation
+                const initialMissingImages = tenant.missing_images;
+                const initialMissingGenres = tenant.missing_genres;
+                const initialMissingLanguages = tenant.missing_languages;
+                const totalNeeded = initialMissingImages + initialMissingGenres + initialMissingLanguages;
+                
                 // INNER LOOP: Keep processing batches for this tenant
                 while (!shouldStop) {
                     batchCount++;
-                    const progressPct = Math.min(batchCount * 10, 90); // Fake progress
-                    updateTenantStatus(tenant.id, 'processing', `Batch ${batchCount}...`, progressPct);
                     
                     try {
                         // Use longer timeout for local (120s) vs PythonAnywhere (30s - server limit)
@@ -449,12 +453,24 @@
                             tenantTotalGenres += stats.genres_added;
                             tenantTotalLanguages += stats.languages_added;
                             
+                            // Calculate real progress based on remaining items
+                            const remainingTotal = (result.remaining_images || 0) + (result.remaining_genres || 0) + (result.remaining_languages || 0);
+                            const processedTotal = totalNeeded - remainingTotal;
+                            const progressPct = totalNeeded > 0 
+                                ? Math.min(5 + (processedTotal / totalNeeded * 90), 95) // 5% start, 90% max until done
+                                : 95;
+                            
+                            // Update status with real progress
+                            const statusMsg = `Batch ${batchCount}... (${result.remaining_images || 0} images remaining)`;
+                            updateTenantStatus(tenant.id, 'processing', statusMsg, progressPct);
+                            
                             // Log detailed stats for debugging
                             console.log(`[Superadmin Bulk] Tenant ${tenant.name} Batch ${batchCount}:`, 
                                        `Total=${stats.total}, Images=${stats.images_fetched}, ` +
                                        `Genres=${stats.genres_added}, Languages=${stats.languages_added}, ` +
                                        `Skipped=${stats.skipped}, Errors=${stats.errors}, ` +
-                                       `HasMore=${result.has_more}, Remaining=${result.remaining}`);
+                                       `HasMore=${result.has_more}, Remaining=${result.remaining}, ` +
+                                       `Progress=${Math.round(progressPct)}%`);
                             
                             // Use backend's has_more flag to determine if we should continue
                             // This is more accurate than checking stats.total === 0 because:
