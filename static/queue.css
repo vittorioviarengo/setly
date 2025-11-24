@@ -542,6 +542,15 @@ body {
         margin: 0 auto;
     }
     
+    .admin-actions-container {
+        flex-direction: column;
+    }
+    
+    .admin-actions-container > .button {
+        width: 100%;
+        min-width: 100%;
+    }
+    
     #songCountContainer {
         margin-bottom: 0.75rem;
         position: relative;
