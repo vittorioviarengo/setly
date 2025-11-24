@@ -543,10 +543,11 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  margin-right: 5.0px;
+  margin-left: 12px;
+  margin-right: 12px;
   margin-top: 12px;
   min-height: 550px;
-  width: 353px;
+  width: 344px;
 }
 
 .search-mobile .flex-row-1 {
@@ -685,10 +686,11 @@
   display: flex;
   flex-direction: column;
   gap: 14px;
-  margin-right: 6.0px;
+  margin-left: 12px;
+  margin-right: 12px;
   overflow: visible; 
   position: relative;
-  width: 363px; 
+  width: 344px; 
 }
 
 .song-add-icon {
@@ -964,6 +966,13 @@
   align-self: center;
   margin-left: auto;
   margin-right: auto;
+}
+
+/* Ensure banner aligns with title bar width */
+.search-mobile > .announcement-banner {
+  width: 344px;
+  margin-left: 12px;
+  margin-right: 12px;
 }
 
 @keyframes slideDown {
