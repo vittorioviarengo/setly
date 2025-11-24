@@ -1062,7 +1062,8 @@
   font-size: 14px;
   
 
-  margin: 10px;
+  margin: 10px auto;
+  width: 344px;
 
   padding: 10px;
   border-radius: 5px;
@@ -1070,7 +1071,6 @@
   max-height: 0;
   opacity: 0;
   overflow: hidden;
-  width: 100%; /* Ensure it takes full width */
   height: auto; /* Allow height to adjust based on content */
 }
 
