@@ -223,10 +223,12 @@ body {
         position: absolute;
         top: 100%;
         left: 0;
-        background: #2c3e50;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        background: #2c3e50 !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
         max-height: calc(100vh - 60px);
         overflow-y: auto;
+        z-index: 1000;
+        border-top: 2px solid rgba(255, 255, 255, 0.1);
     }
     
     .tenant-nav ul.active {
@@ -242,6 +244,14 @@ body {
         padding: 0.875rem 1.25rem;
         width: 100%;
         box-sizing: border-box;
+        color: rgba(255, 255, 255, 0.95) !important;
+        background: #2c3e50 !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .tenant-nav a:hover {
+        background: rgba(255, 255, 255, 0.15) !important;
+        color: white !important;
     }
     
     .tenant-nav li.right {
