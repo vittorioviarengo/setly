@@ -498,16 +498,16 @@ select {
 
 .admin-actions-container {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 1rem;
-    padding: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.75rem;
+    padding: 0.75rem;
     background: var(--bg-card);
     border: 1px solid var(--border-light);
     border-top: none;
     border-radius: 0 0 var(--radius) var(--radius);
     box-shadow: var(--shadow-sm);
-    margin-bottom: 1.5rem;
-    overflow: hidden;
+    margin-bottom: 1rem;
+    overflow: visible;
     transition: max-height 0.3s ease, padding 0.3s ease, opacity 0.3s ease;
     max-height: 2000px;
     opacity: 1;
@@ -524,53 +524,63 @@ select {
 .action-item {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
-    padding: 0.75rem;
+    gap: 0.4rem;
+    padding: 0.6rem;
     background: var(--bg-main);
     border-radius: var(--radius);
+    min-width: 0; /* Prevent overflow */
 }
 
 .action-item label {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     color: var(--text-primary);
     font-weight: 600;
-    margin-bottom: 0.25rem;
+    margin-bottom: 0.15rem;
 }
 
 .action-item input[type="text"],
 .action-item input[type="number"],
 .action-item textarea {
-    padding: 0.5rem 0.75rem;
+    padding: 0.4rem 0.6rem;
     border: 1px solid var(--border-color);
     border-radius: var(--radius);
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     width: 100%;
     font-family: inherit;
+    box-sizing: border-box;
 }
 
 .action-item textarea {
     resize: vertical;
-    min-height: 60px;
+    min-height: 50px;
+    max-height: 120px;
 }
 
 .action-item .button {
-    margin: 0.25rem 0 0 0;
+    margin: 0.2rem 0 0 0;
     width: 100%;
+    padding: 0.5rem 0.8rem;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .gig-info {
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: 0.2rem;
+    margin-bottom: 0.3rem;
 }
 
 .gig-name {
     font-weight: 500;
     color: var(--text-primary);
+    font-size: 0.85rem;
 }
 
 .gig-time {
-    font-size: 0.85em;
+    font-size: 0.75rem;
     color: var(--text-secondary);
 }
 
@@ -580,8 +590,8 @@ select {
 
 .announcement-buttons {
     display: flex;
-    gap: 0.5rem;
-    margin-top: 0.5rem;
+    gap: 0.4rem;
+    margin-top: 0.4rem;
 }
 
 .announcement-buttons .button {
