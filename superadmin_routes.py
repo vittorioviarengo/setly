@@ -1797,17 +1797,28 @@ def bulk_spotify_process():
                                   'default' in song['image'].lower()
                               )))
                 
-                # Check if file exists (use absolute path - same as bulk_spotify_status)
+                # Check if file exists (use same method as download_image)
                 image_file_missing = False
                 if not needs_image and song['image']:
-                    # Use the same path calculation as bulk_spotify_status
-                    image_path = os.path.join(app_dir, 'static', 'tenants', tenant_slug, 'author_images', song['image'])
-                    if not os.path.exists(image_path):
-                        needs_image = True
-                        image_file_missing = True
-                        app.logger.info(f"[Superadmin Bulk] Song {song['id']} ({song['title']}) has image '{song['image']}' in DB but file doesn't exist at {image_path}")
-                    else:
-                        app.logger.debug(f"[Superadmin Bulk] Song {song['id']} ({song['title']}) has image '{song['image']}' and file EXISTS at {image_path}")
+                    # Use get_tenant_dir to match where download_image saves files
+                    from utils.tenant_utils import get_tenant_dir
+                    try:
+                        author_images_dir = get_tenant_dir(app, tenant_slug, 'author_images')
+                        image_path = os.path.join(author_images_dir, song['image'])
+                        if not os.path.exists(image_path):
+                            needs_image = True
+                            image_file_missing = True
+                            app.logger.info(f"[Superadmin Bulk] Song {song['id']} ({song['title']}) has image '{song['image']}' in DB but file doesn't exist at {image_path}")
+                        else:
+                            app.logger.debug(f"[Superadmin Bulk] Song {song['id']} ({song['title']}) has image '{song['image']}' and file EXISTS at {image_path}")
+                    except Exception as e:
+                        app.logger.warning(f"Error checking image path for tenant {tenant_slug}: {e}")
+                        # Fallback to manual path calculation
+                        image_path = os.path.join(app_dir, 'static', 'tenants', tenant_slug, 'author_images', song['image'])
+                        if not os.path.exists(image_path):
+                            needs_image = True
+                            image_file_missing = True
+                            app.logger.info(f"[Superadmin Bulk] Song {song['id']} ({song['title']}) has image '{song['image']}' in DB but file doesn't exist at {image_path}")
                 
                 needs_genre = not song['genre'] or song['genre'] == ''
                 needs_language = not song['language'] or song['language'] in ['', 'unknown']
