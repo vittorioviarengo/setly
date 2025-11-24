@@ -1713,37 +1713,13 @@ def bulk_spotify_process():
                 songs.extend(additional_songs)
                 app.logger.info(f"[Superadmin Bulk] Added {len(additional_songs)} more songs with missing genre/language")
         
-        # If still not enough, also get songs that have image values (even if they don't match patterns)
-        # These might have images in DB but missing physical files
-        if len(songs) < extended_batch:
-            remaining = extended_batch - len(songs)
-            song_ids = [song['id'] for song in songs] if songs else []
-            
-            if song_ids:
-                placeholders = ','.join(['?'] * len(song_ids))
-                cursor.execute(f'''
-                    SELECT id, title, author, image, genre, language 
-                    FROM songs 
-                    WHERE tenant_id = ?
-                    AND id NOT IN ({placeholders})
-                    AND image IS NOT NULL 
-                    AND image != ''
-                    LIMIT ?
-                ''', [tenant_id] + song_ids + [remaining])
-            else:
-                cursor.execute('''
-                    SELECT id, title, author, image, genre, language 
-                    FROM songs 
-                    WHERE tenant_id = ?
-                    AND image IS NOT NULL 
-                    AND image != ''
-                    LIMIT ?
-                ''', (tenant_id, remaining))
-            
-            more_songs = cursor.fetchall()
-            if more_songs:
-                songs.extend(more_songs)
-                app.logger.info(f"[Superadmin Bulk] Added {len(more_songs)} more songs with image values (will check if files exist)")
+        # NOTE: We don't select songs with image IS NOT NULL here because:
+        # 1. We can't check file existence in SQL
+        # 2. Most songs with image values already have files
+        # 3. This causes infinite loops selecting the same songs
+        # Instead, we only select songs that definitely need images (NULL, placeholder, http, etc.)
+        # Songs with image values but missing files will be caught by the status check
+        # and can be processed manually or in a separate pass
         
         total_songs = len(songs)
         
