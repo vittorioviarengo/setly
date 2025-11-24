@@ -1780,21 +1780,25 @@ def bulk_spotify_process():
                     if not os.path.exists(image_path):
                         needs_image = True
                         image_file_missing = True
-                        app.logger.debug(f"[Superadmin Bulk] Song {song['id']} ({song['title']}) has image '{song['image']}' in DB but file doesn't exist")
+                        app.logger.info(f"[Superadmin Bulk] Song {song['id']} ({song['title']}) has image '{song['image']}' in DB but file doesn't exist at {image_path}")
+                    else:
+                        app.logger.debug(f"[Superadmin Bulk] Song {song['id']} ({song['title']}) has image '{song['image']}' and file EXISTS at {image_path}")
                 
                 needs_genre = not song['genre'] or song['genre'] == ''
                 needs_language = not song['language'] or song['language'] in ['', 'unknown']
+                
+                # Log the decision for each song
+                app.logger.info(f"[Superadmin Bulk] Song {song['id']} ({song['title']} by {song['author']}): needs_image={needs_image} (file_missing={image_file_missing}), needs_genre={needs_genre}, needs_language={needs_language}, image='{song['image']}'")
                 
                 if not (needs_image or needs_genre or needs_language):
                     stats['skipped'] += 1
                     reason = f"Song {song['id']} ({song['title']} by {song['author']}): Already has all data"
                     stats['skipped_reasons'].append(reason)
-                    app.logger.debug(f"[Superadmin Bulk] {reason}")
+                    app.logger.info(f"[Superadmin Bulk] SKIPPING: {reason}")
                     continue
                 
                 # Log what we're processing
-                if needs_image:
-                    app.logger.debug(f"[Superadmin Bulk] Processing song {song['id']} ({song['title']}): needs_image={needs_image} (file_missing={image_file_missing}), needs_genre={needs_genre}, needs_language={needs_language}")
+                app.logger.info(f"[Superadmin Bulk] PROCESSING song {song['id']} ({song['title']} by {song['author']}): needs_image={needs_image} (file_missing={image_file_missing}), needs_genre={needs_genre}, needs_language={needs_language}")
                 
                 # Get artist data
                 artist_name = song['author']
