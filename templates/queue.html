@@ -7,8 +7,8 @@
     <title>{{ _('Queued Songs') }}</title>
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename=favicon) }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='queue.css') }}?v={{ config.get('VERSION', '1.0') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='nav.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='admin.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='nav.css') }}?v={{ config.get('VERSION', '1.0') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='admin.css') }}?v={{ config.get('VERSION', '1.0') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/dialog.css') }}">
     <script src="{{ url_for('static', filename='image-utils.js') }}"></script>
     <script src="{{ url_for('static', filename='dialog.js') }}"></script>
