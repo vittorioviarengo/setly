@@ -1,40 +1,505 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>System Logs - Super Admin</title>
-    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename=favicon) }}">
+    <title>Audit Logs - Super Admin</title>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='superadmin.css') }}">
+    <style>
+        .logs-container {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+        }
+        
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stat-card h3 {
+            margin: 0 0 8px 0;
+            font-size: 0.9em;
+            opacity: 0.9;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .stat-card .value {
+            font-size: 2em;
+            font-weight: 700;
+            margin: 0;
+        }
+        
+        .filters-panel {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .filters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+        
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .filter-group label {
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #495057;
+            font-size: 0.9em;
+        }
+        
+        .filter-group select,
+        .filter-group input {
+            padding: 8px 12px;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+        
+        .filter-actions {
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+        }
+        
+        .btn-filter {
+            padding: 8px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+        
+        .btn-filter:hover {
+            background: #5568d3;
+        }
+        
+        .btn-clear {
+            padding: 8px 20px;
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+        
+        .btn-clear:hover {
+            background: #5a6268;
+        }
+        
+        .logs-table-container {
+            overflow-x: auto;
+            margin-bottom: 20px;
+        }
+        
+        .logs-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9em;
+        }
+        
+        .logs-table thead {
+            background: #f8f9fa;
+            position: sticky;
+            top: 0;
+        }
+        
+        .logs-table th {
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #495057;
+            border-bottom: 2px solid #dee2e6;
+        }
+        
+        .logs-table td {
+            padding: 12px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .logs-table tbody tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .log-action {
+            font-weight: 600;
+            color: #667eea;
+        }
+        
+        .log-entity {
+            background: #e9ecef;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.85em;
+        }
+        
+        .log-user-type {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+        
+        .log-user-type.end_user {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .log-user-type.tenant_admin {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        
+        .log-user-type.superadmin {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .log-details {
+            max-width: 300px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            cursor: pointer;
+            color: #6c757d;
+        }
+        
+        .log-details.expanded {
+            white-space: normal;
+            overflow: visible;
+            max-width: 500px;
+        }
+        
+        .log-details-json {
+            background: #f8f9fa;
+            padding: 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.85em;
+            margin-top: 4px;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            margin-top: 20px;
+        }
+        
+        .pagination a,
+        .pagination span {
+            padding: 8px 12px;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            text-decoration: none;
+            color: #495057;
+            transition: all 0.2s;
+        }
+        
+        .pagination a:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        
+        .pagination .current {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        
+        .pagination-info {
+            margin: 0 16px;
+            color: #6c757d;
+        }
+        
+        .top-actions {
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid #dee2e6;
+        }
+        
+        .top-actions h3 {
+            margin-bottom: 16px;
+            color: #495057;
+        }
+        
+        .top-actions-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+        }
+        
+        .top-action-item {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .top-action-name {
+            font-weight: 600;
+            color: #495057;
+        }
+        
+        .top-action-count {
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+    </style>
 </head>
 <body>
     {% include 'superadmin/nav.html' %}
     
     <div class="dashboard-container">
-        <h1>System Logs</h1>
-        
-        <div class="logs-list">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Time</th>
-                        <th>Action</th>
-                        <th>Entity</th>
-                        <th>User</th>
-                        <th>Details</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for log in logs %}
-                    <tr>
-                        <td>{{ log.created_at }}</td>
-                        <td>{{ log.action }}</td>
-                        <td>{{ log.entity_type }}</td>
-                        <td>{{ log.user_type }}</td>
-                        <td>{{ log.details }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+        <div class="admin-header">
+            <h1>📊 Audit Logs</h1>
+            <p class="admin-subtitle">System activity and user actions monitoring</p>
         </div>
+        
+        <!-- Statistics Cards -->
+        <div class="stats-row">
+            <div class="stat-card">
+                <h3>Total Logs</h3>
+                <p class="value">{{ stats_total }}</p>
+            </div>
+            <div class="stat-card" style="background: linear-gradient(135deg, #26de81 0%, #20bf6b 100%);">
+                <h3>Last 24 Hours</h3>
+                <p class="value">{{ stats_today }}</p>
+            </div>
+            <div class="stat-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                <h3>Last 7 Days</h3>
+                <p class="value">{{ stats_week }}</p>
+            </div>
+        </div>
+        
+        <!-- Filters Panel -->
+        <div class="filters-panel">
+            <form method="get" action="{{ url_for('superadmin.logs') }}">
+                <div class="filters-grid">
+                    <div class="filter-group">
+                        <label>Search</label>
+                        <input type="text" name="search" value="{{ search_query }}" placeholder="Search in details, actions, users...">
+                    </div>
+                    <div class="filter-group">
+                        <label>Action</label>
+                        <select name="action">
+                            <option value="">All Actions</option>
+                            {% for action in available_actions %}
+                                <option value="{{ action }}" {% if action == action_filter %}selected{% endif %}>{{ action }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>User Type</label>
+                        <select name="user_type">
+                            <option value="">All Types</option>
+                            {% for user_type in available_user_types %}
+                                <option value="{{ user_type }}" {% if user_type == user_type_filter %}selected{% endif %}>{{ user_type }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Entity Type</label>
+                        <select name="entity_type">
+                            <option value="">All Entities</option>
+                            {% for entity_type in available_entity_types %}
+                                <option value="{{ entity_type }}" {% if entity_type == entity_type_filter %}selected{% endif %}>{{ entity_type }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Tenant</label>
+                        <select name="tenant_id">
+                            <option value="">All Tenants</option>
+                            {% for tenant in available_tenants %}
+                                <option value="{{ tenant.tenant_id }}" {% if tenant.tenant_id|string == tenant_id_filter %}selected{% endif %}>
+                                    {% if tenant.name %}{{ tenant.name }}{% elif tenant.slug %}{{ tenant.slug }}{% else %}ID: {{ tenant.tenant_id }}{% endif %}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Per Page</label>
+                        <select name="per_page">
+                            <option value="25" {% if per_page == 25 %}selected{% endif %}>25</option>
+                            <option value="50" {% if per_page == 50 %}selected{% endif %}>50</option>
+                            <option value="100" {% if per_page == 100 %}selected{% endif %}>100</option>
+                            <option value="200" {% if per_page == 200 %}selected{% endif %}>200</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="filter-actions">
+                    <button type="submit" class="btn-filter">🔍 Apply Filters</button>
+                    <a href="{{ url_for('superadmin.logs') }}" class="btn-clear">🗑️ Clear</a>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Logs Table -->
+        <div class="logs-container">
+            <div class="logs-table-container">
+                <table class="logs-table">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Action</th>
+                            <th>Entity</th>
+                            <th>User</th>
+                            <th>Tenant</th>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in logs %}
+                        <tr>
+                            <td>{{ log.created_at }}</td>
+                            <td><span class="log-action">{{ log.action }}</span></td>
+                            <td><span class="log-entity">{{ log.entity_type }}{% if log.entity_id %} #{{ log.entity_id }}{% endif %}</span></td>
+                            <td>
+                                {% if log.user_type %}
+                                    <span class="log-user-type {{ log.user_type }}">{{ log.user_type }}</span>
+                                    {% if log.user_name %}<br><small>{{ log.user_name }}</small>{% endif %}
+                                {% else %}
+                                    <span style="color: #6c757d;">—</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if log.tenant_name %}
+                                    {{ log.tenant_name }}
+                                {% elif log.tenant_id %}
+                                    ID: {{ log.tenant_id }}
+                                {% else %}
+                                    <span style="color: #6c757d;">—</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if log.details %}
+                                    <div class="log-details" onclick="this.classList.toggle('expanded')" title="Click to expand/collapse">
+                                        {% if log.details|length > 50 %}{{ log.details[:50] }}...{% else %}{{ log.details }}{% endif %}
+                                        {% if log.details|length > 50 %}
+                                            <div class="log-details-json" style="display: none;">{{ log.details }}</div>
+                                        {% endif %}
+                                    </div>
+                                {% else %}
+                                    <span style="color: #6c757d;">—</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            {% if total_pages > 1 %}
+            <div class="pagination">
+                {% if page > 1 %}
+                    <a href="#" class="pagination-link" data-page="{{ page - 1 }}">&laquo; Previous</a>
+                {% else %}
+                    <span>&laquo; Previous</span>
+                {% endif %}
+                
+                <span class="pagination-info">Page {{ page }} of {{ total_pages }} ({{ total_logs }} total)</span>
+                
+                {% if page < total_pages %}
+                    <a href="#" class="pagination-link" data-page="{{ page + 1 }}">Next &raquo;</a>
+                {% else %}
+                    <span>Next &raquo;</span>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Top Actions (Last 7 Days) -->
+        {% if top_actions %}
+        <div class="top-actions">
+            <h3>🔥 Top Actions (Last 7 Days)</h3>
+            <div class="top-actions-list">
+                {% for action in top_actions %}
+                <div class="top-action-item">
+                    <span class="top-action-name">{{ action.action }}</span>
+                    <span class="top-action-count">{{ action.count }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
     </div>
+    
+    <script>
+        // Expand/collapse details
+        document.querySelectorAll('.log-details').forEach(el => {
+            el.addEventListener('click', function() {
+                this.classList.toggle('expanded');
+                const jsonDiv = this.querySelector('.log-details-json');
+                if (jsonDiv) {
+                    // Try to parse and format JSON if possible
+                    try {
+                        const jsonData = JSON.parse(this.textContent.trim());
+                        jsonDiv.textContent = JSON.stringify(jsonData, null, 2);
+                    } catch(e) {
+                        // Not JSON, just show as is
+                    }
+                    jsonDiv.style.display = this.classList.contains('expanded') ? 'block' : 'none';
+                }
+            });
+        });
+        
+        // Pagination links
+        document.querySelectorAll('.pagination-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const page = this.getAttribute('data-page');
+                const params = new URLSearchParams(window.location.search);
+                params.set('page', page);
+                
+                // Preserve all current filter parameters
+                {% if action_filter %}params.set('action', '{{ action_filter }}');{% endif %}
+                {% if tenant_id_filter %}params.set('tenant_id', '{{ tenant_id_filter }}');{% endif %}
+                {% if user_type_filter %}params.set('user_type', '{{ user_type_filter }}');{% endif %}
+                {% if entity_type_filter %}params.set('entity_type', '{{ entity_type_filter }}');{% endif %}
+                {% if search_query %}params.set('search', '{{ search_query }}');{% endif %}
+                {% if per_page != 50 %}params.set('per_page', '{{ per_page }}');{% endif %}
+                
+                window.location.href = '{{ url_for("superadmin.logs") }}?' + params.toString();
+            });
+        });
+    </script>
 </body>
 </html>

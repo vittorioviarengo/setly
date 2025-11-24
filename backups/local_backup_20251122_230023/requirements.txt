@@ -1,0 +1,51 @@
+Flask==2.2.5
+Flask-Babel==4.0.0
+Flask-Cors==5.0.0
+Flask-Mail==0.10.0
+Flask-SQLAlchemy==3.1.1
+Flask-Limiter==3.5.0
+Werkzeug==3.0.1
+Jinja2==3.1.4
+MarkupSafe==3.0.2
+click==8.1.7
+itsdangerous==2.2.0
+blinker==1.8.2
+
+# Spotify Integration
+spotipy==2.23.0
+requests==2.32.3
+
+# Translation Support
+babel==2.17.0
+polib==1.2.0
+
+# Environment Variables
+python-dotenv==1.0.1
+
+# Database
+SQLAlchemy==2.0.30
+
+# Utilities
+python-dateutil==2.9.0.post0
+pytz==2024.2
+certifi==2024.8.30
+charset-normalizer==3.4.0
+urllib3==2.2.3
+idna==3.10
+reportlab==4.0.7
+qrcode==7.4.2
+Pillow==10.1.0
+
+# Optional: Web scraping (if needed)
+beautifulsoup4==4.12.3
+soupsieve==2.6
+
+# Optional: Data processing (if needed)
+pandas==2.2.3
+numpy==2.0.2
+
+# Dependencies
+typing_extensions==4.12.2
+importlib_metadata==8.5.0
+zipp==3.20.2
+greenlet==3.2.4

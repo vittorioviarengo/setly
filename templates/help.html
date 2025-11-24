@@ -548,7 +548,7 @@
                         <img src="{{ url_for('static', filename='img/help-screenshots/' ~ current_lang ~ '/01-search-by-title-or-artist.png') }}" 
                              alt="Search by Title or Artist" 
                              class="help-screenshot"
-                             style="display: none;"
+                             style="display: block;"
                              onerror="this.style.display='none';">
                     </div>
                 </div>
@@ -721,26 +721,44 @@
             });
             
             // Highlight selected language
-            const currentLang = '{{ language if language else "en" }}';
+            const menuCurrentLang = '{{ language if language else "en" }}';
             menuItems.forEach(item => {
-                if (item.getAttribute('data-lang') === currentLang) {
+                if (item.getAttribute('data-lang') === menuCurrentLang) {
                     item.classList.add('selected');
                 }
             });
             
             // Show help screenshots if they load successfully
+            // Use fallback to Italian if current language image doesn't exist
             const helpScreenshots = document.querySelectorAll('img.help-screenshot');
+            const currentLang = '{{ current_lang }}';
+            const fallbackLang = 'it'; // Use Italian as fallback
             
             helpScreenshots.forEach(function(img) {
+                const originalSrc = img.src;
+                let hasTriedFallback = false;
+                
                 // Only show image if it loads successfully
                 img.onload = function() {
-                    this.style.display = '';
+                    this.style.display = 'block';
                 };
                 
-                // Keep hidden if image fails to load
-                // Note: Browser will still log 404 in console, but image stays hidden
+                // If image fails to load and we're not already using fallback, try Italian
                 img.onerror = function() {
-                    this.style.display = 'none';
+                    // Check if we're already using the fallback language or have tried it
+                    if (currentLang !== fallbackLang && !hasTriedFallback && originalSrc.includes('/' + currentLang + '/')) {
+                        // Try fallback to Italian
+                        hasTriedFallback = true;
+                        const fallbackSrc = originalSrc.replace('/' + currentLang + '/', '/' + fallbackLang + '/');
+                        // Reset error handler to allow fallback to load
+                        this.onerror = function() {
+                            this.style.display = 'none';
+                        };
+                        this.src = fallbackSrc;
+                    } else {
+                        // Already tried fallback or no fallback available, just hide
+                        this.style.display = 'none';
+                    }
                 };
             });
         });

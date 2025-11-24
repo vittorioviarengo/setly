@@ -457,3 +457,30 @@ msgstr "Échec de la fin de l'événement"
 
 msgid "Error ending gig"
 msgstr "Erreur lors de la fin de l'événement"
+
+msgid "Send Message to Audience:"
+msgstr "Envoyer un Message au Public:"
+
+msgid "Type your message here..."
+msgstr "Tapez votre message ici..."
+
+msgid "Send Message"
+msgstr "Envoyer le Message"
+
+msgid "Clear"
+msgstr "Effacer"
+
+msgid "Announcement sent successfully"
+msgstr "Message envoyé avec succès"
+
+msgid "Announcement cleared"
+msgstr "Message effacé"
+
+msgid "Error sending announcement"
+msgstr "Erreur lors de l'envoi du message"
+
+msgid "No active gig. Start a gig first."
+msgstr "Aucun événement actif. Démarrez d'abord un événement."
+
+msgid "Close"
+msgstr "Fermer"

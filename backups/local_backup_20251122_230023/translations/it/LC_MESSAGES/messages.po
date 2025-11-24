@@ -1,0 +1,1544 @@
+#
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "Sergio Music Universe"
+msgstr "La musica di Sergio"
+
+msgid "English"
+msgstr "Inglese"
+
+msgid "Italian"
+msgstr "Italiano"
+
+msgid "Spanish"
+msgstr "spagnolo"
+
+msgid "German"
+msgstr "Tedesco"
+
+msgid "Change Name"
+msgstr "Cambia nome"
+
+msgid "Choose Language"
+msgstr "Scegli la lingua dell&#39;app"
+
+msgid "Enter your name"
+msgstr "Digita il tuo nome per richiedere i brani"
+
+msgid "Enter Name Button"
+msgstr "Entra nell'universo musicale"
+
+msgid "Enter Name to Request"
+msgstr "Inserisci il tuo nome per richiedere una canzone"
+
+msgid "Songs"
+msgstr "Canzoni"
+
+msgid "Search Songs Box"
+msgstr "Cerca brani"
+
+msgid "Search Songs Button"
+msgstr "Ricerca"
+
+msgid "Submit Button"
+msgstr "Invia"
+
+msgid "Language Radio All"
+msgstr "Tutto"
+
+msgid "Language Radio Italian"
+msgstr "Italiano"
+
+msgid "Language Radio English"
+msgstr "Inglese"
+
+msgid "Language Radio Spanish"
+msgstr "spagnolo"
+
+msgid "Language Radio French"
+msgstr "francese"
+
+msgid "Language Radio German"
+msgstr "Tedesco"
+
+msgid "Your Name Label"
+msgstr "Il tuo nome:"
+
+msgid "Enter Button"
+msgstr "Entra nell&#39;Universo Sergio"
+
+msgid "Music Universe of"
+msgstr "L&#39;universo musicale di"
+
+msgid "Songs Requests"
+msgstr "Coda dei brani richiesti"
+
+msgid "Remove from Queue"
+msgstr "Rimuovi brano dalla coda"
+
+msgid "Admin Actions"
+msgstr "Azioni di amministrazione"
+
+msgid "Queued Songs"
+msgstr "Canzoni in coda"
+
+msgid "Empty Queue"
+msgstr "Svuota Coda"
+
+msgid "Are you sure you want to empty the queue?"
+msgstr "Sei sicuro di voler svuotare la coda?"
+
+msgid "Delete all songs"
+msgstr "Elimina tutti i brani"
+
+msgid "Max requests per user:"
+msgstr "Richieste massime per utente:"
+
+msgid "Venue:"
+msgstr "Locale:"
+
+msgid "Browse Music"
+msgstr "Sfoglia la musica di Sergio"
+
+msgid "Request Song Button"
+msgstr "Richiesta"
+
+msgid "Delete Song Button"
+msgstr "Elimina brano"
+
+msgid "Clear Search Button"
+msgstr "Cancella ricerca"
+
+msgid "Total songs in queue:"
+msgstr "Canzoni totali in coda:"
+
+msgid "Enter Venue Name:"
+msgstr "Inserisci il nome della sede:"
+
+msgid "Update Venue Button"
+msgstr "Aggiorna sede"
+
+msgid "Update Max Requests Button"
+msgstr "Limite di aggiornamento"
+
+msgid "No songs in the queue."
+msgstr "Nessuna canzone in coda."
+
+msgid "Admin Page Title"
+msgstr "Amministrazione dell&#39;applicazione"
+
+msgid "Manage your artist profile and song library"
+msgstr "Gestisci il tuo profilo artista e la libreria musicale"
+
+msgid "Choose Logo Image"
+msgstr "Scegli Immagine Logo"
+
+msgid "Choose Banner Image"
+msgstr "Scegli Immagine Banner"
+
+msgid "Choose CSV File"
+msgstr "Scegli File CSV"
+
+msgid "CSV should contain: title, author, language, image"
+msgstr "Il CSV deve contenere: titolo, autore, lingua, immagine"
+
+msgid "Manage your complete song repertoire"
+msgstr "Gestisci il tuo repertorio musicale completo"
+
+msgid "Song Page Title"
+msgstr "Amministrazione del database delle canzoni"
+
+msgid "Scan QR Code"
+msgstr "Scansiona nuovamente il codice QR"
+
+msgid "Please scan QR code message"
+msgstr ""
+"Il tuo precedente evento dal vivo è terminato, se sei a un evento dal vivo "
+"di Sergio Chiappa, scansiona il codice QR per richiedere i brani"
+
+msgid "Back to Search"
+msgstr "Torna alla Libreria dei brani"
+
+msgid "Song request successful"
+msgstr "La tua richiesta di brano è andata a buon fine"
+
+msgid "Song Request Error"
+msgstr "Si è verificato un errore nella richiesta del brano"
+
+msgid "Song Already Requested"
+msgstr "Hai già richiesto questa canzone"
+
+msgid "Maximum Request Reached"
+msgstr ""
+"Hai raggiunto il numero massimo di richieste, riprova quando i tuoi brani "
+"saranno stati riprodotti"
+
+msgid "User Required"
+msgstr "Per richiedere una canzone è necessario un nome utente"
+
+msgid "Your Requests Title"
+msgstr "Le tue richieste"
+
+msgid "Song List Title"
+msgstr "Canzoni"
+
+msgid "By Author"
+msgstr "per Autore"
+
+msgid "Back to Sergio Chiappa.com"
+msgstr "Torniamo a Sergio Chiappa.com"
+
+msgid "No Songs Found"
+msgstr "Nessun brano trovato"
+
+msgid "Sort by"
+msgstr "Di:"
+
+msgid "Title"
+msgstr "Titolo"
+
+msgid "Author"
+msgstr "Cantante"
+
+msgid "All Requests"
+msgstr "Tutte le richieste"
+
+msgid "Most Popular"
+msgstr "Più popolare"
+
+msgid "About Sergio"
+msgstr "A proposito di Sergio"
+
+msgid "Loading..."
+msgstr "Caricamento..."
+
+msgid "Song Database Administration"
+msgstr "Amministrazione del database dei brani"
+
+msgid "Zero All Popularity"
+msgstr "Reimposta tutta la popolarità"
+
+msgid "Add New Song"
+msgstr "Aggiungi nuova canzone"
+
+msgid "Image"
+msgstr "Immagine"
+
+msgid "Cancel"
+msgstr "Annulla"
+
+msgid "Song Database"
+msgstr "Database dei brani"
+
+msgid "songs"
+msgstr "brani"
+
+msgid "Author Image"
+msgstr "Immagine dell&#39;autore"
+
+msgid "Popularity"
+msgstr "Popolarità"
+
+msgid "Delete"
+msgstr "Eliminare"
+
+msgid "Are you sure you want to reset the popularity of all songs to zero?"
+msgstr "Sei sicuro di voler azzerare la popolarità di tutte le canzoni?"
+
+msgid "Are you sure you want to delete this song?"
+msgstr "Sei sicuro di voler eliminare questa canzone?"
+
+msgid "Please fill in all fields correctly."
+msgstr "Si prega di compilare correttamente tutti i campi."
+
+msgid "UI Language"
+msgstr "Lingua dell&#39;interfaccia utente"
+
+msgid "Mark as Played"
+msgstr "Segna come Suonata"
+
+msgid "Welcome to"
+msgstr "Benvenuto a"
+
+msgid "Song Page"
+msgstr "Gestione del database dei brani"
+
+msgid "Admin Page"
+msgstr "Pagina Amministrazione"
+
+msgid "Queue Page"
+msgstr "Pagina di coda"
+
+msgid "Create Songs Databae Explaination"
+msgstr ""
+"Ricrea il database dei brani da zero. Tutti i dati andranno persi. Si prega "
+"di eseguire il backup dei dati prima di eseguire questa azione"
+
+msgid "Delete Songs Explaination"
+msgstr ""
+"Elimina tutti i brani dal database. Tutti i dati andranno persi. Si prega di"
+" eseguire il backup dei dati prima di eseguire questa azione"
+
+msgid "Translate UI Explaination"
+msgstr ""
+"Traduci l&#39;interfaccia utente dell&#39;app in tutte le lingue supportate."
+" Eseguilo ogni volta che vengono aggiunti nuovi elementi "
+"dell&#39;interfaccia utente"
+
+msgid "Upload Songs Text Explaination"
+msgstr ""
+"Carica un file di testo con i brani che desideri aggiungere al database. Il "
+"file dovrà essere nel seguente formato: Titolo, Cantante, Autore-immagine, "
+"Popolarità "
+
+msgid "Upload Songs File"
+msgstr "Carica il file dei brani"
+
+msgid "Generate PDF"
+msgstr "Genera PDF"
+
+msgid "Generating PDF..."
+msgstr "Generazione PDF in corso..."
+
+msgid "Error generating PDF:"
+msgstr "Errore nella generazione del PDF:"
+
+msgid "Admin Page Link"
+msgstr "Amministrazione"
+
+msgid "Insights"
+msgstr "Statistiche"
+
+msgid "Insights & Analytics"
+msgstr "Statistiche e Analitiche"
+
+msgid "Total Requests"
+msgstr "Richieste Totali"
+
+msgid "Fulfilled"
+msgstr "Completate"
+
+msgid "Pending"
+msgstr "In Attesa"
+
+msgid "Conversion Rate"
+msgstr "Tasso di Conversione"
+
+msgid "Total Tips"
+msgstr "Mance Totali"
+
+msgid "Top Requested Songs"
+msgstr "Canzoni Più Richieste"
+
+msgid "Recently Played Songs"
+msgstr "Canzoni Suonate di Recente"
+
+msgid "Logout"
+msgstr "Esci"
+
+msgid "No requests yet"
+msgstr "Nessuna richiesta ancora"
+
+msgid "No songs played yet"
+msgstr "Nessuna canzone suonata ancora"
+
+msgid "Requested by"
+msgstr "Richiesta da"
+
+msgid "Queue Page Link"
+msgstr "Richieste in tempo reale"
+
+msgid "Songs Page Link"
+msgstr "Database delle canzoni"
+
+msgid "Audience Page"
+msgstr "Pagina Pubblico"
+
+msgid "Open audience page in new tab"
+msgstr "Apri pagina pubblico in una nuova scheda"
+
+msgid "Delete All Songs"
+msgstr "Elimina tutti i brani"
+
+msgid "Remove Duplicate Songs"
+msgstr "Rimuovi Brani Duplicati"
+
+msgid "Find and remove duplicate entries (keeps the oldest copy)"
+msgstr "Trova e rimuovi voci duplicate (mantiene la copia più vecchia)"
+
+msgid "Remove Duplicates"
+msgstr "Rimuovi Duplicati"
+
+msgid "Info"
+msgstr "Info"
+
+msgid "This will identify songs with identical titles and authors (case-insensitive). The oldest entry will be kept, and newer duplicates will be removed along with their requests."
+msgstr "Questo identificherà i brani con titoli e autori identici (non sensibile alle maiuscole). La voce più vecchia verrà mantenuta e i duplicati più recenti verranno rimossi insieme alle loro richieste."
+
+msgid "Remove Duplicates Confirm Message"
+msgstr "Questo cercherà i brani duplicati (stesso titolo e autore) e rimuoverà le copie più recenti, mantenendo la voce più vecchia. Continuare?"
+
+msgid "Remove Duplicates Confirm Title"
+msgstr "Rimuovi Duplicati"
+
+msgid "Searching for duplicates..."
+msgstr "Ricerca duplicati in corso..."
+
+msgid "Removed duplicates:"
+msgstr "Duplicati rimossi:"
+
+msgid "Confirm"
+msgstr "Conferma"
+
+msgid "Cancel"
+msgstr "Annulla"
+
+msgid "Add 51 sample songs to your library?"
+msgstr "Aggiungere 51 canzoni campione alla tua libreria? Le immagini verranno scaricate automaticamente da Spotify. Attendere circa 1 minuto per il completamento."
+
+msgid "Add Sample Songs Confirm Title"
+msgstr "Aggiungi Canzoni Campione"
+
+msgid "Delete all sample songs?"
+msgstr "Eliminare tutte le canzoni campione? Le tue canzoni vere non saranno toccate."
+
+msgid "Delete Sample Songs Confirm Title"
+msgstr "Elimina Canzoni Campione"
+
+msgid "Adding songs..."
+msgstr "Aggiunta canzoni..."
+
+msgid "Deleting..."
+msgstr "Eliminazione..."
+
+msgid "WARNING: This will permanently DELETE ALL songs from your library! This action CANNOT be undone. Are you absolutely sure?"
+msgstr "ATTENZIONE: Questo eliminerà permanentemente TUTTE le canzoni dalla tua libreria! Questa azione NON può essere annullata. Sei assolutamente sicuro?"
+
+msgid "Delete All Songs Confirm Title"
+msgstr "Elimina Tutte le Canzoni"
+
+msgid "Delete Sample Songs"
+msgstr "Elimina Canzoni Campione"
+
+msgid "Create Songs Database"
+msgstr "Crea un database di brani"
+
+msgid "Create Songs Database Explanation"
+msgstr ""
+"Ricrea un database di brani vuoto. Questo cancellerà il tuo database "
+"esistente!!!!!"
+
+msgid "Delete Songs Explanation"
+msgstr ""
+"Elimina tutti i brani dal database. Questo cancellerà le tue canzoni "
+"esistenti!!!!!"
+
+msgid "Translate UI"
+msgstr "Traduci l&#39;interfaccia utente"
+
+msgid "Translate UI Explanation"
+msgstr ""
+"Traduci l&#39;interfaccia utente dell&#39;app in tutte le lingue supportate."
+" Eseguilo ogni volta che vengono aggiunti nuovi elementi "
+"dell&#39;interfaccia utente"
+
+msgid "Upload Songs Text"
+msgstr "Carica un file separato da virgole contenente i brani"
+
+msgid "Upload"
+msgstr "Caricamento"
+
+msgid "Upload Songs Title"
+msgstr "Carica il file dei brani"
+
+msgid "Popularity must be a number"
+msgstr "La popolarità deve essere un numero"
+
+msgid "Error updating song"
+msgstr "Errore durante l&#39;aggiornamento del brano"
+
+msgid "Error deleting song"
+msgstr "Errore durante l&#39;eliminazione del brano"
+
+msgid "Error adding song"
+msgstr "Errore durante l&#39;aggiunta del brano"
+
+msgid "Error uploading image"
+msgstr "Errore durante il caricamento dell&#39;immagine"
+
+msgid "Error resetting popularity"
+msgstr "Errore durante la reimpostazione della popolarità"
+
+msgid "Edit Image"
+msgstr "Modifica immagine"
+
+msgid "Save"
+msgstr "Salva"
+
+msgid "Search for songs"
+msgstr "Inserisci il titolo o l&#39;autore per cercare i brani..."
+
+msgid "Upload Songs Text Explanation"
+msgstr ""
+"Carica un file denominato songs.csv con il seguente formato: &quot;titolo "
+"del brano&quot;, &quot;autore del brano&quot;, &quot;nome file "
+"autho0image,&quot;codice lingua&quot; (ad esempio, &quot;Non farlo&quot;, "
+"&quot;Simple Minds&quot;, &quot;simpleminds.jpg&quot; ,&#39;en&#39;) quindi "
+"fare clic su &#39;Popola database di brani&#39;"
+
+msgid "Use with Caution"
+msgstr "Usare con cautela"
+
+msgid "Enter Password to access Admin Area"
+msgstr "Inserisci la Password per accedere all&#39;Area Amministrazione"
+
+msgid "Welcome {name} - Enter your email and password to access Admin Area"
+msgstr "Benvenuto {name} - Inserisci la tua email e password per accedere all'Area Amministrazione"
+
+msgid "Incorrect password"
+msgstr "Password errata. Per favore riprova."
+
+msgid "Live Event Is Over"
+msgstr "L&#39;evento dal vivo è terminato"
+
+msgid "Scan new QR Code"
+msgstr "Scansiona un nuovo codice QR"
+
+msgid "Go to SergioChiappa.com"
+msgstr "Vai su SergioChiappa.com"
+
+msgid "Visit Artist Website"
+msgstr "Visita il sito dell'artista"
+
+msgid "Thank you for attending!"
+msgstr "Grazie per aver partecipato!"
+
+msgid "Artist Website"
+msgstr "Sito web dell'artista"
+
+msgid "Update your official website URL"
+msgstr "Aggiorna l'URL del tuo sito web ufficiale"
+
+msgid "Website URL"
+msgstr "URL del sito web"
+
+msgid "This URL will be shown on the session expiry page"
+msgstr "Questo URL verrà mostrato nella pagina di sessione scaduta"
+
+msgid "Save Website URL"
+msgstr "Salva URL del sito"
+
+msgid "Website URL updated successfully!"
+msgstr "URL del sito web aggiornato con successo!"
+
+msgid "Error updating website URL"
+msgstr "Errore nell'aggiornamento dell'URL del sito web"
+
+msgid "Image"
+msgstr "Immagine"
+
+msgid "Actions"
+msgstr "Azioni"
+
+msgid "Enter title"
+msgstr "Inserisci titolo"
+
+msgid "Enter author"
+msgstr "Inserisci autore"
+
+msgid "Fetch from Spotify"
+msgstr "Scarica da Spotify"
+
+msgid "Auto-filled"
+msgstr "Compilato automaticamente"
+
+msgid "Image + Language + Genre"
+msgstr "Immagine + Lingua + Genere"
+
+msgid "Data fetched from Spotify successfully!"
+msgstr "Dati scaricati da Spotify con successo!"
+
+msgid "Error fetching data from Spotify"
+msgstr "Errore nel recupero dei dati da Spotify"
+
+msgid "Genre"
+msgstr "Genere"
+
+msgid "Add Song"
+msgstr "Aggiungi Canzone"
+
+msgid "All Genres"
+msgstr "Tutti i Generi"
+
+msgid "All Playlists"
+msgstr "Tutte le Playlist"
+
+msgid "Filter by Genre"
+msgstr "Filtra per Genere"
+
+msgid "Filter by Playlist"
+msgstr "Filtra per Playlist"
+
+msgid "How to Request Songs"
+msgstr "Come Richiedere Canzoni"
+
+msgid "Your guide to using the music request system"
+msgstr "La tua guida per usare il sistema di richiesta musicale"
+
+msgid "Getting Started"
+msgstr "Iniziamo"
+
+msgid "Follow these simple steps to request your favorite songs"
+msgstr "Segui questi semplici passaggi per richiedere le tue canzoni preferite"
+
+msgid "Browse the Song Library"
+msgstr "Sfoglia la Libreria Musicale"
+
+msgid "Scroll through the list of available songs. Use the search box at the top to quickly find a specific song or artist."
+msgstr "Scorri l'elenco delle canzoni disponibili. Usa la casella di ricerca in alto per trovare rapidamente una canzone o un artista specifico."
+
+msgid "Search by Title or Artist"
+msgstr "Cerca per Titolo o Artista"
+
+msgid "Type in the search box to filter songs. You can search by song title, artist name, or even language!"
+msgstr "Digita nella casella di ricerca per filtrare le canzoni. Puoi cercare per titolo della canzone, nome dell'artista o anche per lingua!"
+
+msgid "Click the Music Icon to Request"
+msgstr "Clicca sull'Icona Musicale per Richiedere"
+
+msgid "Found a song you like? Simply click the music note icon 🎵 next to the song. The song will be added to your request queue!"
+msgstr "Hai trovato una canzone che ti piace? Clicca semplicemente sull'icona della nota musicale 🎵 accanto alla canzone. La canzone verrà aggiunta alla tua coda di richieste!"
+
+msgid "View Your Requests"
+msgstr "Visualizza le Tue Richieste"
+
+msgid "Your requested songs appear in the box at the top of the page. You can see all the songs you have requested during this session."
+msgstr "Le canzoni richieste appaiono nella casella in alto nella pagina. Puoi vedere tutte le canzoni che hai richiesto durante questa sessione."
+
+msgid "Remove Requests"
+msgstr "Rimuovi Richieste"
+
+msgid "Click on the X icon to clear the search"
+msgstr "Clicca sull'icona X per cancellare la ricerca"
+
+msgid "To clear your search and see all songs again, click the X icon next to the search box."
+msgstr "Per cancellare la ricerca e vedere di nuovo tutte le canzoni, clicca sull'icona X accanto alla casella di ricerca."
+
+msgid "Click on the Song to Request"
+msgstr "Clicca sulla Canzone per Richiederla"
+
+msgid "Found a song you like? Simply click anywhere on the song card. The song will be added to your request queue!"
+msgstr "Trovata una canzone che ti piace? Basta cliccare ovunque sulla card della canzone. La canzone verrà aggiunta alla tua coda di richieste!"
+
+msgid "Reset Search"
+msgstr "Reimposta Ricerca"
+
+msgid "To reset your search and start fresh, click the X icon in the search bar to clear all filters."
+msgstr "Per reimpostare la ricerca e ricominciare, clicca sull'icona X nella barra di ricerca per cancellare tutti i filtri."
+
+msgid "Changed your mind? No problem! Click the ✖ button next to any song in your request box to remove it from the queue."
+msgstr "Hai cambiato idea? Nessun problema! Clicca sul pulsante ✖ accanto a qualsiasi canzone nella tua casella delle richieste per rimuoverla dalla coda."
+
+msgid "Pro Tip"
+msgstr "Suggerimento"
+
+msgid "There is a limit on the number of songs you can request at once. If you reach the limit, you will need to wait for the artist to play one of your songs before requesting more."
+msgstr "C'è un limite al numero di canzoni che puoi richiedere contemporaneamente. Se raggiungi il limite, dovrai aspettare che l'artista suoni una delle tue canzoni prima di richiederne altre."
+
+msgid "Key Features"
+msgstr "Caratteristiche Principali"
+
+msgid "What makes this request system special"
+msgstr "Cosa rende speciale questo sistema di richieste"
+
+msgid "Smart Search"
+msgstr "Ricerca Intelligente"
+
+msgid "Instantly find songs by title, artist, or language"
+msgstr "Trova istantaneamente canzoni per titolo, artista o lingua"
+
+msgid "Multilingual"
+msgstr "Multilingue"
+
+msgid "Songs in multiple languages with flag indicators"
+msgstr "Canzoni in più lingue con indicatori di bandiera"
+
+msgid "Mobile Friendly"
+msgstr "Ottimizzato per Mobile"
+
+msgid "Works perfectly on phones, tablets, and computers"
+msgstr "Funziona perfettamente su telefoni, tablet e computer"
+
+msgid "Real-Time Updates"
+msgstr "Aggiornamenti in Tempo Reale"
+
+msgid "See your requests update instantly"
+msgstr "Vedi le tue richieste aggiornarsi istantaneamente"
+
+msgid "Ready to Start?"
+msgstr "Pronto per Iniziare?"
+
+msgid "Jump back to the song list and start requesting!"
+msgstr "Torna all'elenco delle canzoni e inizia a richiedere!"
+
+msgid "Now that you know how it works, go ahead and request your favorite songs. The artist will see your requests and play them during the performance!"
+msgstr "Ora che sai come funziona, vai avanti e richiedi le tue canzoni preferite. L'artista vedrà le tue richieste e le suonerà durante l'esibizione!"
+
+msgid "Go to Song List"
+msgstr "Vai all'Elenco delle Canzoni"
+
+msgid "Back to Song List"
+msgstr "Torna all'Elenco delle Canzoni"
+
+msgid "How to Use"
+msgstr "Istruzioni"
+
+msgid "Forgot Password"
+msgstr "Password Dimenticata"
+
+msgid "Forgot Password?"
+msgstr "Password Dimenticata?"
+
+msgid "Password reset email sent! Check your inbox."
+msgstr "Email di ripristino inviata! Controlla la tua casella di posta."
+
+msgid "Email system not configured. Your reset link is shown below."
+msgstr "Sistema email non configurato. Il tuo link di ripristino è mostrato qui sotto."
+
+msgid "If that email is registered, a password reset link has been sent."
+msgstr "Se questa email è registrata, ti è stato inviato un link di ripristino password."
+
+msgid "Password Reset Link"
+msgstr "Link di Ripristino Password"
+
+msgid "Copy"
+msgstr "Copia"
+
+msgid "Copied!"
+msgstr "Copiato!"
+
+msgid "Enter your email address and we'll send you a link to reset your password."
+msgstr "Inserisci il tuo indirizzo email e ti invieremo un link per reimpostare la password."
+
+msgid "Email Address"
+msgstr "Indirizzo Email"
+
+msgid "Send Reset Link"
+msgstr "Invia Link di Ripristino"
+
+msgid "Back to Login"
+msgstr "Torna al Login"
+
+msgid "Set Your Password"
+msgstr "Imposta la Tua Password"
+
+msgid "Welcome! Please create a secure password for your account."
+msgstr "Benvenuto! Crea una password sicura per il tuo account."
+
+msgid "New Password"
+msgstr "Nuova Password"
+
+msgid "At least 6 characters"
+msgstr "Almeno 6 caratteri"
+
+msgid "Confirm Password"
+msgstr "Conferma Password"
+
+msgid "Confirm New Password"
+msgstr "Conferma Nuova Password"
+
+msgid "Set Password"
+msgstr "Imposta Password"
+
+msgid "Change Password"
+msgstr "Cambia Password"
+
+msgid "Update your account password"
+msgstr "Aggiorna la password del tuo account"
+
+msgid "Current Password"
+msgstr "Password Attuale"
+
+msgid "Password changed successfully!"
+msgstr "Password cambiata con successo!"
+
+msgid "Error changing password"
+msgstr "Errore nel cambio password"
+
+msgid "New passwords do not match"
+msgstr "Le nuove password non corrispondono"
+
+msgid "Upcoming Shows"
+msgstr "Prossimi Concerti"
+
+msgid "Events Calendar"
+msgstr "Calendario Eventi"
+
+msgid "Link to your upcoming shows and events"
+msgstr "Link ai tuoi prossimi concerti ed eventi"
+
+msgid "Events/Calendar URL"
+msgstr "URL Calendario/Eventi"
+
+msgid "Fans will see a link to your upcoming shows in the app"
+msgstr "I fan vedranno un link ai tuoi prossimi concerti nell'app"
+
+msgid "Save Events Link"
+msgstr "Salva Link Eventi"
+
+msgid "Events link updated successfully!"
+msgstr "Link eventi aggiornato con successo!"
+
+msgid "Error updating events link"
+msgstr "Errore nell'aggiornamento del link eventi"
+
+msgid "Invite Musicians"
+msgstr "Invita Musicisti"
+
+msgid "Share your referral link and help other musicians discover Musium!"
+msgstr "Condividi il tuo link di invito e aiuta altri musicisti a scoprire Musium!"
+
+msgid "Your Referral Link"
+msgstr "Il Tuo Link di Invito"
+
+msgid "Copy Link"
+msgstr "Copia Link"
+
+msgid "Link copied to clipboard!"
+msgstr "Link copiato negli appunti!"
+
+msgid "Referrals"
+msgstr "Inviti"
+
+msgid "Musicians you invited"
+msgstr "Musicisti che hai invitato"
+
+msgid "Referral link not available. Please contact support."
+msgstr "Link di invito non disponibile. Contatta l'assistenza."
+
+msgid "Invite by Email"
+msgstr "Invita via Email"
+
+msgid "Email Address"
+msgstr "Indirizzo Email"
+
+msgid "Send Invitation"
+msgstr "Invia Invito"
+
+msgid "Invitation sent successfully!"
+msgstr "Invito inviato con successo!"
+
+msgid "Error sending invitation"
+msgstr "Errore nell'invio dell'invito"
+
+msgid "Bulk Fetch from Spotify"
+msgstr "Scarica Dati da Spotify"
+
+msgid "Automatically fetch missing images, genres, and languages for all songs"
+msgstr "Scarica automaticamente immagini, generi e lingue mancanti per tutte le canzoni"
+
+msgid "Fetch Missing Data"
+msgstr "Scarica Dati Mancanti"
+
+msgid "This may take a few minutes depending on your song library size."
+msgstr "Potrebbe richiedere alcuni minuti a seconda della dimensione della tua libreria."
+
+msgid "This will scan all songs and automatically download missing artist images, add genres, and detect languages from Spotify."
+msgstr "Questo analizzerà tutte le canzoni e scaricherà automaticamente le immagini degli artisti mancanti, aggiungerà i generi e rileverà le lingue da Spotify."
+
+msgid "Please enter an email address"
+msgstr "Per favore inserisci un indirizzo email"
+
+msgid "Please enter a valid email address"
+msgstr "Per favore inserisci un indirizzo email valido"
+
+msgid "Sending..."
+msgstr "Invio in corso..."
+
+msgid "No musicians have signed up yet. The list will update when someone uses your referral link to create an account."
+msgstr "Nessun musicista si è ancora iscritto. La lista si aggiornerà quando qualcuno userà il tuo link di invito per creare un account."
+
+msgid "Delete All Songs"
+msgstr "Elimina Tutte le Canzoni"
+
+msgid "Permanently remove all songs from your library"
+msgstr "Rimuovi permanentemente tutte le canzoni dalla tua libreria"
+
+msgid "Warning"
+msgstr "Avviso"
+
+msgid "This will permanently delete all songs from your library. This action cannot be undone. All associated song requests will also be deleted."
+msgstr "Questo eliminerà permanentemente tutte le canzoni dalla tua libreria. Questa azione non può essere annullata. Anche tutte le richieste di canzoni associate verranno eliminate."
+
+msgid "Sample Songs"
+msgstr "Canzoni Campione"
+
+msgid "Populate your library with sample songs for testing"
+msgstr "Popola la tua libreria con canzoni campione per testare l'app"
+
+msgid "Add Sample Songs"
+msgstr "Aggiungi Canzoni Campione"
+
+msgid "Delete Sample Songs"
+msgstr "Elimina Canzoni Campione"
+
+msgid "Sample songs are great for testing the app. They include popular songs across multiple genres and languages. You can delete them anytime."
+msgstr "Le canzoni campione sono ottime per testare l'app. Includono canzoni popolari di vari generi e lingue. Puoi eliminarle in qualsiasi momento."
+
+msgid "Adding songs..."
+msgstr "Aggiunta canzoni..."
+
+msgid "Deleting..."
+msgstr "Eliminazione..."
+
+msgid "Add 51 sample songs to your library? This is great for testing!"
+msgstr "Aggiungere 51 canzoni campione alla tua libreria? Ottimo per testare l'app!"
+
+msgid "Delete all sample songs? Your real songs will not be affected."
+msgstr "Eliminare tutte le canzoni campione? Le tue canzoni vere non saranno toccate."
+
+msgid "WARNING: This will permanently delete ALL songs from your library! This action CANNOT be undone. Type DELETE ALL to confirm:"
+msgstr "ATTENZIONE: Questo eliminerà permanentemente TUTTE le canzoni dalla tua libreria! Questa azione NON può essere annullata. Digita DELETE ALL per confermare:"
+
+msgid "Deletion cancelled - confirmation text did not match"
+msgstr "Eliminazione annullata - il testo di conferma non corrisponde"
+
+msgid "Setup Wizard"
+msgstr "Wizard di Configurazione"
+
+msgid "Configure your profile, import songs, and learn about all features"
+msgstr "Configura il tuo profilo, importa canzoni e scopri tutte le funzionalità"
+
+msgid "Run Setup Wizard"
+msgstr "Avvia Wizard"
+
+msgid "Update Logo"
+msgstr "Aggiorna Logo"
+
+msgid "Upload a new logo image (16x16 recommended)"
+msgstr "Carica una nuova immagine del logo (16x16 consigliato)"
+
+msgid "Update Welcome Banner"
+msgstr "Aggiorna Banner di Benvenuto"
+
+msgid "Upload a new welcome screen banner image"
+msgstr "Carica una nuova immagine del banner di benvenuto"
+
+msgid "Print QR Code"
+msgstr "Stampa Codice QR"
+
+msgid "Print a QR code for customers to request songs"
+msgstr "Stampa un codice QR per far richiedere canzoni ai clienti"
+
+msgid "Open Printable QR Code"
+msgstr "Apri Codice QR Stampabile"
+
+msgid "This will open a beautifully designed page with your QR code that customers can scan to request songs. Perfect for printing and displaying at your venue!"
+msgstr "Questo aprirà una pagina dal design accattivante con il tuo codice QR che i clienti possono scannerizzare per richiedere canzoni. Perfetto da stampare ed esporre nel tuo locale!"
+
+msgid "Profile"
+msgstr "Profilo"
+
+msgid "Songs"
+msgstr "Canzoni"
+
+msgid "Settings"
+msgstr "Impostazioni"
+
+msgid "Promote"
+msgstr "Promuovi"
+
+msgid "Tutorial"
+msgstr "Tutorial"
+
+msgid "Artist Profile"
+msgstr "Profilo Artista"
+
+msgid "Tell us about yourself and customize your artist page"
+msgstr "Raccontaci di te e personalizza la tua pagina artista"
+
+msgid "Artist Name"
+msgstr "Nome Artista"
+
+msgid "Your URL"
+msgstr "Il Tuo URL"
+
+msgid "Only lowercase letters, numbers, and hyphens. Cannot be changed later!"
+msgstr "Solo lettere minuscole, numeri e trattini. Non potrà essere modificato successivamente!"
+
+msgid "Bio / Description"
+msgstr "Bio / Descrizione"
+
+msgid "Tell your audience about yourself..."
+msgstr "Racconta al tuo pubblico di te..."
+
+msgid "A brief description that will appear on your public page"
+msgstr "Una breve descrizione che apparirà sulla tua pagina pubblica"
+
+msgid "Logo Image"
+msgstr "Immagine Logo"
+
+msgid "Current logo"
+msgstr "Logo attuale"
+
+msgid "Square image recommended (512x512px)"
+msgstr "Immagine quadrata consigliata (512x512px)"
+
+msgid "Banner Image"
+msgstr "Immagine Banner"
+
+msgid "Current banner"
+msgstr "Banner attuale"
+
+msgid "Wide image recommended (1920x1080px)"
+msgstr "Immagine panoramica consigliata (1920x1080px)"
+
+msgid "Website URL"
+msgstr "URL Sito Web"
+
+msgid "Event Calendar Link"
+msgstr "Link Calendario Eventi"
+
+msgid "Optional: Link to your event calendar"
+msgstr "Opzionale: Link al tuo calendario eventi"
+
+msgid "Import Your Songs"
+msgstr "Importa le Tue Canzoni"
+
+msgid "Add songs to your repertoire - you can always add more later"
+msgstr "Aggiungi canzoni al tuo repertorio - potrai sempre aggiungerne altre in seguito"
+
+msgid "Upload CSV File"
+msgstr "Carica File CSV"
+
+msgid "Import your existing song list from a CSV file"
+msgstr "Importa la tua lista di canzoni esistente da un file CSV"
+
+msgid "Download Template"
+msgstr "Scarica Template"
+
+msgid "Format: Title, Author, Language, Genre"
+msgstr "Formato: Titolo, Autore, Lingua, Genere"
+
+msgid "Format: Title, Author, Language, Genre, Playlist (optional)"
+msgstr "Formato: Titolo, Autore, Lingua, Genere, Playlist (opzionale)"
+
+msgid "OR"
+msgstr "OPPURE"
+
+msgid "Load Sample Songs"
+msgstr "Carica Canzoni di Esempio"
+
+msgid "Start with our curated list of popular songs"
+msgstr "Inizia con la nostra lista curata di canzoni popolari"
+
+msgid "Load 100+ Sample Songs"
+msgstr "Carica 100+ Canzoni di Esempio"
+
+msgid "Warning"
+msgstr "Attenzione"
+
+msgid "No songs have been imported. You can add them later from the admin panel."
+msgstr "Nessuna canzone è stata importata. Puoi aggiungerle successivamente dal pannello admin."
+
+msgid "App Settings"
+msgstr "Impostazioni App"
+
+msgid "Configure how your song request app works"
+msgstr "Configura come funziona la tua app di richieste musicali"
+
+msgid "Max Requests Per User"
+msgstr "Massimo Richieste per Utente"
+
+msgid "How many songs each user can request"
+msgstr "Quante canzoni ogni utente può richiedere"
+
+msgid "Venue Name"
+msgstr "Nome Locale"
+
+msgid "e.g., The Blue Note, Central Park..."
+msgstr "es., The Blue Note, Central Park..."
+
+msgid "Optional: Where you typically perform"
+msgstr "Opzionale: Dove ti esibisci abitualmente"
+
+msgid "Default Language"
+msgstr "Lingua Predefinita"
+
+msgid "The default language for your public page"
+msgstr "La lingua predefinita per la tua pagina pubblica"
+
+msgid "Promote Your App"
+msgstr "Promuovi la Tua App"
+
+msgid "Share your song request page with your audience"
+msgstr "Condividi la tua pagina di richieste con il tuo pubblico"
+
+msgid "Your Public Link"
+msgstr "Il Tuo Link Pubblico"
+
+msgid "Copy"
+msgstr "Copia"
+
+msgid "Preview"
+msgstr "Anteprima"
+
+msgid "QR Code"
+msgstr "Codice QR"
+
+msgid "Print this QR code for easy access at your events"
+msgstr "Stampa questo codice QR per accesso facile ai tuoi eventi"
+
+msgid "Invite a Friend"
+msgstr "Invita un Amico"
+
+msgid "Share your experience with other artists"
+msgstr "Condividi la tua esperienza con altri artisti"
+
+msgid "Send Invite"
+msgstr "Invia Invito"
+
+msgid "You're All Set!"
+msgstr "Sei Pronto!"
+
+msgid "Watch this quick tutorial to learn about the main features"
+msgstr "Guarda questo breve tutorial per conoscere le funzionalità principali"
+
+msgid "Tutorial Video Coming Soon!"
+msgstr "Video Tutorial in Arrivo!"
+
+msgid "In the meantime, explore the admin panel to discover all features"
+msgstr "Nel frattempo, esplora il pannello admin per scoprire tutte le funzionalità"
+
+msgid "Setup Complete!"
+msgstr "Configurazione Completata!"
+
+msgid "Your song request app is ready to use. Here's what you can do next:"
+msgstr "La tua app di richieste musicali è pronta. Ecco cosa puoi fare:"
+
+msgid "Share your public link with your audience"
+msgstr "Condividi il tuo link pubblico con il tuo pubblico"
+
+msgid "Customize your song list in the admin panel"
+msgstr "Personalizza la tua lista di canzoni nel pannello admin"
+
+msgid "View and manage song requests in the queue"
+msgstr "Visualizza e gestisci le richieste nella coda"
+
+msgid "Update your profile and settings anytime"
+msgstr "Aggiorna il tuo profilo e le impostazioni in qualsiasi momento"
+
+msgid "Previous"
+msgstr "Precedente"
+
+msgid "Skip for Now"
+msgstr "Salta per Ora"
+
+msgid "Next"
+msgstr "Avanti"
+
+msgid "Go to Dashboard"
+msgstr "Vai alla Dashboard"
+
+msgid "Please enter your artist name"
+msgstr "Inserisci il nome del tuo artista"
+
+msgid "Please enter a URL slug"
+msgstr "Inserisci uno slug URL"
+
+msgid "Please wait for slug validation..."
+msgstr "Attendere la validazione dello slug..."
+
+msgid "Please set max requests per user"
+msgstr "Imposta il massimo di richieste per utente"
+
+msgid "Loading sample songs..."
+msgstr "Caricamento canzoni di esempio..."
+
+msgid "Link copied to clipboard!"
+msgstr "Link copiato negli appunti!"
+
+msgid "Please enter an email address"
+msgstr "Inserisci un indirizzo email"
+
+msgid "Please enter a valid email address"
+msgstr "Inserisci un indirizzo email valido"
+
+msgid "Invite sent!"
+msgstr "Invito inviato!"
+
+msgid "Setup completed successfully!"
+msgstr "Configurazione completata con successo!"
+
+msgid "Error completing setup"
+msgstr "Errore nel completamento della configurazione"
+
+msgid "Are you sure you want to skip the setup wizard? You can always access it later from the admin panel."
+msgstr "Sei sicuro di voler saltare il wizard di configurazione? Potrai sempre accedervi in seguito dal pannello admin."
+
+msgid "Skip Setup"
+msgstr "Salta Configurazione"
+
+msgid "Available!"
+msgstr "Disponibile!"
+
+msgid "Error checking availability"
+msgstr "Errore nel controllo della disponibilità"
+
+msgid "Upload Songs"
+msgstr "Carica Canzoni"
+
+msgid "Uploading and importing songs..."
+msgstr "Caricamento e importazione canzoni in corso..."
+
+msgid "Songs imported successfully!"
+msgstr "Canzoni importate con successo!"
+
+msgid "Failed to import songs"
+msgstr "Errore nell'importazione delle canzoni"
+
+msgid "Please select a CSV file first"
+msgstr "Seleziona prima un file CSV"
+
+msgid "Error uploading CSV file"
+msgstr "Errore nel caricamento del file CSV"
+
+msgid "Error loading sample songs"
+msgstr "Errore nel caricamento delle canzoni di esempio"
+
+msgid "Remove Duplicates"
+msgstr "Rimuovi Duplicati"
+
+msgid "Are you sure you want to remove duplicate songs? This will keep only the first occurrence of each duplicate."
+msgstr "Sei sicuro di voler rimuovere le canzoni duplicate? Verrà mantenuta solo la prima occorrenza di ogni duplicato."
+
+msgid "Confirm Remove Duplicates"
+msgstr "Conferma Rimozione Duplicati"
+
+msgid "Error removing duplicates"
+msgstr "Errore nell'eliminazione dei duplicati"
+
+msgid "Current password is required"
+msgstr "La password corrente è obbligatoria"
+
+msgid "Password must be at least 6 characters long"
+msgstr "La password deve essere lunga almeno 6 caratteri"
+
+msgid "Passwords do not match"
+msgstr "Le password non corrispondono"
+
+msgid "Loading..."
+msgstr "Caricamento..."
+
+msgid "Artist not found on Spotify"
+msgstr "Artista non trovato su Spotify"
+
+msgid "Spotify request timed out. Please check your internet connection and try again."
+msgstr "Richiesta Spotify scaduta. Controlla la connessione internet e riprova."
+
+msgid "Starting bulk fetch..."
+msgstr "Avvio caricamento di massa..."
+
+msgid "Setup completed successfully! Redirecting to your song library..."
+msgstr "Configurazione completata con successo! Reindirizzamento alla libreria musicale..."
+
+msgid "Scan to Request Your Favorite Songs"
+msgstr "Scansiona per Richiedere le Tue Canzoni Preferite"
+
+msgid "How to Use"
+msgstr "Istruzioni"
+
+msgid "Open your phone camera app"
+msgstr "Apri l'app fotocamera del tuo telefono"
+
+msgid "Point it at the QR code above"
+msgstr "Puntala sul codice QR qui sopra"
+
+msgid "Tap the notification that appears"
+msgstr "Tocca la notifica che appare"
+
+msgid "Browse and request your favorite songs!"
+msgstr "Sfoglia e richiedi le tue canzoni preferite!"
+
+msgid "Or visit:"
+msgstr "Oppure visita:"
+
+msgid "Language"
+msgstr "Lingua"
+
+msgid " Link to your event calendar"
+msgstr " Link al tuo calendario eventi"
+
+msgid " Title, Author, Language, Genre"
+msgstr " Titolo, Autore, Lingua, Genere"
+
+msgid " Where you typically perform"
+msgstr " Dove ti esibisci abitualmente"
+
+msgid " title, author, language, image, requests, popularity, genre, playlist"
+msgstr " titolo, autore, lingua, immagine, richieste, popolarità, genere, playlist"
+
+msgid "Are you sure you want to delete this song ? "
+msgstr "Sei sicuro di voler eliminare questa canzone? "
+
+msgid "Are you sure you want to reset the popularity of all songs to zero ? "
+msgstr "Sei sicuro di voler azzerare la popolarità di tutte le canzoni? "
+
+msgid "Current Banner"
+msgstr "Banner Attuale"
+
+msgid "Current Logo"
+msgstr "Logo Attuale"
+
+msgid "Deutsch"
+msgstr "Tedesco"
+
+msgid "Download Song Library as CSV"
+msgstr "Scarica Libreria Canzoni come CSV"
+
+msgid "Edit"
+msgstr "Modifica"
+
+msgid "Enter venue name"
+msgstr "Inserisci nome locale"
+
+msgid "Espanol"
+msgstr "Spagnolo"
+
+msgid "Export all your songs to backup or edit offline"
+msgstr "Esporta tutte le tue canzoni per backup o modifica offline"
+
+msgid "Fetch Information from Spotify"
+msgstr "Recupera Informazioni da Spotify"
+
+msgid "Fetching images, genres, and languages from Spotify..."
+msgstr "Recupero immagini, generi e lingue da Spotify..."
+
+msgid "Find and remove duplicate entries (keeps the oldest copy"
+msgstr "Trova e rimuovi voci duplicate (mantiene la copia più vecchia"
+
+msgid "Français"
+msgstr "Francese"
+
+msgid "Italiano"
+msgstr "Italiano"
+
+msgid "Minimum 4 columns required. See CSV_FORMAT.md for details."
+msgstr "Minimo 4 colonne richieste. Vedi CSV_FORMAT.md per dettagli."
+
+msgid "Optional"
+msgstr "Opzionale"
+
+msgid "Playlist"
+msgstr "Playlist"
+
+msgid "Please enter the author name to fetch the image from Spotify"
+msgstr "Inserisci il nome dell'autore per recuperare l'immagine da Spotify"
+
+msgid "Share your referral link and help other musicians discover Setly!"
+msgstr "Condividi il tuo link di invito e aiuta altri musicisti a scoprire Setly!"
+
+msgid "Square image recommended (512x512px"
+msgstr "Immagine quadrata consigliata (512x512px"
+
+msgid "Upload a new logo image (16x16 recommended"
+msgstr "Carica una nuova immagine del logo (16x16 consigliato"
+
+msgid "Uploading..."
+msgstr "Caricamento..."
+
+msgid "Wide image recommended (1920x1080px"
+msgstr "Immagine panoramica consigliata (1920x1080px"
+
+msgid "friend@example.com"
+msgstr "amico@esempio.com"
+
+msgid "Info"
+msgstr "Info"
+
+msgid "Branding"
+msgstr "Branding"
+
+msgid "Basic Information"
+msgstr "Informazioni di Base"
+
+msgid "Let's start with the essentials"
+msgstr "Iniziamo con le informazioni essenziali"
+
+msgid "Branding & Links"
+msgstr "Branding e Collegamenti"
+
+msgid "Customize your artist page appearance"
+msgstr "Personalizza l'aspetto della tua pagina artista"
+
+msgid "Branding & URL"
+msgstr "Branding e URL"
+
+msgid "Choose your URL and customize your page appearance"
+msgstr "Scegli il tuo URL e personalizza l'aspetto della pagina"
+
+msgid "Your artist or band name"
+msgstr "Il tuo nome d'arte o della band"
+
+msgid "Artist info updated successfully!"
+msgstr "Informazioni artista aggiornate con successo!"
+
+msgid "Error updating artist info"
+msgstr "Errore nell'aggiornamento delle informazioni artista"
+
+msgid "Save Artist Info"
+msgstr "Salva Informazioni Artista"
+
+msgid "Total Processed"
+msgstr "Totale Processate"
+
+msgid "Page will reload in 5 seconds..."
+msgstr "La pagina si ricaricherà tra 5 secondi..."
+
+msgid "Processing... Please wait"
+msgstr "Elaborazione... Attendere prego"
+
+msgid "Images fetched"
+msgstr "Immagini scaricate"
+
+msgid "Genres added"
+msgstr "Generi aggiunti"
+
+msgid "Languages added"
+msgstr "Lingue aggiunte"
+
+msgid "Downloading images from Spotify... Please wait"
+msgstr "Scaricamento immagini da Spotify... Attendere prego"
+
+msgid "There are"
+msgstr "Ci sono ancora"
+
+msgid "more songs in the database"
+msgstr "altre canzoni nel database"
+
+msgid "Continue with Next Batch"
+msgstr "Continua con il Prossimo Gruppo"
+
+msgid "Done for Now"
+msgstr "Finito per Ora"
+
+msgid "Continue processing or save for later"
+msgstr "Continua l'elaborazione o salva per dopo"
+
+msgid "Request timed out"
+msgstr "Richiesta scaduta"
+
+msgid "This can happen with large databases. Try again to continue processing more songs."
+msgstr "Questo può accadere con database grandi. Riprova per continuare a processare altre canzoni."
+
+msgid "Fetching data from Spotify..."
+msgstr "Scaricamento dati da Spotify..."
+
+msgid "This process:"
+msgstr "Questo processo:"
+
+msgid "Downloads artist images"
+msgstr "Scarica immagini degli artisti"
+
+msgid "Fetches music genres"
+msgstr "Recupera generi musicali"
+
+msgid "Detects song languages"
+msgstr "Rileva lingue delle canzoni"
+
+msgid "Estimated time: 30-60 seconds"
+msgstr "Tempo stimato: 30-60 secondi"
+
+msgid "Please keep this page open..."
+msgstr "Mantieni questa pagina aperta..."
+
+msgid "Connecting to Spotify..."
+msgstr "Connessione a Spotify..."
+
+msgid "Fetching artist data..."
+msgstr "Recupero dati artisti..."
+
+msgid "Downloading images..."
+msgstr "Scaricamento immagini..."
+
+msgid "Processing genres..."
+msgstr "Elaborazione generi..."
+
+msgid "Detecting languages..."
+msgstr "Rilevamento lingue..."
+
+msgid "Almost done..."
+msgstr "Quasi finito..."
+
+msgid "Close"
+msgstr "Chiudi"
+
+msgid "All done!"
+msgstr "Tutto fatto!"
+
+msgid "Close and Refresh"
+msgstr "Chiudi e Ricarica"
+
+msgid "Reloading page to show new images..."
+msgstr "Ricaricamento pagina per mostrare le nuove immagini..."
+
+msgid "Checking songs..."
+msgstr "Controllo canzoni..."
+
+msgid "Songs to process:"
+msgstr "Canzoni da processare:"
+
+msgid "Total songs:"
+msgstr "Totale canzoni:"
+
+msgid "Missing images:"
+msgstr "Immagini mancanti:"
+
+msgid "Missing genres:"
+msgstr "Generi mancanti:"
+
+msgid "Missing languages:"
+msgstr "Lingue mancanti:"
+
+msgid "Processing up to"
+msgstr "Processeremo fino a"
+
+msgid "songs per batch"
+msgstr "canzoni per batch"
+
+msgid "Still needed:"
+msgstr "Ancora necessario:"
+
+msgid "Auto-continue to next batch"
+msgstr "Continua automaticamente al prossimo batch"
+
+msgid "recommended"
+msgstr "consigliato"
+
+msgid "Continuing in"
+msgstr "Continuo tra"
+
+msgid "seconds..."
+msgstr "secondi..."
+
+msgid "Artists not found by Spotify"
+msgstr "Artisti non trovati da Spotify"
+
+msgid "These artists may have typos or be unknown on Spotify. Check the artist names in your database."
+msgstr "Questi artisti potrebbero avere errori di battitura o essere sconosciuti su Spotify. Controlla i nomi degli artisti nel database."
+
+msgid "Missing image"
+msgstr "Immagine mancante"
+
+msgid "No image"
+msgstr "Nessuna immagine"
+
+msgid "Warning:"
+msgstr "Attenzione:"
+
+msgid "songs are missing images. The PDF will show default icons for these songs. Continue anyway?"
+msgstr "canzoni non hanno immagini. Il PDF mostrerà icone predefinite per queste canzoni. Continuare comunque?"
+
+msgid "Missing Images"
+msgstr "Immagini Mancanti"

@@ -1564,6 +1564,33 @@ msgstr "Impossibile terminare la serata"
 msgid "Error ending gig"
 msgstr "Errore nella terminazione della serata"
 
+msgid "Send Message to Audience:"
+msgstr "Invia Messaggio al Pubblico:"
+
+msgid "Type your message here..."
+msgstr "Scrivi il tuo messaggio qui..."
+
+msgid "Send Message"
+msgstr "Invia Messaggio"
+
+msgid "Clear"
+msgstr "Cancella"
+
+msgid "Announcement sent successfully"
+msgstr "Messaggio inviato con successo"
+
+msgid "Announcement cleared"
+msgstr "Messaggio cancellato"
+
+msgid "Error sending announcement"
+msgstr "Errore nell'invio del messaggio"
+
+msgid "No active gig. Start a gig first."
+msgstr "Nessuna serata attiva. Avvia prima una serata."
+
+msgid "Close"
+msgstr "Chiudi"
+
 msgid "Already fetching image for this song. Please wait..."
 msgstr "Sto già scaricando l'immagine per questa canzone. Attendi..."
 

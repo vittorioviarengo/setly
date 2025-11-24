@@ -1126,16 +1126,127 @@ def upload_icon():
 @superadmin.route('/superadmin/logs')
 @superadmin_required
 def logs():
+    """Enhanced audit logs viewer with filtering, pagination, and search."""
     conn = create_connection()
     cursor = conn.cursor()
-    cursor.execute('''
-        SELECT * FROM audit_logs 
-        ORDER BY created_at DESC 
-        LIMIT 100
-    ''')
+    
+    # Get filter parameters
+    action_filter = request.args.get('action', '')
+    tenant_id_filter = request.args.get('tenant_id', '')
+    user_type_filter = request.args.get('user_type', '')
+    entity_type_filter = request.args.get('entity_type', '')
+    search_query = request.args.get('search', '')
+    page = int(request.args.get('page', 1))
+    per_page = int(request.args.get('per_page', 50))
+    
+    # Build WHERE clause
+    where_clauses = []
+    params = []
+    
+    if action_filter:
+        where_clauses.append("action LIKE ?")
+        params.append(f"%{action_filter}%")
+    
+    if tenant_id_filter:
+        try:
+            where_clauses.append("tenant_id = ?")
+            params.append(int(tenant_id_filter))
+        except (ValueError, TypeError):
+            pass  # Skip invalid tenant_id
+    
+    if user_type_filter:
+        where_clauses.append("user_type = ?")
+        params.append(user_type_filter)
+    
+    if entity_type_filter:
+        where_clauses.append("entity_type = ?")
+        params.append(entity_type_filter)
+    
+    if search_query:
+        where_clauses.append("(details LIKE ? OR action LIKE ? OR user_name LIKE ?)")
+        params.extend([f"%{search_query}%", f"%{search_query}%", f"%{search_query}%"])
+    
+    where_sql = " WHERE " + " AND ".join(where_clauses) if where_clauses else ""
+    
+    # Get total count for pagination
+    count_query = f"SELECT COUNT(*) as total FROM audit_logs {where_sql}"
+    cursor.execute(count_query, tuple(params))
+    total_logs = cursor.fetchone()['total']
+    total_pages = (total_logs + per_page - 1) // per_page
+    
+    # Get logs with pagination
+    offset = (page - 1) * per_page
+    query = f'''
+        SELECT 
+            al.*,
+            t.name as tenant_name,
+            t.slug as tenant_slug
+        FROM audit_logs al
+        LEFT JOIN tenants t ON al.tenant_id = t.id
+        {where_sql}
+        ORDER BY al.created_at DESC 
+        LIMIT ? OFFSET ?
+    '''
+    params.extend([per_page, offset])
+    cursor.execute(query, tuple(params))
     logs = cursor.fetchall()
+    
+    # Get unique values for filter dropdowns
+    cursor.execute("SELECT DISTINCT action FROM audit_logs ORDER BY action")
+    available_actions = [row['action'] for row in cursor.fetchall()]
+    
+    cursor.execute("SELECT DISTINCT user_type FROM audit_logs WHERE user_type IS NOT NULL ORDER BY user_type")
+    available_user_types = [row['user_type'] for row in cursor.fetchall()]
+    
+    cursor.execute("SELECT DISTINCT entity_type FROM audit_logs ORDER BY entity_type")
+    available_entity_types = [row['entity_type'] for row in cursor.fetchall()]
+    
+    # Get tenant list for filter
+    cursor.execute("SELECT DISTINCT al.tenant_id, t.name, t.slug FROM audit_logs al LEFT JOIN tenants t ON al.tenant_id = t.id WHERE al.tenant_id IS NOT NULL ORDER BY t.name")
+    available_tenants = cursor.fetchall()
+    
+    # Get statistics
+    cursor.execute("SELECT COUNT(*) as total FROM audit_logs")
+    stats_total = cursor.fetchone()['total']
+    
+    cursor.execute("SELECT COUNT(*) as total FROM audit_logs WHERE created_at >= datetime('now', '-24 hours')")
+    stats_today = cursor.fetchone()['total']
+    
+    cursor.execute("SELECT COUNT(*) as total FROM audit_logs WHERE created_at >= datetime('now', '-7 days')")
+    stats_week = cursor.fetchone()['total']
+    
+    # Top actions
+    cursor.execute("""
+        SELECT action, COUNT(*) as count 
+        FROM audit_logs 
+        WHERE created_at >= datetime('now', '-7 days')
+        GROUP BY action 
+        ORDER BY count DESC 
+        LIMIT 10
+    """)
+    top_actions = cursor.fetchall()
+    
     conn.close()
-    return render_template('superadmin/logs.html', logs=logs)
+    
+    return render_template('superadmin/logs.html', 
+                         logs=logs,
+                         page=page,
+                         per_page=per_page,
+                         total_logs=total_logs,
+                         total_pages=total_pages,
+                         action_filter=action_filter,
+                         tenant_id_filter=tenant_id_filter,
+                         user_type_filter=user_type_filter,
+                         entity_type_filter=entity_type_filter,
+                         search_query=search_query,
+                         available_actions=available_actions,
+                         available_user_types=available_user_types,
+                         available_entity_types=available_entity_types,
+                         available_tenants=available_tenants,
+                         stats_total=stats_total,
+                         stats_today=stats_today,
+                         stats_week=stats_week,
+                         top_actions=top_actions)
 
 # Translation management is now done manually via .po files
 # To add new translations:

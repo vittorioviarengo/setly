@@ -51,6 +51,16 @@
                     <button id="startGigButton" class="button">{{ _('Start Gig') }}</button>
                 {% endif %}
             </div>
+            {% if active_gig %}
+            <div class="action-item" style="flex-direction: column; align-items: flex-start;">
+                <label for="announcementInput">{{ _('Send Message to Audience:') }}</label>
+                <textarea id="announcementInput" placeholder="{{ _('Type your message here...') }}" rows="3" style="width: 100%; padding: 8px; margin: 5px 0; border: 1px solid #ddd; border-radius: 4px; font-family: inherit; resize: vertical;">{{ active_gig.announcement if active_gig.announcement else '' }}</textarea>
+                <div style="display: flex; gap: 10px; margin-top: 5px;">
+                    <button id="sendAnnouncementButton" class="button">{{ _('Send Message') }}</button>
+                    <button id="clearAnnouncementButton" class="button" style="background: #6c757d;">{{ _('Clear') }}</button>
+                </div>
+            </div>
+            {% endif %}
         </div>
         {% endif %}
 
@@ -473,6 +483,64 @@
                             });
                         }
                     );
+                });
+            }
+        })();
+        {% endif %}
+
+        // Announcement management
+        {% if is_admin and tenant and active_gig %}
+        (function() {
+            const tenantSlug = '{{ tenant.slug }}';
+            const sendAnnouncementButton = document.getElementById('sendAnnouncementButton');
+            const clearAnnouncementButton = document.getElementById('clearAnnouncementButton');
+            const announcementInput = document.getElementById('announcementInput');
+            
+            // Translations for JavaScript
+            const announcementTranslations = {
+                success: {{ _('Announcement sent successfully') | tojson }},
+                cleared: {{ _('Announcement cleared') | tojson }},
+                error: {{ _('Error sending announcement') | tojson }},
+                noGig: {{ _('No active gig. Start a gig first.') | tojson }}
+            };
+            
+            function sendAnnouncement(message) {
+                fetch(`/${tenantSlug}/send_announcement`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        announcement: message
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showSuccess(data.message || announcementTranslations.success);
+                    } else {
+                        showError(data.message || announcementTranslations.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error sending announcement:', error);
+                    showError(announcementTranslations.error + ': ' + error.message);
+                });
+            }
+            
+            if (sendAnnouncementButton) {
+                sendAnnouncementButton.addEventListener('click', function() {
+                    const message = announcementInput ? announcementInput.value.trim() : '';
+                    sendAnnouncement(message);
+                });
+            }
+            
+            if (clearAnnouncementButton) {
+                clearAnnouncementButton.addEventListener('click', function() {
+                    if (announcementInput) {
+                        announcementInput.value = '';
+                    }
+                    sendAnnouncement('');
                 });
             }
         })();

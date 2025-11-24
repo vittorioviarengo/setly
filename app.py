@@ -3135,6 +3135,52 @@ def tenant_get_active_gig(tenant_slug):
     finally:
         conn.close()
 
+@app.route('/<tenant_slug>/send_announcement', methods=['POST'])
+def tenant_send_announcement(tenant_slug):
+    """Send an announcement message to the current audience."""
+    if not session.get('is_tenant_admin') or session.get('tenant_slug') != tenant_slug:
+        return jsonify({'success': False, 'message': _('Unauthorized')}), 403
+    
+    data = request.get_json()
+    announcement = data.get('announcement', '').strip() if data else ''
+    
+    tenant_id = session.get('tenant_id')
+    if not tenant_id:
+        return jsonify({'success': False, 'message': _('Tenant ID not found')}), 400
+    
+    # Get active gig
+    active_gig = get_active_gig(tenant_id)
+    if not active_gig:
+        return jsonify({'success': False, 'message': _('No active gig. Start a gig first.')}), 400
+    
+    # Update announcement in the active gig
+    conn = create_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            UPDATE gigs 
+            SET announcement = ? 
+            WHERE id = ? AND tenant_id = ? AND is_active = 1
+        """, (announcement if announcement else None, active_gig['id'], tenant_id))
+        conn.commit()
+        
+        if announcement:
+            return jsonify({
+                'success': True, 
+                'message': _('Announcement sent successfully')
+            })
+        else:
+            return jsonify({
+                'success': True, 
+                'message': _('Announcement cleared')
+            })
+    except Exception as e:
+        app.logger.error(f"Error updating announcement: {e}", exc_info=True)
+        conn.rollback()
+        return jsonify({'success': False, 'message': _('Error sending announcement')}), 500
+    finally:
+        conn.close()
+
 @app.route('/<tenant_slug>/update_default_language', methods=['POST'])
 def tenant_update_default_language(tenant_slug):
     """Update tenant default language."""
@@ -5249,8 +5295,21 @@ def ensure_gigs_table():
             SELECT name FROM sqlite_master 
             WHERE type='table' AND name='gigs'
         """)
-        if cursor.fetchone():
-            app.logger.info("Gigs table already exists")
+        table_exists = cursor.fetchone()
+        
+        # Add announcement column if table exists but column doesn't
+        if table_exists:
+            try:
+                cursor.execute("ALTER TABLE gigs ADD COLUMN announcement TEXT NULL")
+                app.logger.info("Added announcement column to existing gigs table")
+            except sqlite3.OperationalError as e:
+                if "duplicate column name" in str(e).lower():
+                    app.logger.info("Column announcement already exists in gigs table")
+                else:
+                    raise
+        
+        if table_exists:
+            conn.commit()
             conn.close()
             return
         
@@ -5291,6 +5350,16 @@ def ensure_gigs_table():
         except sqlite3.OperationalError as e:
             if "duplicate column name" in str(e).lower():
                 app.logger.info("Column gig_id already exists in requests table")
+            else:
+                raise
+        
+        # Add announcement column to gigs table if it doesn't exist
+        try:
+            cursor.execute("ALTER TABLE gigs ADD COLUMN announcement TEXT NULL")
+            app.logger.info("Added announcement column to gigs table")
+        except sqlite3.OperationalError as e:
+            if "duplicate column name" in str(e).lower():
+                app.logger.info("Column announcement already exists in gigs table")
             else:
                 raise
         

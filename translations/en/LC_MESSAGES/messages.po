@@ -765,3 +765,30 @@ msgstr "Failed to end gig"
 
 msgid "Error ending gig"
 msgstr "Error ending gig"
+
+msgid "Send Message to Audience:"
+msgstr "Send Message to Audience:"
+
+msgid "Type your message here..."
+msgstr "Type your message here..."
+
+msgid "Send Message"
+msgstr "Send Message"
+
+msgid "Clear"
+msgstr "Clear"
+
+msgid "Announcement sent successfully"
+msgstr "Announcement sent successfully"
+
+msgid "Announcement cleared"
+msgstr "Announcement cleared"
+
+msgid "Error sending announcement"
+msgstr "Error sending announcement"
+
+msgid "No active gig. Start a gig first."
+msgstr "No active gig. Start a gig first."
+
+msgid "Close"
+msgstr "Close"

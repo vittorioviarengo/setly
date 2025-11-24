@@ -449,3 +449,30 @@ msgstr "Fehler beim Beenden des Events"
 
 msgid "Error ending gig"
 msgstr "Fehler beim Beenden des Events"
+
+msgid "Send Message to Audience:"
+msgstr "Nachricht an das Publikum senden:"
+
+msgid "Type your message here..."
+msgstr "Geben Sie hier Ihre Nachricht ein..."
+
+msgid "Send Message"
+msgstr "Nachricht senden"
+
+msgid "Clear"
+msgstr "Löschen"
+
+msgid "Announcement sent successfully"
+msgstr "Nachricht erfolgreich gesendet"
+
+msgid "Announcement cleared"
+msgstr "Nachricht gelöscht"
+
+msgid "Error sending announcement"
+msgstr "Fehler beim Senden der Nachricht"
+
+msgid "No active gig. Start a gig first."
+msgstr "Kein aktives Event. Starten Sie zuerst ein Event."
+
+msgid "Close"
+msgstr "Schließen"
