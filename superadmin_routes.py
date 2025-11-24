@@ -1943,6 +1943,13 @@ def bulk_spotify_process():
         
         app.logger.info(f"[Superadmin Bulk] Remaining: {remaining_images} images, {remaining_genres} genres, {remaining_languages} languages. Has more: {has_more}")
         
+        # When few images remain, increase batch size to find them more efficiently
+        # This helps when ORDER BY RANDOM() might not find the remaining songs easily
+        if remaining_images > 0 and remaining_images < 50:
+            # Increase batch size when few images remain to be more efficient
+            extended_batch = max(extended_batch, remaining_images * 2)
+            app.logger.info(f"[Superadmin Bulk] Few images remaining ({remaining_images}), increasing batch size to {extended_batch}")
+        
         # Remove skipped_reasons from stats before sending to frontend (too verbose)
         response_stats = {k: v for k, v in stats.items() if k != 'skipped_reasons'}
         
