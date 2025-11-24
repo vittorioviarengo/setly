@@ -425,6 +425,12 @@
                 
                 // INNER LOOP: Keep processing batches for this tenant
                 while (!shouldStop) {
+                    // Check if stop was requested before starting new batch
+                    if (shouldStop) {
+                        console.log(`[Superadmin Bulk] Stop requested for ${tenant.name}, exiting batch loop`);
+                        break;
+                    }
+                    
                     batchCount++;
                     
                     try {
@@ -493,13 +499,22 @@
                                 console.log(`[Superadmin Bulk] ${tenant.name} still has ${result.remaining} items remaining (${result.remaining_images} images, ${result.remaining_genres} genres, ${result.remaining_languages} languages)`);
                             }
                             
-                            // Small delay between batches
+                            // Small delay between batches (but check shouldStop first)
+                            if (shouldStop) {
+                                console.log(`[Superadmin Bulk] Stop requested for ${tenant.name}, exiting batch loop`);
+                                break;
+                            }
                             await new Promise(resolve => setTimeout(resolve, 2000));
                         } else {
                             updateTenantStatus(tenant.id, 'error', 'Error: ' + result.message, 0);
                             break;
                         }
                     } catch (error) {
+                        // If error is due to abort (stop requested), don't show error
+                        if (error.name === 'AbortError' && shouldStop) {
+                            console.log(`[Superadmin Bulk] Stop requested for ${tenant.name}, aborting current batch`);
+                            break;
+                        }
                         updateTenantStatus(tenant.id, 'error', 'Error: ' + error.message, 0);
                         break;
                     }
@@ -524,8 +539,11 @@
             }
             
             isProcessing = false;
+            shouldStop = false; // Reset stop flag
             document.getElementById('startBtn').style.display = 'inline-block';
             document.getElementById('stopBtn').style.display = 'none';
+            document.getElementById('stopBtn').disabled = false; // Re-enable button
+            document.getElementById('stopBtn').textContent = '⏸️ Stop Processing'; // Reset button text
             document.getElementById('batchSize').disabled = false;
             document.getElementById('tenantDelay').disabled = false;
             document.querySelectorAll('.tenant-checkbox').forEach(cb => cb.disabled = false);
@@ -534,6 +552,8 @@
                 showAlert('✅ Bulk fetch completed!<br>Images: ' + globalStats.imagesFetched + 
                          ', Genres: ' + globalStats.genresAdded + 
                          ', Languages: ' + globalStats.languagesAdded, 'success');
+            } else {
+                showAlert('⏸️ Bulk fetch stopped by user', 'info');
             }
         }
 
@@ -542,11 +562,9 @@
             document.getElementById('stopBtn').disabled = true;
             document.getElementById('stopBtn').textContent = 'Stopping...';
             
-            // Wait a moment for current batch to finish, then reload tenant data
-            setTimeout(async () => {
-                await loadTenantStatus();
-                showAlert('Bulk fetch stopped. Tenant data refreshed.', 'info');
-            }, 2000);
+            // The loop will check shouldStop and exit at the next iteration
+            // The button will be reset when isProcessing becomes false
+            // No need to wait here, the main loop will handle cleanup
         }
 
         function updateTenantStatus(tenantId, status, message, progress) {
