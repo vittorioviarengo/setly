@@ -3127,7 +3127,8 @@ def tenant_get_active_gig(tenant_slug):
                 'gig': {
                     'id': active_gig['id'],
                     'name': active_gig['name'],
-                    'start_time': active_gig['start_time']
+                    'start_time': active_gig['start_time'],
+                    'announcement': active_gig.get('announcement', '')
                 }
             })
         else:
@@ -3911,7 +3912,19 @@ def get_user_requested_song_ids():
         conn.close()
         
         requested_song_ids = [req['song_id'] for req in requests]
-        return jsonify({'requested_song_ids': requested_song_ids})
+        
+        # Also get active gig announcement if available
+        announcement = None
+        gig_id_for_announcement = None
+        if active_gig:
+            announcement = active_gig.get('announcement', '')
+            gig_id_for_announcement = active_gig.get('id')
+        
+        return jsonify({
+            'requested_song_ids': requested_song_ids,
+            'announcement': announcement if announcement else None,
+            'gig_id': gig_id_for_announcement
+        })
     except Exception as e:
         app.logger.error(f"Error fetching user requests: {e}")
         return jsonify({'requested_song_ids': []})

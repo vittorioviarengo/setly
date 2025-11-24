@@ -996,6 +996,83 @@ function getCurrentLanguageFilter() {
 
 // ===== AUTO-REFRESH: Check if requested songs have been played =====
 let lastRequestedSongIds = [];
+let lastAnnouncement = null;
+let lastGigId = null;
+
+function updateAnnouncementBanner(announcement, gigId) {
+    // Get or create the banner container
+    const titleDiv = document.getElementById('title-div');
+    if (!titleDiv) return;
+    
+    let announcementBanner = document.getElementById('announcementBanner');
+    
+    // If no announcement, hide and remove banner if it exists
+    if (!announcement || announcement.trim() === '') {
+        if (announcementBanner) {
+            announcementBanner.style.display = 'none';
+        }
+        lastAnnouncement = null;
+        lastGigId = null;
+        return;
+    }
+    
+    // If announcement changed or banner doesn't exist, create/update it
+    if (announcement !== lastAnnouncement || gigId !== lastGigId) {
+        // Create banner if it doesn't exist
+        if (!announcementBanner) {
+            announcementBanner = document.createElement('div');
+            announcementBanner.id = 'announcementBanner';
+            announcementBanner.className = 'announcement-banner';
+            announcementBanner.style.display = 'none';
+            
+            const announcementContent = document.createElement('div');
+            announcementContent.className = 'announcement-content';
+            
+            const announcementText = document.createElement('span');
+            announcementText.className = 'announcement-text';
+            
+            const announcementClose = document.createElement('button');
+            announcementClose.className = 'announcement-close';
+            announcementClose.id = 'announcementClose';
+            announcementClose.setAttribute('aria-label', 'Close');
+            announcementClose.textContent = '×';
+            
+            announcementContent.appendChild(announcementText);
+            announcementContent.appendChild(announcementClose);
+            announcementBanner.appendChild(announcementContent);
+            
+            // Insert after title-div
+            titleDiv.parentNode.insertBefore(announcementBanner, titleDiv.nextSibling);
+            
+            // Handle close button
+            announcementClose.addEventListener('click', function() {
+                const announcementHash = announcement.length > 0 ? announcement.substring(0, 30).replace(/[^a-zA-Z0-9]/g, '') : '';
+                const storageKey = `announcement_closed_${gigId}_${announcementHash}`;
+                announcementBanner.style.display = 'none';
+                localStorage.setItem(storageKey, 'true');
+            });
+        }
+        
+        // Update announcement text
+        const announcementText = announcementBanner.querySelector('.announcement-text');
+        if (announcementText) {
+            announcementText.textContent = announcement;
+        }
+        
+        // Check if user has closed this specific announcement
+        const announcementHash = announcement.length > 0 ? announcement.substring(0, 30).replace(/[^a-zA-Z0-9]/g, '') : '';
+        const storageKey = `announcement_closed_${gigId}_${announcementHash}`;
+        const isClosed = localStorage.getItem(storageKey);
+        
+        // Show banner if not closed
+        if (!isClosed) {
+            announcementBanner.style.display = 'block';
+        }
+        
+        lastAnnouncement = announcement;
+        lastGigId = gigId;
+    }
+}
 
 function checkForPlayedSongs() {
     // Only poll if user is logged in
@@ -1007,6 +1084,11 @@ function checkForPlayedSongs() {
         .then(response => response.json())
         .then(data => {
             const currentRequestedIds = data.requested_song_ids || [];
+            
+            // Check for announcement updates
+            const announcement = data.announcement || null;
+            const gigId = data.gig_id || null;
+            updateAnnouncementBanner(announcement, gigId);
             
             // On first load, just store the current state
             if (lastRequestedSongIds.length === 0) {
@@ -1043,6 +1125,39 @@ function checkForPlayedSongs() {
 
 // Start polling if user is logged in (interval configured in system settings)
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialize announcement banner if it exists in the template
+    const existingBanner = document.getElementById('announcementBanner');
+    if (existingBanner) {
+        const announcementText = existingBanner.querySelector('.announcement-text');
+        const announcementClose = document.getElementById('announcementClose');
+        
+        if (announcementText && announcementClose) {
+            // Get gig ID and announcement from data attributes or template
+            const bannerText = announcementText.textContent.trim();
+            if (bannerText) {
+                // Try to get gig ID from a data attribute or use a placeholder
+                const gigId = existingBanner.dataset.gigId || null;
+                lastAnnouncement = bannerText;
+                lastGigId = gigId;
+                
+                // Check if user has closed this announcement
+                const announcementHash = bannerText.length > 0 ? bannerText.substring(0, 30).replace(/[^a-zA-Z0-9]/g, '') : '';
+                const storageKey = `announcement_closed_${gigId}_${announcementHash}`;
+                const isClosed = localStorage.getItem(storageKey);
+                
+                if (!isClosed) {
+                    existingBanner.style.display = 'block';
+                }
+                
+                // Handle close button
+                announcementClose.addEventListener('click', function() {
+                    existingBanner.style.display = 'none';
+                    localStorage.setItem(storageKey, 'true');
+                });
+            }
+        }
+    }
+    
     if (globalUserName) {
         // Get interval from window (set by template) or use default 30 seconds
         const refreshInterval = window.autoRefreshInterval || 30000;
