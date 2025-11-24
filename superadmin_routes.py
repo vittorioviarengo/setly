@@ -1660,9 +1660,8 @@ def bulk_spotify_process():
         
         extended_batch = int(batch_size * batch_multiplier)
         
-        # First, get songs that match the obvious patterns OR have missing genre/language
-        # This query finds songs with obvious missing data
-        # Use ORDER BY RANDOM() to avoid selecting the same songs repeatedly
+        # First, prioritize songs that definitely need images (NULL, placeholder, http, etc.)
+        # This ensures we process songs that need images before those that might already have files
         cursor.execute('''
             SELECT id, title, author, image, genre, language 
             FROM songs 
@@ -1673,9 +1672,7 @@ def bulk_spotify_process():
                 image LIKE 'http%' OR
                 image LIKE '%setly%' OR
                 image LIKE '%music-icon%' OR
-                image LIKE '%default%' OR
-                genre IS NULL OR genre = '' OR 
-                language IS NULL OR language = '' OR language = 'unknown'
+                image LIKE '%default%'
             )
             ORDER BY RANDOM()
             LIMIT ?
@@ -1683,7 +1680,7 @@ def bulk_spotify_process():
         
         songs = cursor.fetchall()
         
-        # Also get songs that have missing genre/language (they might also have missing image files)
+        # If still not enough, get songs with missing genre/language (they might also have missing image files)
         # This helps us find songs with images in DB that don't exist physically
         if len(songs) < extended_batch:
             remaining = extended_batch - len(songs)
