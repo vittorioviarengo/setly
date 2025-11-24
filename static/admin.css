@@ -546,6 +546,10 @@ select {
     grid-column: 1;
     text-align: left;
     justify-self: start;
+    font-size: 0.8rem;
+    color: var(--text-primary);
+    font-weight: 600;
+    margin-bottom: 0.15rem;
 }
 
 .action-item input[type="text"],
@@ -560,13 +564,6 @@ select {
     justify-self: end;
     width: 100%;
     margin: 0;
-}
-
-.action-item > label {
-    font-size: 0.8rem;
-    color: var(--text-primary);
-    font-weight: 600;
-    margin-bottom: 0.15rem;
 }
 
 .action-item input[type="text"],
