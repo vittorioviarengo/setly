@@ -1005,7 +1005,7 @@
   letter-spacing: 1.60px;
   line-height: normal;
   word-wrap: break-word;
-  color: #dbd9d9;
+  color: white;
 }
 
 .announcement-close {
@@ -1036,11 +1036,13 @@
 .welcome-div {
   align-items: center; /* Center vertically */
   display: flex;
-  min-width: 341px;
+  min-width: 344px;
   height: auto; /* Allow height to adjust based on content */
   margin-top: -1px;
   position: relative;
-  width: 100%;
+  width: 344px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .welcome-rectangle {
