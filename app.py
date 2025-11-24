@@ -1763,7 +1763,10 @@ def tenant_home(tenant_slug):
     # Generate unique session_id for tracking user activity
     # Format: tenant_id-YYYYMMDDHHMMSS-random
     if 'user_session_id' not in session:
-        from utils.audit_logger import log_event
+        try:
+            from utils.audit_logger import log_event
+        except ImportError:
+            log_event = None
         import secrets
         from datetime import datetime
         timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
@@ -1771,13 +1774,14 @@ def tenant_home(tenant_slug):
         session['user_session_id'] = f"{tenant['id']}-{timestamp}-{random_suffix}"
         
         # Log session start (async - non-blocking)
-        log_event(
-            action='user_session_start',
-            entity_type='session',
-            tenant_id=tenant['id'],
-            user_type='end_user',
-            user_session_id=session['user_session_id'],
-            details={
+        if log_event:
+            log_event(
+                action='user_session_start',
+                entity_type='session',
+                tenant_id=tenant['id'],
+                user_type='end_user',
+                user_session_id=session['user_session_id'],
+                details={
                 'tenant_slug': tenant_slug,
                 'entry_point': 'home',
                 'user_name': request.args.get('user', '')
@@ -1815,7 +1819,10 @@ def tenant_login(tenant_slug):
         return redirect(url_for('index'))
     
     if request.method == 'POST':
-        from utils.audit_logger import log_event
+        try:
+            from utils.audit_logger import log_event
+        except ImportError:
+            log_event = None
         
         email = request.form.get('email')
         password = request.form.get('password')
@@ -1849,8 +1856,9 @@ def tenant_login(tenant_slug):
             conn.close()
             
             # Log successful login (async - non-blocking)
-            log_event(
-                action='tenant_login',
+            if log_event:
+                log_event(
+                    action='tenant_login',
                 entity_type='tenant',
                 entity_id=tenant['id'],
                 tenant_id=tenant['id'],
@@ -1859,9 +1867,9 @@ def tenant_login(tenant_slug):
                     'tenant_slug': tenant_slug,
                     'login_method': 'password',
                     'success': True,
-                    'wizard_completed': bool(wizard_completed and has_essential_data)
-                }
-            )
+                        'wizard_completed': bool(wizard_completed and has_essential_data)
+                    }
+                )
             
             # Redirect to wizard if not completed or missing essential data
             if not wizard_completed or not has_essential_data:
@@ -1870,8 +1878,9 @@ def tenant_login(tenant_slug):
             return redirect(url_for('tenant_admin', tenant_slug=tenant_slug))
         else:
             # Log failed login attempt (async - non-blocking)
-            log_event(
-                action='tenant_login_failed',
+            if log_event:
+                log_event(
+                    action='tenant_login_failed',
                 entity_type='tenant',
                 tenant_id=tenant['id'],
                 user_type='tenant_admin',
@@ -3043,7 +3052,10 @@ def tenant_start_gig(tenant_slug):
 @app.route('/<tenant_slug>/end_gig', methods=['POST'])
 def tenant_end_gig(tenant_slug):
     """End the currently active gig for the tenant."""
-    from utils.audit_logger import log_tenant_admin_action
+    try:
+        from utils.audit_logger import log_tenant_admin_action
+    except ImportError:
+        log_tenant_admin_action = None
     
     if not session.get('is_tenant_admin') or session.get('tenant_slug') != tenant_slug:
         return jsonify({'success': False, 'message': 'Unauthorized'}), 403
@@ -3075,13 +3087,14 @@ def tenant_end_gig(tenant_slug):
                 conn.close()
         
         # Log gig ended (async - non-blocking)
-        log_tenant_admin_action(
-            action='gig_ended',
+        if log_tenant_admin_action:
+            log_tenant_admin_action(
+                action='gig_ended',
             entity_type='gig',
             entity_id=gig_id,
-            gig_name=gig_name,
-            total_requests=request_count
-        )
+                gig_name=gig_name,
+                total_requests=request_count
+            )
         
         return jsonify({'success': True, 'message': 'Gig ended successfully'})
     else:
@@ -3232,7 +3245,10 @@ def tenant_help(tenant_slug):
 @app.route('/<tenant_slug>/logout_user', methods=['GET', 'POST'])
 def tenant_logout_user(tenant_slug):
     """Logout end user - clear name and return to home."""
-    from utils.audit_logger import log_event
+    try:
+        from utils.audit_logger import log_event
+    except ImportError:
+        log_event = None
     
     # Get session info before clearing
     user_session_id = session.get('user_session_id')
@@ -3253,7 +3269,7 @@ def tenant_logout_user(tenant_slug):
             pass
     
     # Log session end before clearing (async - non-blocking)
-    if user_session_id:
+    if user_session_id and log_event:
         log_event(
             action='user_session_end',
             entity_type='session',
@@ -3278,7 +3294,11 @@ def tenant_logout_user(tenant_slug):
 @app.route('/<tenant_slug>/search', methods=['GET', 'POST'])
 def tenant_search(tenant_slug):
     """Tenant-specific search page."""
-    from utils.audit_logger import log_user_action
+    try:
+        from utils.audit_logger import log_user_action
+    except ImportError:
+        log_user_action = None
+        app.logger.warning("audit_logger not available, skipping logging")
     import time
     
     start_time = time.time()
@@ -3341,7 +3361,7 @@ def tenant_search(tenant_slug):
         app.logger.debug(f'Found {len(songs)} songs for tenant_id: {tenant["id"]}')
         
         # Log search if query is provided (async - non-blocking)
-        if search_query:
+        if search_query and log_user_action:
             duration_ms = int((time.time() - start_time) * 1000)
             log_user_action(
                 action='search_performed',
@@ -3853,7 +3873,10 @@ def get_user_requested_song_ids():
 @app.route('/request_song/<int:song_id>', methods=['POST'])
 @limiter.limit("10 per minute")
 def request_song(song_id):
-    from utils.audit_logger import log_user_action
+    try:
+        from utils.audit_logger import log_user_action
+    except ImportError:
+        log_user_action = None
 
     if not is_session_valid():
         return jsonify({'redirect': url_for('scan_qr')})
@@ -3896,14 +3919,15 @@ def request_song(song_id):
 
         if user_requests >= max_requests:
             # Log failed request - max requests reached
-            log_user_action(
-                action='song_request_failed',
+            if log_user_action:
+                log_user_action(
+                    action='song_request_failed',
                 entity_type='request',
                 song_id=song_id,
                 failure_reason='max_requests_reached',
-                user_current_requests_count=user_requests,
-                max_requests_allowed=max_requests
-            )
+                    user_current_requests_count=user_requests,
+                    max_requests_allowed=max_requests
+                )
             return jsonify({'error': _('Maximum Request Reached')}), 400
 
         conn = create_connection()
@@ -3915,12 +3939,13 @@ def request_song(song_id):
         if not song:
             conn.close()
             # Log failed request - song not found
-            log_user_action(
-                action='song_request_failed',
+            if log_user_action:
+                log_user_action(
+                    action='song_request_failed',
                 entity_type='request',
-                song_id=song_id,
-                failure_reason='song_not_found'
-            )
+                    song_id=song_id,
+                    failure_reason='song_not_found'
+                )
             return jsonify({'error': 'Song not found'}), 404
 
         # Check if the user has already requested the song in the current active gig
@@ -3942,14 +3967,15 @@ def request_song(song_id):
         if user_requested_song['count'] > 0:
             conn.close()
             # Log failed request - already requested
-            log_user_action(
-                action='song_request_failed',
+            if log_user_action:
+                log_user_action(
+                    action='song_request_failed',
                 entity_type='request',
                 song_id=song_id,
                 song_title=song['title'],
-                song_author=song['author'],
-                failure_reason='already_requested'
-            )
+                    song_author=song['author'],
+                    failure_reason='already_requested'
+                )
             return jsonify({'error': _('Song Already Requested')}), 400
 
         # Get current queue size (pending requests) for position calculation
@@ -4001,32 +4027,37 @@ def request_song(song_id):
             log_data['gig_id'] = active_gig['id']
             log_data['gig_name'] = active_gig['name']
         
-        log_user_action(
-            action='song_requested',
+        if log_user_action:
+            log_user_action(
+                action='song_requested',
             entity_type='request',
-            entity_id=request_id,
-            **log_data
-        )
+                entity_id=request_id,
+                **log_data
+            )
 
         # Return success message
         return jsonify({'success': True, 'message': _('Song request successful')}), 200
 
     except Exception as e:
         # Log error
-        log_user_action(
-            action='song_request_failed',
+        if log_user_action:
+            log_user_action(
+                action='song_request_failed',
             entity_type='request',
-            song_id=song_id,
-            failure_reason='error',
-            error_message=str(e)
-        )
+                    song_id=song_id,
+                    failure_reason='error',
+                    error_message=str(e)
+                )
         app.logger.error(f"Error incrementing request: {e}")
         return jsonify({'error': _('Song Request Error')}), 500
 
 @app.route('/api/mark_request_fulfilled/<int:request_id>', methods=['POST'])
 def mark_request_fulfilled(request_id):
     """Mark a song request as fulfilled (played) by the artist."""
-    from utils.audit_logger import log_tenant_admin_action
+    try:
+        from utils.audit_logger import log_tenant_admin_action
+    except ImportError:
+        log_tenant_admin_action = None
     from datetime import datetime, timezone
     
     try:
@@ -4079,17 +4110,18 @@ def mark_request_fulfilled(request_id):
         conn.close()
         
         # Log request fulfilled (async - non-blocking)
-        log_tenant_admin_action(
-            action='request_marked_fulfilled',
+        if log_tenant_admin_action:
+            log_tenant_admin_action(
+                action='request_marked_fulfilled',
             entity_type='request',
             entity_id=request_id,
             song_id=request_data['song_id'],
             song_title=request_data['title'],
             song_author=request_data['author'],
             requester=request_data['requester'],
-            queue_position=queue_position,
-            time_in_queue_seconds=time_in_queue_seconds
-        )
+                queue_position=queue_position,
+                time_in_queue_seconds=time_in_queue_seconds
+            )
         
         return jsonify({'success': True, 'message': 'Request marked as fulfilled'}), 200
         
@@ -4429,7 +4461,10 @@ def update_song_new(id):
 
 @app.route('/delete_song/<int:id>', methods=['DELETE'])
 def delete_song(id):
-    from utils.audit_logger import log_tenant_admin_action
+    try:
+        from utils.audit_logger import log_tenant_admin_action
+    except ImportError:
+        log_tenant_admin_action = None
     
     # Get tenant_id from session for data isolation
     tenant_id = session.get('tenant_id')
@@ -4472,7 +4507,7 @@ def delete_song(id):
         app.logger.info(f"Deleted song {id} and {requests_deleted} associated requests for tenant {tenant_id}")
         
         # Log song deletion (async - non-blocking)
-        if song_data:  # Only log if song was found
+        if song_data and log_tenant_admin_action:  # Only log if song was found and logger available
             log_tenant_admin_action(
                 action='song_deleted',
                 entity_type='song',
