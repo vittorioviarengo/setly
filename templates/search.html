@@ -192,12 +192,14 @@
                 {% if active_gig and active_gig.announcement %}
                 const gigId = {{ active_gig.id }};
                 const announcementText = {{ active_gig.announcement | tojson }};
-                const storageKey = `announcement_closed_${gigId}_${announcementText.substring(0, 20)}`;
+                // Create a more stable key based on gig ID and announcement hash
+                const announcementHash = announcementText.length > 0 ? announcementText.substring(0, 30).replace(/[^a-zA-Z0-9]/g, '') : '';
+                const storageKey = `announcement_closed_${gigId}_${announcementHash}`;
                 
                 // Check if user has closed this specific announcement
                 const isClosed = localStorage.getItem(storageKey);
                 
-                if (!isClosed) {
+                if (!isClosed && announcementText && announcementText.trim() !== '') {
                     // Show banner
                     announcementBanner.style.display = 'block';
                 }

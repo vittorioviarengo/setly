@@ -949,7 +949,7 @@
 
 /* Announcement Banner */
 .announcement-banner {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #00858b 0%, #006d72 100%);
   color: white;
   padding: 12px 16px;
   margin: 8px 12px;
@@ -958,6 +958,9 @@
   position: relative;
   z-index: 999;
   animation: slideDown 0.3s ease-out;
+  width: calc(100% - 24px);
+  max-width: 344px;
+  box-sizing: border-box;
 }
 
 @keyframes slideDown {
