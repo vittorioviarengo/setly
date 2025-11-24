@@ -545,6 +545,7 @@ select {
 .action-item > label {
     grid-column: 1;
     text-align: left;
+    justify-self: start;
 }
 
 .action-item input[type="text"],
