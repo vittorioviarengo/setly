@@ -24,13 +24,16 @@
   gap: 3px;
   margin-right: 1.81px;
   margin-top: -7px;
-  padding: 4px 8px;
+  padding: 4px 0;
   background-color: #000000;
 
   position: sticky;
   top: 0; 
   z-index: 1000; 
-  width: 100%; 
+  width: 100%;
+  max-width: 368px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 
@@ -38,10 +41,11 @@
   display: flex;
   align-items: center; /* Center items vertically */
   justify-content: space-between; /* Space items around */
-  padding: 0 10px; /* Add some padding if needed */
+  padding: 0 12px; /* Match margin of other elements */
   background-color: #000000; /* Ensure background color matches the design */
   position: relative; /* Ensure the menu is positioned relative to the title-div */
-  width: 100%;
+  width: 344px;
+  margin: 0 auto;
 }
 
 .setly-logo-title {
@@ -999,8 +1003,9 @@
   font-family: var(--font-family-century_gothic-regular);
   font-weight: 700;
   letter-spacing: 1.60px;
-  line-height: 1.4;
+  line-height: normal;
   word-wrap: break-word;
+  color: #dbd9d9;
 }
 
 .announcement-close {
