@@ -12,10 +12,12 @@ cd ~/setly
 echo "📥 Step 1: Aggiorno codice da Git..."
 echo "   Controllo stato git..."
 
-# Stash or reset compiled translation files (.mo) - they're auto-generated
-echo "   Pulizia file .mo compilati (verranno rigenerati)..."
+# Reset any local changes to auto-generated files and deploy script
+echo "   Pulizia file auto-generati e script di deploy..."
 git checkout -- translations/*/LC_MESSAGES/*.mo 2>/dev/null || true
 git reset HEAD translations/*/LC_MESSAGES/*.mo 2>/dev/null || true
+git checkout -- deploy_pythonanywhere.sh 2>/dev/null || true
+git reset HEAD deploy_pythonanywhere.sh 2>/dev/null || true
 
 git fetch origin main
 LOCAL=$(git rev-parse @)
