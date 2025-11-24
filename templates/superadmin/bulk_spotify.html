@@ -578,6 +578,9 @@
             document.getElementById('tenantDelay').disabled = false;
             document.querySelectorAll('.tenant-checkbox').forEach(cb => cb.disabled = false);
             
+            // Reload tenant status to get updated counts after bulk fetch completes
+            await loadTenantStatus();
+            
             if (!shouldStop) {
                 showAlert('✅ Bulk fetch completed!<br>Images: ' + globalStats.imagesFetched + 
                          ', Genres: ' + globalStats.genresAdded + 
