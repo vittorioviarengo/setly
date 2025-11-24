@@ -468,7 +468,8 @@ select {
     width: 100%;
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-end;
+    gap: 0.5rem;
     padding: 0.75rem 1rem;
     background: var(--bg-card);
     border: 1px solid var(--border-light);
@@ -479,6 +480,14 @@ select {
     color: var(--text-primary);
     transition: all 0.2s;
     box-shadow: var(--shadow-sm);
+}
+
+.admin-actions-toggle .toggle-text {
+    order: 1;
+}
+
+.admin-actions-toggle .toggle-icon {
+    order: 2;
 }
 
 .admin-actions-toggle:hover {
@@ -522,9 +531,10 @@ select {
 }
 
 .action-item {
-    display: flex;
-    flex-direction: column;
-    gap: 0.4rem;
+    display: grid;
+    grid-template-columns: 1fr 180px;
+    gap: 0.75rem;
+    align-items: start;
     padding: 0.6rem;
     background: var(--bg-main);
     border-radius: var(--radius);
@@ -532,7 +542,26 @@ select {
     box-sizing: border-box;
 }
 
-.action-item label {
+.action-item > label {
+    grid-column: 1;
+    text-align: left;
+}
+
+.action-item input[type="text"],
+.action-item input[type="number"],
+.action-item textarea,
+.action-item .gig-info {
+    grid-column: 1;
+}
+
+.action-item .button {
+    grid-column: 2;
+    justify-self: end;
+    width: 100%;
+    margin: 0;
+}
+
+.action-item > label {
     font-size: 0.8rem;
     color: var(--text-primary);
     font-weight: 600;
@@ -558,8 +587,6 @@ select {
 }
 
 .action-item .button {
-    margin: 0.2rem 0 0 0;
-    width: 100%;
     padding: 0.5rem 0.8rem;
     font-size: 0.85rem;
     white-space: nowrap;
@@ -587,16 +614,28 @@ select {
 
 .announcement-item {
     width: 100%;
+    grid-template-columns: 1fr;
+}
+
+.announcement-item label {
+    grid-column: 1;
+}
+
+.announcement-item textarea {
+    grid-column: 1;
 }
 
 .announcement-buttons {
     display: flex;
     gap: 0.4rem;
     margin-top: 0.4rem;
+    grid-column: 1;
+    justify-content: flex-end;
 }
 
 .announcement-buttons .button {
-    flex: 1;
+    width: 180px;
+    flex: 0 0 auto;
 }
 
 .button-secondary {
@@ -652,6 +691,25 @@ select {
     
     .action-item {
         padding: 0.5rem;
+        grid-template-columns: 1fr;
+    }
+    
+    .action-item > label {
+        text-align: right;
+        grid-column: 1;
+    }
+    
+    .action-item input[type="text"],
+    .action-item input[type="number"],
+    .action-item textarea,
+    .action-item .gig-info {
+        grid-column: 1;
+    }
+    
+    .action-item .button {
+        grid-column: 1;
+        justify-self: stretch;
+        width: 100%;
     }
     
     .wizard-banner {
