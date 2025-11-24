@@ -438,6 +438,12 @@
                     batchCount++;
                     
                     try {
+                        // Check if stop was requested before making the fetch
+                        if (shouldStop || (globalAbortController && globalAbortController.signal.aborted)) {
+                            console.log(`[Superadmin Bulk] Stop requested for ${tenant.name}, aborting before fetch`);
+                            break;
+                        }
+                        
                         // Use longer timeout for local (120s) vs PythonAnywhere (30s - server limit)
                         const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
                         const isPythonAnywhere = window.location.hostname.includes('pythonanywhere.com');
@@ -445,11 +451,20 @@
                         const controller = new AbortController();
                         const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
                         
-                        // Combine both abort signals: timeout and global stop
-                        const combinedSignal = AbortSignal.any([
-                            controller.signal,
-                            globalAbortController.signal
-                        ]);
+                        // Use global abort controller signal - if it's aborted, the fetch will be cancelled immediately
+                        // Also listen to timeout controller
+                        const fetchSignal = globalAbortController ? globalAbortController.signal : null;
+                        
+                        // Create a combined abort handler
+                        const abortHandler = () => {
+                            if (!controller.signal.aborted) {
+                                controller.abort();
+                            }
+                        };
+                        
+                        if (fetchSignal) {
+                            fetchSignal.addEventListener('abort', abortHandler);
+                        }
                         
                         const response = await fetch('{{ url_for("superadmin.bulk_spotify_process") }}', {
                             method: 'POST',
@@ -458,8 +473,13 @@
                                 tenant_id: tenant.id,
                                 batch_size: batchSize
                             }),
-                            signal: combinedSignal
-                        }).finally(() => clearTimeout(timeoutId));
+                            signal: controller.signal // Use timeout controller, but global will trigger it via event listener
+                        }).finally(() => {
+                            clearTimeout(timeoutId);
+                            if (fetchSignal) {
+                                fetchSignal.removeEventListener('abort', abortHandler);
+                            }
+                        });
                         
                         const result = await response.json();
                         
