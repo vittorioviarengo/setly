@@ -98,9 +98,11 @@ body {
 .admin-header {
     background: var(--bg-card);
     padding: 0.75rem 1rem;
-    margin: 0 -2rem 1rem -2rem;
+    margin: 0 0 1rem 0;
     border-bottom: 1px solid var(--border-light);
     box-shadow: var(--shadow-sm);
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .admin-header h1 {
@@ -693,7 +695,7 @@ select {
     
     .admin-header {
         padding: 0.6rem 0.75rem;
-        margin: 0 -1rem 0.75rem -1rem;
+        margin: 0 0 0.75rem 0;
     }
     
     .admin-header h1 {
