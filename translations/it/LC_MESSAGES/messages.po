@@ -256,7 +256,7 @@ msgid "UI Language"
 msgstr "Lingua dell&#39;interfaccia utente"
 
 msgid "Mark as Played"
-msgstr "Segna come Suonata"
+msgstr "Suonata"
 
 msgid "Welcome to"
 msgstr "Benvenuto a"

@@ -42,10 +42,12 @@ body {
 #queueContainer {
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: stretch;
     margin: 0;
     padding: 0;
     width: 100%;
+    box-sizing: border-box;
+    max-width: 100%;
 }
 
 #queueContainer > p {
@@ -68,14 +70,17 @@ body {
     background-color: #fff;
     border: 1px solid #e0e0e0;
     border-radius: 8px;
-    padding: 12px;
-    margin-bottom: 10px;
+    padding: 18px 20px;
+    margin-bottom: 12px;
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
     box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    gap: 12px;
+    gap: 20px;
     transition: transform 0.2s, box-shadow 0.2s;
+    align-self: stretch;
+    margin-left: 0;
+    margin-right: 0;
 }
 
 .song-item:hover {
@@ -84,8 +89,8 @@ body {
 }
 
 .author-image {
-    width: 60px;
-    height: 60px;
+    width: 70px;
+    height: 70px;
     border-radius: 50%;
     flex-shrink: 0;
     object-fit: cover;
@@ -100,10 +105,10 @@ body {
 }
 
 .song-info p {
-    margin: 4px 0;
-    line-height: 1.4;
+    margin: 6px 0;
+    line-height: 1.5;
     color: #555;
-    font-size: 0.95em;
+    font-size: 1.1em;
 }
 
 .song-info p:first-child {
@@ -111,10 +116,11 @@ body {
 }
 
 .song-info strong {
-    font-size: 1.1em;
+    font-size: 1.3em;
     color: #2c3e50;
     display: block;
-    margin-bottom: 2px;
+    margin-bottom: 4px;
+    font-weight: 600;
 }
 
 .button {
@@ -159,9 +165,37 @@ body {
 }
 
 .song-item button {
-    padding: 14px 32px;
-    font-size: 16px;
-    min-width: 160px;
+    padding: 16px 36px;
+    font-size: 17px;
+    min-width: 180px;
+}
+
+@media screen and (max-width: 768px) {
+    .song-item button {
+        padding: 2px 5px !important;
+        font-size: 0.55em !important;
+        min-width: 40px !important;
+        min-height: 60px !important;
+        font-weight: 400 !important;
+        line-height: 1.2;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .song-item button {
+        padding: 2px 5px !important;
+        font-size: 0.5em !important;
+        min-width: 40px !important;
+        min-height: 60px !important;
+        font-weight: 400 !important;
+        line-height: 1.2;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
 }
 
 .admin-actions-container {
@@ -249,12 +283,16 @@ body {
     flex-wrap: wrap;
     gap: 0.75rem;
     margin: 0 0 0.5rem 0;
-    padding: 0.6rem 0.8rem;
+    padding: 0.8rem 1rem;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     border: none;
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .song-count-text {
@@ -321,6 +359,29 @@ body {
 @media screen and (max-width: 768px) {
     .admin-container {
         padding: 0 0.5rem;
+        max-width: 368px;
+        margin: 0 auto;
+    }
+    
+    #songCountContainer {
+        margin-bottom: 0.75rem;
+        position: relative;
+        z-index: 1;
+    }
+    
+    #queueContainer {
+        max-width: 100%;
+        margin: 0.5rem auto 0;
+        position: relative;
+        z-index: 0;
+        width: 100%;
+    }
+    
+    .song-item {
+        max-width: 100%;
+        width: 100%;
+        position: relative;
+        z-index: 0;
     }
     
     .admin-header {
@@ -364,44 +425,60 @@ body {
     }
     
     .song-item {
-        flex-direction: column;
-        align-items: stretch;
-        padding: 15px;
+        flex-direction: row;
+        align-items: flex-start;
+        padding: 12px;
         text-align: left;
-        gap: 10px;
+        gap: 12px;
+        min-height: auto;
+        margin-bottom: 10px;
+        width: 100%;
+        max-width: 100%;
     }
     
     .author-image {
-        width: 70px;
-        height: 70px;
-        margin: 0 auto 10px auto;
-        align-self: center;
+        width: 60px;
+        height: 60px;
+        margin: 0;
+        flex-shrink: 0;
+        align-self: flex-start;
     }
     
     .song-info {
-        width: 100%;
-        text-align: center;
+        flex: 1;
+        min-width: 0;
+        text-align: left;
+        overflow: hidden;
     }
     
     .song-info p {
         font-size: 0.9em;
         word-wrap: break-word;
         overflow-wrap: break-word;
-        margin: 5px 0;
+        margin: 3px 0;
+        line-height: 1.4;
     }
     
     .song-info strong {
         font-size: 1.05em;
         display: block;
-        margin-bottom: 5px;
+        margin-bottom: 3px;
     }
     
     .song-item .button {
-        width: 100%;
-        margin-top: 10px;
-        padding: 12px 20px;
-        font-size: 15px;
-        min-width: 100%;
+        width: auto !important;
+        min-width: 40px !important;
+        min-height: 60px !important;
+        margin: 0 !important;
+        padding: 2px 5px !important;
+        font-size: 0.55em !important;
+        font-weight: 400 !important;
+        flex-shrink: 0;
+        align-self: flex-start;
+        line-height: 1.2;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
     }
     
     #songCountContainer {
@@ -410,11 +487,23 @@ body {
         padding: 0.6rem 0.8rem;
         gap: 0.5rem;
         margin: 0 0 0.5rem 0;
+        position: relative;
     }
     
     .song-count-text {
         font-size: 0.9em;
         word-wrap: break-word;
+        pointer-events: none;
+        user-select: none;
+    }
+    
+    #songCountContainer form {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        pointer-events: auto;
+        z-index: 1;
+        position: relative;
     }
     
     #songCountContainer .button {
@@ -422,12 +511,38 @@ body {
         min-width: 100%;
         padding: 8px 16px;
         font-size: 0.85rem;
+        pointer-events: auto;
+        z-index: 2;
+        position: relative;
     }
 }
 
 @media screen and (max-width: 480px) {
     .admin-container {
         padding: 0 0.5rem;
+        max-width: 368px;
+        margin: 0 auto;
+    }
+    
+    #songCountContainer {
+        margin-bottom: 0.75rem;
+        position: relative;
+        z-index: 1;
+    }
+    
+    #queueContainer {
+        max-width: 100%;
+        margin: 0.5rem auto 0;
+        position: relative;
+        z-index: 0;
+        width: 100%;
+    }
+    
+    .song-item {
+        max-width: 100%;
+        width: 100%;
+        position: relative;
+        z-index: 0;
     }
     
     .admin-header {
@@ -477,54 +592,90 @@ body {
     
     .song-item {
         padding: 12px;
-        margin-bottom: 8px;
-        gap: 8px;
+        margin-bottom: 10px;
+        gap: 12px;
+        min-height: auto;
+        flex-direction: row;
+        align-items: flex-start;
+        width: 100%;
+        max-width: 100%;
     }
     
     .author-image {
         width: 60px;
         height: 60px;
-        margin-bottom: 8px;
+        margin: 0;
+        flex-shrink: 0;
+        align-self: flex-start;
     }
     
     .song-info {
-        text-align: center;
+        flex: 1;
+        min-width: 0;
+        text-align: left;
+        overflow: hidden;
     }
     
     .song-info p {
         font-size: 0.85em;
         line-height: 1.4;
-        margin: 4px 0;
+        margin: 3px 0;
         word-wrap: break-word;
         overflow-wrap: break-word;
     }
     
     .song-info strong {
         font-size: 1em;
-        margin-bottom: 4px;
+        margin-bottom: 3px;
     }
     
     .song-item .button {
-        padding: 10px 18px;
-        font-size: 14px;
-        margin-top: 8px;
+        padding: 2px 5px !important;
+        font-size: 0.5em !important;
+        font-weight: 400 !important;
+        margin: 0 !important;
+        width: auto !important;
+        min-width: 40px !important;
+        min-height: 60px !important;
+        flex-shrink: 0;
+        align-self: flex-start;
+        line-height: 1.2;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
     }
     
     #songCountContainer {
         padding: 0.5rem 0.6rem;
         gap: 0.4rem;
         margin: 0 0 0.4rem 0;
+        position: relative;
     }
     
     .song-count-text {
         font-size: 0.85em;
         line-height: 1.3;
         word-wrap: break-word;
+        pointer-events: none;
+        user-select: none;
+    }
+    
+    #songCountContainer form {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        pointer-events: auto;
+        z-index: 1;
+        position: relative;
     }
     
     #songCountContainer .button {
         padding: 7px 14px;
         font-size: 0.8rem;
+        width: 100%;
+        pointer-events: auto;
+        z-index: 2;
+        position: relative;
     }
     
     #queueContainer > p {

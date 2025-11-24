@@ -256,6 +256,9 @@ msgstr "Veuillez remplir tous les champs correctement."
 msgid "UI Language"
 msgstr "Langue de l&#39;interface utilisateur"
 
+msgid "Mark as Played"
+msgstr "Jouée"
+
 msgid "Play Song"
 msgstr "Jouer une chanson"
 
