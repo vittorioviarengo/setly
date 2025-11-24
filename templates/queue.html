@@ -449,7 +449,9 @@
                 failedToStartGig: {{ _('Failed to start gig') | tojson }},
                 errorStartingGig: {{ _('Error starting gig') | tojson }},
                 failedToEndGig: {{ _('Failed to end gig') | tojson }},
-                errorEndingGig: {{ _('Error ending gig') | tojson }}
+                errorEndingGig: {{ _('Error ending gig') | tojson }},
+                confirm: {{ _('Confirm') | tojson }},
+                cancel: {{ _('Cancel') | tojson }}
             };
             
             // Get tenant slug from URL if not available in template
@@ -517,7 +519,11 @@
                                 console.error('Error ending gig:', error);
                                 showError(translations.errorEndingGig + ': ' + error.message);
                             });
-                        }
+                        },
+                        null,
+                        {{ _('Confirm') | tojson }},
+                        {{ _('Confirm') | tojson }},
+                        {{ _('Cancel') | tojson }}
                     );
                 });
             }

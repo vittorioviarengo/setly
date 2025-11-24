@@ -95,8 +95,10 @@ class AppDialog {
      * @param {function} onConfirm - Callback when confirmed
      * @param {function} onCancel - Optional callback when cancelled
      * @param {string} title - Optional custom title
+     * @param {string} confirmText - Optional text for confirm button (default: 'Confirm')
+     * @param {string} cancelText - Optional text for cancel button (default: 'Cancel')
      */
-    confirm(message, onConfirm, onCancel = null, title = 'Confirm') {
+    confirm(message, onConfirm, onCancel = null, title = 'Confirm', confirmText = 'Confirm', cancelText = 'Cancel') {
         this.show({
             title: title,
             message: message,
@@ -104,7 +106,7 @@ class AppDialog {
             iconClass: 'question',
             buttons: [
                 { 
-                    text: 'Cancel', 
+                    text: cancelText, 
                     class: 'secondary', 
                     callback: () => {
                         this.close();
@@ -112,7 +114,7 @@ class AppDialog {
                     }
                 },
                 { 
-                    text: 'Confirm', 
+                    text: confirmText, 
                     class: 'primary', 
                     callback: () => {
                         this.close();
@@ -239,8 +241,8 @@ function initializeDialog() {
         window.appDialog.alert(message, type, title);
     };
 
-    window.showConfirm = (message, onConfirm, onCancel = null, title = 'Confirm') => {
-        window.appDialog.confirm(message, onConfirm, onCancel, title);
+    window.showConfirm = (message, onConfirm, onCancel = null, title = 'Confirm', confirmText = 'Confirm', cancelText = 'Cancel') => {
+        window.appDialog.confirm(message, onConfirm, onCancel, title, confirmText, cancelText);
     };
 
     window.showConfirmDanger = (message, onConfirm, onCancel = null, confirmText = 'Delete', title = 'Confirm Action') => {
