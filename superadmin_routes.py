@@ -1458,8 +1458,11 @@ def bulk_spotify_status():
     """Get status of all tenants for bulk Spotify fetch."""
     import os
     
-    # Get absolute path to the app directory
+    # Get absolute path to the app directory (same method as app.py)
     app_dir = os.path.dirname(os.path.abspath(__file__))
+    # Use the same base directory logic as app.py for consistency
+    from app import app
+    app_dir = os.path.dirname(os.path.abspath(app.root_path)) if hasattr(app, 'root_path') else app_dir
     
     conn = create_connection()
     cursor = conn.cursor()
