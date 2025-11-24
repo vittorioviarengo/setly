@@ -1135,25 +1135,27 @@ document.addEventListener('DOMContentLoaded', function() {
             // Get gig ID and announcement from data attributes or template
             const bannerText = announcementText.textContent.trim();
             if (bannerText) {
-                // Try to get gig ID from a data attribute or use a placeholder
+                // Get gig ID from data attribute
                 const gigId = existingBanner.dataset.gigId || null;
-                lastAnnouncement = bannerText;
-                lastGigId = gigId;
-                
-                // Check if user has closed this announcement
-                const announcementHash = bannerText.length > 0 ? bannerText.substring(0, 30).replace(/[^a-zA-Z0-9]/g, '') : '';
-                const storageKey = `announcement_closed_${gigId}_${announcementHash}`;
-                const isClosed = localStorage.getItem(storageKey);
-                
-                if (!isClosed) {
-                    existingBanner.style.display = 'block';
+                if (gigId) {
+                    lastAnnouncement = bannerText;
+                    lastGigId = parseInt(gigId);
+                    
+                    // Check if user has closed this announcement
+                    const announcementHash = bannerText.length > 0 ? bannerText.substring(0, 30).replace(/[^a-zA-Z0-9]/g, '') : '';
+                    const storageKey = `announcement_closed_${gigId}_${announcementHash}`;
+                    const isClosed = localStorage.getItem(storageKey);
+                    
+                    if (!isClosed) {
+                        existingBanner.style.display = 'block';
+                    }
+                    
+                    // Handle close button
+                    announcementClose.addEventListener('click', function() {
+                        existingBanner.style.display = 'none';
+                        localStorage.setItem(storageKey, 'true');
+                    });
                 }
-                
-                // Handle close button
-                announcementClose.addEventListener('click', function() {
-                    existingBanner.style.display = 'none';
-                    localStorage.setItem(storageKey, 'true');
-                });
             }
         }
     }
