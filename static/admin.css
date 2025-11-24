@@ -512,7 +512,8 @@ select {
 
 .admin-actions-container {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    flex-wrap: wrap;
     gap: 0.75rem;
     padding: 0.75rem;
     background: var(--bg-card);
@@ -525,6 +526,13 @@ select {
     overflow: visible;
     transition: max-height 0.3s ease, padding 0.3s ease, opacity 0.3s ease;
     max-height: 2000px;
+}
+
+/* Buttons inside admin-actions-container should be side by side on desktop */
+.admin-actions-container > .button {
+    flex: 0 1 auto;
+    min-width: 150px;
+}
     opacity: 1;
     width: 100%;
     box-sizing: border-box;
