@@ -11,6 +11,12 @@ cd ~/setly
 # Step 1: Git pull
 echo "📥 Step 1: Aggiorno codice da Git..."
 echo "   Controllo stato git..."
+
+# Stash or reset compiled translation files (.mo) - they're auto-generated
+echo "   Pulizia file .mo compilati (verranno rigenerati)..."
+git checkout -- translations/*/LC_MESSAGES/*.mo 2>/dev/null || true
+git reset HEAD translations/*/LC_MESSAGES/*.mo 2>/dev/null || true
+
 git fetch origin main
 LOCAL=$(git rev-parse @)
 REMOTE=$(git rev-parse @{u})
