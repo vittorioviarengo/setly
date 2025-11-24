@@ -1623,6 +1623,8 @@ def bulk_spotify_process():
     requested_batch_size = data.get('batch_size', default_batch_size)
     
     # Detect PythonAnywhere and limit batch size automatically (30-second server timeout)
+    # TODO: On production server, remove this limit and use batch_size from UI directly
+    # The UI already allows setting batch_size, but PythonAnywhere needs smaller batches due to timeout
     is_pythonanywhere = (
         'pythonanywhere.com' in flask_request.host or 
         os.environ.get('PYTHONANYWHERE', '').lower() == 'true' or
@@ -1632,6 +1634,8 @@ def bulk_spotify_process():
     if is_pythonanywhere:
         # PythonAnywhere has strict 30-second timeout, use smaller batches
         default_batch_size = min(default_batch_size, 10)  # Cap at 10 for PythonAnywhere
+    # TODO: On production server, use requested_batch_size directly without limiting:
+    # batch_size = requested_batch_size
     
     batch_size = min(requested_batch_size, default_batch_size)
     
@@ -1655,6 +1659,7 @@ def bulk_spotify_process():
         batch_multiplier = get_system_setting('spotify_batch_multiplier', default=3, value_type=int)
         
         # PythonAnywhere needs smaller multiplier to avoid timeout
+        # TODO: On production server, remove this limit and use full multiplier
         if is_pythonanywhere:
             batch_multiplier = min(batch_multiplier, 1.5)  # Cap at 1.5x for PythonAnywhere (10 * 1.5 = 15 songs)
         
