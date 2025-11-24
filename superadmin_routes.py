@@ -1495,11 +1495,21 @@ def bulk_spotify_status():
                               'default' in song['image'].lower()
                           )))
             
-            # Check if image file actually exists on disk (use absolute path)
+            # Check if image file actually exists on disk (use same method as download_image)
             if not needs_image and song['image']:
-                image_path = os.path.join(app_dir, 'static', 'tenants', tenant['slug'], 'author_images', song['image'])
-                if not os.path.exists(image_path):
-                    needs_image = True
+                # Use get_tenant_dir to match where download_image saves files
+                from utils.tenant_utils import get_tenant_dir
+                try:
+                    author_images_dir = get_tenant_dir(app, tenant['slug'], 'author_images')
+                    image_path = os.path.join(author_images_dir, song['image'])
+                    if not os.path.exists(image_path):
+                        needs_image = True
+                except Exception as e:
+                    app.logger.warning(f"Error checking image path for tenant {tenant['slug']}: {e}")
+                    # Fallback to manual path calculation
+                    image_path = os.path.join(app_dir, 'static', 'tenants', tenant['slug'], 'author_images', song['image'])
+                    if not os.path.exists(image_path):
+                        needs_image = True
             
             needs_genre = not song['genre'] or song['genre'] == ''
             needs_language = not song['language'] or song['language'] in ['', 'unknown']
@@ -1937,11 +1947,21 @@ def bulk_spotify_process():
                               'default' in song['image'].lower()
                           )))
             
-            # Check if image file actually exists on disk
+            # Check if image file actually exists on disk (use same method as download_image)
             if not needs_image and song['image']:
-                image_path = os.path.join(app_dir, 'static', 'tenants', tenant_slug, 'author_images', song['image'])
-                if not os.path.exists(image_path):
-                    needs_image = True
+                # Use get_tenant_dir to match where download_image saves files
+                from utils.tenant_utils import get_tenant_dir
+                try:
+                    author_images_dir = get_tenant_dir(app, tenant_slug, 'author_images')
+                    image_path = os.path.join(author_images_dir, song['image'])
+                    if not os.path.exists(image_path):
+                        needs_image = True
+                except Exception as e:
+                    app.logger.warning(f"Error checking image path for tenant {tenant_slug}: {e}")
+                    # Fallback to manual path calculation
+                    image_path = os.path.join(app_dir, 'static', 'tenants', tenant_slug, 'author_images', song['image'])
+                    if not os.path.exists(image_path):
+                        needs_image = True
             
             needs_genre = not song['genre'] or song['genre'] == ''
             needs_language = not song['language'] or song['language'] in ['', 'unknown']
