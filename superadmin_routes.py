@@ -1666,17 +1666,65 @@ def bulk_spotify_process():
     tenant_slug = tenant['slug']
     
     try:
+        # First, calculate how many images are actually missing to optimize batch_multiplier
+        # This helps us avoid hundreds of batches when only a few images remain
+        cursor.execute('SELECT id, image, genre, language FROM songs WHERE tenant_id = ?', (tenant_id,))
+        all_songs = cursor.fetchall()
+        
+        remaining_images_count = 0
+        from utils.tenant_utils import get_tenant_dir
+        
+        for song in all_songs:
+            needs_image = (not song['image'] or song['image'] == '' or 
+                          (song['image'] and (
+                              'placeholder' in song['image'].lower() or 
+                              song['image'].startswith('http') or
+                              'setly' in song['image'].lower() or
+                              'music-icon' in song['image'].lower() or
+                              'default' in song['image'].lower()
+                          )))
+            
+            if not needs_image and song['image']:
+                try:
+                    author_images_dir = get_tenant_dir(app, tenant_slug, 'author_images')
+                    image_path = os.path.join(author_images_dir, song['image'])
+                    if not os.path.exists(image_path):
+                        needs_image = True
+                except Exception:
+                    image_path = os.path.join(app_dir, 'static', 'tenants', tenant_slug, 'author_images', song['image'])
+                    if not os.path.exists(image_path):
+                        needs_image = True
+            
+            if needs_image:
+                remaining_images_count += 1
+        
         # Get more songs than batch_size to compensate for skips (same logic as tenant bulk)
         # Many songs match the query but get skipped in the loop (e.g., file exists, Spotify returns no data)
         # Use multiplier from settings (default 3x), can be adjusted for local vs PythonAnywhere
         batch_multiplier = get_system_setting('spotify_batch_multiplier', default=3, value_type=int)
         
+        # When few images remain, increase multiplier dramatically to find them faster
+        # This avoids hundreds of batches for just a few images
+        if remaining_images_count > 0 and remaining_images_count < 50:
+            # Increase multiplier based on how few images remain
+            # For 18 images: 18 / 10 = 1.8, so multiplier = max(10, 1.8 * 3) = 10
+            # This means we'll process 10 * batch_size songs per batch to find those 18 images faster
+            suggested_multiplier = max(10, int(50 / remaining_images_count) * 2)
+            batch_multiplier = max(batch_multiplier, suggested_multiplier)
+            app.logger.info(f"[Superadmin Bulk] Only {remaining_images_count} images remaining, increasing batch_multiplier to {batch_multiplier} for faster processing")
+        
         # PythonAnywhere needs smaller multiplier to avoid timeout
         # TODO: On production server, remove this limit and use full multiplier
         if is_pythonanywhere:
-            batch_multiplier = min(batch_multiplier, 1.5)  # Cap at 1.5x for PythonAnywhere (10 * 1.5 = 15 songs)
+            # Even on PythonAnywhere, if few images remain, allow higher multiplier
+            if remaining_images_count > 0 and remaining_images_count < 50:
+                # Cap at 5x for PythonAnywhere when few images remain (10 * 5 = 50 songs)
+                batch_multiplier = min(batch_multiplier, 5)
+            else:
+                batch_multiplier = min(batch_multiplier, 1.5)  # Cap at 1.5x for PythonAnywhere (10 * 1.5 = 15 songs)
         
         extended_batch = int(batch_size * batch_multiplier)
+        app.logger.info(f"[Superadmin Bulk] Tenant {tenant_slug}: {remaining_images_count} images remaining, using batch_multiplier={batch_multiplier}, extended_batch={extended_batch}")
         
         # First, prioritize songs that definitely need images (NULL, placeholder, http, etc.)
         # This ensures we process songs that need images before those that might already have files
