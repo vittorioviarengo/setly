@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="utf-8" />
     <title>Super Admin Login</title>
@@ -15,6 +16,7 @@
             max-width: 500px;
             padding: 0 20px;
         }
+
         .flash-message {
             padding: 15px 20px;
             margin: 10px 0;
@@ -22,33 +24,39 @@
             font-size: 16px;
             font-weight: 500;
             text-align: center;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
         }
+
         .flash-message.error {
             background: linear-gradient(135deg, #ff4757 0%, #ff3838 100%);
             color: white;
             border: 2px solid #ff6b7a;
         }
+
         .flash-message.success {
             background: linear-gradient(135deg, #26de81 0%, #20bf6b 100%);
             color: white;
             border: 2px solid #45e89a;
         }
+
         .flash-message.info {
             background: linear-gradient(135deg, #4b7bec 0%, #3867d6 100%);
             color: white;
             border: 2px solid #6c8eef;
         }
+
         /* Improve text visibility */
         .enter-password-to-access-admin-area {
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
             font-size: 18px;
             line-height: 1.5;
             padding: 10px 20px;
         }
+
         .name {
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
         }
+
         .super-admin-badge {
             display: inline-block;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -58,17 +66,19 @@
             font-size: 14px;
             font-weight: 600;
             margin-left: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
         }
     </style>
 </head>
+
 <body>
     <input type="hidden" id="anPageName" name="page" value="superadmin-login" />
     <div class="container-center-horizontal">
         <form class="login screen" name="superadmin_login" action="{{ url_for('superadmin.login') }}" method="post">
             <div class="top-bar">
                 <div class="title-div">
-                    <img class="setly-logo-title" src="{{ url_for('static', filename='img/setly-logo.png') }}" alt="Setly logo" />
+                    <img class="setly-logo-title" src="{{ url_for('static', filename='img/setly-logo.png') }}"
+                        alt="Setly logo" />
                     <div class="name">
                         System Administrator
                         <span class="super-admin-badge">SUPER ADMIN</span>
@@ -78,33 +88,36 @@
                     Enter your credentials to access the Super Admin Dashboard
                 </p>
             </div>
-            
+
             <!-- Flash Messages -->
             {% with messages = get_flashed_messages() %}
-                {% if messages %}
-                    <div class="flash-messages">
-                        {% for message in messages %}
-                            <div class="flash-message error">{{ message }}</div>
-                        {% endfor %}
-                    </div>
-                {% endif %}
+            {% if messages %}
+            <div class="flash-messages">
+                {% for message in messages %}
+                <div class="flash-message error">{{ message }}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
             {% endwith %}
-            
+
             <div class="search-bar">
                 <div class="search-div" style="flex-direction: column; width: 100%; max-width: 500px; margin: 0 auto;">
                     <div class="search-box-div" style="width: 100%; margin-bottom: 15px;">
-                        <input class="password-text" id="username" name="username" placeholder="Username" type="text" required 
-                               style="width: 100%; padding: 15px; font-size: 16px; border: 2px solid rgba(255,255,255,0.3); border-radius: 8px; background: rgba(255,255,255,0.9); color: #333;" />
+                        <input class="password-text" id="username" name="username" placeholder="Username" type="text"
+                            required
+                            style="width: 100%; padding: 15px; font-size: 16px; border: 2px solid rgba(255,255,255,0.3); border-radius: 8px; background: rgba(255,255,255,0.9); color: #333;" />
                     </div>
                     <div class="search-box-div" style="width: 100%; margin-bottom: 15px;">
-                        <input class="password-text" id="password" name="password" placeholder="Password" type="password" required 
-                               style="width: 100%; padding: 15px; font-size: 16px; border: 2px solid rgba(255,255,255,0.3); border-radius: 8px; background: rgba(255,255,255,0.9); color: #333;" />
+                        <input class="password-text" id="password" name="password" placeholder="Password"
+                            type="password" required
+                            style="width: 100%; padding: 15px; font-size: 16px; border: 2px solid rgba(255,255,255,0.3); border-radius: 8px; background: rgba(255,255,255,0.9); color: #333;" />
                     </div>
                     <div class="search-box-div" style="width: 100%;">
                         <button class="search-button" type="submit"
-                                style="width: 100%; padding: 15px; font-size: 18px; font-weight: 600; border: none; border-radius: 8px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.3); transition: transform 0.2s;">
+                            style="width: 100%; padding: 15px; font-size: 18px; font-weight: 600; border: none; border-radius: 8px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.3); transition: transform 0.2s;">
                             <span class="search-icon valign-text-middle" style="margin-right: 10px;">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle;">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" style="vertical-align: middle;">
                                     <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
                                     <polyline points="10 17 15 12 10 7"></polyline>
                                     <line x1="15" y1="12" x2="3" y2="12"></line>
@@ -114,8 +127,14 @@
                         </button>
                     </div>
                 </div>
+                <div style="margin-top: 20px; text-align: center;">
+                    <a href="{{ url_for('superadmin.forgot_password') }}"
+                        style="color: #4b7bec; text-decoration: none; font-size: 14px; font-weight: 500;">Forgot
+                        Password?</a>
+                </div>
             </div>
         </form>
     </div>
 </body>
+
 </html>

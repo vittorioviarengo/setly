@@ -8,6 +8,7 @@ from utils.tenant_utils import get_tenant_dir
 import sqlite3
 import os
 from flask_mail import Mail, Message
+from itsdangerous import URLSafeTimedSerializer
 
 superadmin = Blueprint('superadmin', __name__)
 
@@ -89,6 +90,93 @@ def login():
         
         flash('Invalid username or password')
     return render_template('superadmin/login.html')
+
+@superadmin.route('/superadmin/forgot-password', methods=['GET', 'POST'])
+def forgot_password():
+    if request.method == 'POST':
+        email = request.form.get('email')
+        
+        conn = create_connection()
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM super_admins WHERE email = ?', (email,))
+        user = cursor.fetchone()
+        conn.close()
+        
+        if user:
+            # Generate token
+            s = URLSafeTimedSerializer(app.config['SECRET_KEY'])
+            token = s.dumps(email, salt='recover-key')
+            
+            # Create reset link
+            reset_url = url_for('superadmin.reset_password_token', token=token, _external=True)
+            
+            # Send email
+            try:
+                msg = Message(
+                    subject="Password Reset Request - Setly",
+                    sender=app.config.get('MAIL_DEFAULT_SENDER', 'noreply@setly.app'),
+                    recipients=[email]
+                )
+                msg.html = f'''
+                    <p>Hello,</p>
+                    <p>You requested a password reset for your Setly Super Admin account.</p>
+                    <p>Click the link below to reset your password:</p>
+                    <p><a href="{reset_url}">{reset_url}</a></p>
+                    <p>If you did not request this, please ignore this email.</p>
+                    <p>Link expires in 1 hour.</p>
+                '''
+                mail = Mail(app)
+                mail.send(msg)
+                flash(f'Password reset link sent to {email}', 'success')
+                
+                # For local development convenience, print the link
+                if app.debug or os.environ.get('FLASK_ENV') == 'development':
+                    print(f"\n🔗 RESET LINK (Local Dev): {reset_url}\n")
+                    
+            except Exception as e:
+                print(f"Error sending email: {e}")
+                flash('Error sending email. Please check server logs.', 'error')
+                # Fallback for local dev if email fails
+                if app.debug or os.environ.get('FLASK_ENV') == 'development':
+                     print(f"\n🔗 RESET LINK (Fallback): {reset_url}\n")
+                     flash(f'DEV MODE: Link printed to console', 'info')
+        else:
+            # Don't reveal if email exists or not for security, but for this app we'll be helpful
+            flash('Email not found', 'error')
+            
+        return redirect(url_for('superadmin.forgot_password'))
+        
+    return render_template('superadmin/forgot_password.html')
+
+@superadmin.route('/superadmin/reset-password/<token>', methods=['GET', 'POST'])
+def reset_password_token(token):
+    try:
+        s = URLSafeTimedSerializer(app.config['SECRET_KEY'])
+        email = s.loads(token, salt='recover-key', max_age=3600) # 1 hour expiration
+    except Exception as e:
+        flash('The reset link is invalid or has expired.', 'error')
+        return redirect(url_for('superadmin.forgot_password'))
+    
+    if request.method == 'POST':
+        password = request.form.get('password')
+        confirm_password = request.form.get('confirm_password')
+        
+        if password != confirm_password:
+            flash('Passwords do not match', 'error')
+            return render_template('superadmin/reset_password_token.html')
+            
+        hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
+        
+        conn = create_connection()
+        cursor = conn.cursor()
+        cursor.execute('UPDATE super_admins SET password_hash = ? WHERE email = ?', (hashed_password, email))
+        conn.commit()
+        conn.close()
+        
+        flash('Your password has been updated! Please log in.', 'success')
+        return redirect(url_for('superadmin.login'))
+        
+    return render_template('superadmin/reset_password_token.html')
 
 @superadmin.route('/superadmin/dashboard')
 @superadmin_required
