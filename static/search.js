@@ -732,6 +732,64 @@ function updateSongListWorks(songs, globalUserName, append = false) {
 
 
 function requestSong(songId, username) {
+    // Find the song data from the current list
+    const songElement = document.querySelector(`[data-song-id="${songId}"]`)?.closest('.song-container, .song-item');
+    let song = null;
+    
+    // Try to get song data from the element or fetch it
+    if (songElement) {
+        const titleElement = songElement.querySelector('.song-name');
+        const authorElement = songElement.querySelector('.author-name');
+        const imageElement = songElement.querySelector('.author-image img, img');
+        
+        song = {
+            id: songId,
+            title: titleElement ? titleElement.textContent.trim() : 'Unknown',
+            author: authorElement ? authorElement.textContent.trim() : 'Unknown',
+            image: imageElement ? imageElement.src : null
+        };
+    } else {
+        // Fallback: try to get from cached songs list if available
+        if (typeof cachedSongs !== 'undefined' && cachedSongs) {
+            song = cachedSongs.find(s => s.id === songId);
+        }
+    }
+    
+    // If we still don't have song data, fetch it
+    if (!song) {
+        // Fallback to old behavior if dialog not available
+        if (!window.tipDialog) {
+            requestSongLegacy(songId, username);
+            return;
+        }
+        // Try to get basic info
+        song = {
+            id: songId,
+            title: 'Canzone',
+            author: 'Artista',
+            image: null
+        };
+    }
+    
+    // Get musician name from page
+    const musicianName = document.querySelector('.title')?.textContent.trim() || 
+                        document.querySelector('.name')?.textContent.trim() || 
+                        'il musicista';
+    
+    // Store musician name globally for nudge
+    window.musicianName = musicianName;
+    
+    // Show tip dialog
+    if (window.tipDialog) {
+        window.tipDialog.showRequestDialog(song, username, musicianName);
+    } else {
+        // Fallback to legacy behavior
+        requestSongLegacy(songId, username);
+    }
+}
+
+function requestSongLegacy(songId, username) {
+    // Original requestSong implementation as fallback
     const requestUrl = `/request_song/${songId}`;
 
     fetch(requestUrl, {
@@ -746,11 +804,9 @@ function requestSong(songId, username) {
     .then(response => response.json())
     .then(data => {
         if (data.redirect) {
-            // Redirect the browser to the URL provided by the server
             window.location.href = data.redirect;
         } else if (data.success) {
-            // Remove the song from the list completely
-            const songElement = document.querySelector(`[data-song-id="${songId}"]`)?.closest('.song-card, .song-item');
+            const songElement = document.querySelector(`[data-song-id="${songId}"]`)?.closest('.song-card, .song-item, .song-container');
             if (songElement) {
                 songElement.style.transition = 'opacity 0.3s ease-out';
                 songElement.style.opacity = '0';
@@ -759,22 +815,26 @@ function requestSong(songId, username) {
                 }, 300);
             }
             
-            // Add the songId to userRequestedSongs to keep track
             userRequestedSongs.push(songId);
-
-            // Reload the user requests
-            fetchUserRequests(username);
+            if (typeof fetchUserRequests === 'function') {
+                fetchUserRequests(username);
+            }
             
-            // Show success message
-            showMessage(data.message || 'Song requested successfully!');
+            if (typeof showMessage === 'function') {
+                showMessage(data.message || 'Song requested successfully!');
+            }
         } else {
             console.log(data.error || 'An error occurred while requesting the song.');
-            showMessage(data.error);
+            if (typeof showMessage === 'function') {
+                showMessage(data.error);
+            }
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        showMessage(error.message);
+        if (typeof showMessage === 'function') {
+            showMessage(error.message);
+        }
     });
 }
 

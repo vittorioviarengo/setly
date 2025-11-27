@@ -414,3 +414,4 @@ def tenant_search(tenant_slug):
 3. ⬜ Creare dashboard per visualizzare statistiche
 4. ⬜ Query SQL per report automatici
 5. ⬜ Monitoring e alerting su eventi critici
+

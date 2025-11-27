@@ -53,6 +53,15 @@
                     {% else %}
                         <label>{{ _('No active gig') }}</label>
                         <input type="text" id="gigNameInput" placeholder="{{ _('Gig name (optional)') }}" style="display: none;">
+                        <div style="margin: 10px 0;">
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                <input type="checkbox" id="tipEnabledCheckbox" checked style="width: auto;">
+                                <span>{{ _('Enable tips for this event') }}</span>
+                            </label>
+                            <small id="paypalWarning" style="display: none; color: #ff6b6b; margin-top: 5px; display: block;">
+                                ⚠️ {{ _('PayPal is not configured. Tips will not work until PayPal credentials are set.') }}
+                            </small>
+                        </div>
                         <button id="startGigButton" class="button">{{ _('Start Gig') }}</button>
                     {% endif %}
                 </div>
@@ -64,6 +73,13 @@
                         <button id="sendAnnouncementButton" class="button">{{ _('Send Message') }}</button>
                         <button id="clearAnnouncementButton" class="button button-secondary">{{ _('Clear') }}</button>
                     </div>
+                </div>
+                <div class="action-item">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                        <input type="checkbox" id="updateTipEnabledCheckbox" {{ 'checked' if active_gig.tip_enabled else '' }} style="width: auto;">
+                        <span>{{ _('Enable tips for this event') }}</span>
+                    </label>
+                    <button id="updateTipEnabledButton" class="button button-secondary" style="margin-top: 10px;">{{ _('Update Tip Setting') }}</button>
                 </div>
                 {% endif %}
             </div>
@@ -461,10 +477,27 @@
                 return match ? match[1] : tenantSlug;
             }
             
+            // Check PayPal configuration when tip checkbox is toggled
+            const tipEnabledCheckbox = document.getElementById('tipEnabledCheckbox');
+            const paypalWarning = document.getElementById('paypalWarning');
+            if (tipEnabledCheckbox && paypalWarning) {
+                tipEnabledCheckbox.addEventListener('change', function() {
+                    if (this.checked) {
+                        // Check if PayPal is configured (this is a simple check, you might want to verify via API)
+                        // For now, just show a warning that PayPal needs to be configured
+                        paypalWarning.style.display = 'block';
+                    } else {
+                        paypalWarning.style.display = 'none';
+                    }
+                });
+            }
+            
             if (startGigButton) {
                 startGigButton.addEventListener('click', function() {
                     const slug = getTenantSlug();
                     const gigName = gigNameInput ? gigNameInput.value.trim() : null;
+                    const tipEnabledCheckbox = document.getElementById('tipEnabledCheckbox');
+                    const tipEnabled = tipEnabledCheckbox ? tipEnabledCheckbox.checked : true;
                     
                     fetch(`/${slug}/start_gig`, {
                         method: 'POST',
@@ -472,7 +505,8 @@
                             'Content-Type': 'application/json'
                         },
                         body: JSON.stringify({
-                            gig_name: gigName || null
+                            gig_name: gigName || null,
+                            tip_enabled: tipEnabled
                         })
                     })
                     .then(response => response.json())
@@ -583,6 +617,43 @@
                         announcementInput.value = '';
                     }
                     sendAnnouncement('');
+                });
+            }
+        })();
+        {% endif %}
+        
+        // Tip enabled management for active gig
+        {% if is_admin and tenant and active_gig %}
+        (function() {
+            const tenantSlug = '{{ tenant.slug }}';
+            const updateTipEnabledButton = document.getElementById('updateTipEnabledButton');
+            const updateTipEnabledCheckbox = document.getElementById('updateTipEnabledCheckbox');
+            
+            if (updateTipEnabledButton && updateTipEnabledCheckbox) {
+                updateTipEnabledButton.addEventListener('click', function() {
+                    const tipEnabled = updateTipEnabledCheckbox.checked;
+                    
+                    fetch(`/${tenantSlug}/update_tip_enabled`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            tip_enabled: tipEnabled
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            showSuccess(data.message || 'Tip setting updated successfully');
+                        } else {
+                            showError(data.message || 'Error updating tip setting');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error updating tip enabled:', error);
+                        showError('Error updating tip setting: ' + error.message);
+                    });
                 });
             }
         })();

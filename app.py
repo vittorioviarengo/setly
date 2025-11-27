@@ -307,7 +307,7 @@ def has_active_gig(tenant_id):
     """Check if a tenant has an active gig."""
     return get_active_gig(tenant_id) is not None
 
-def start_gig(tenant_id, gig_name=None):
+def start_gig(tenant_id, gig_name=None, tip_enabled=True):
     """Start a new gig for a tenant. Returns the gig ID if successful, None otherwise."""
     if not tenant_id:
         return None
@@ -322,26 +322,56 @@ def start_gig(tenant_id, gig_name=None):
             WHERE tenant_id = ? AND is_active = 1
         """, (tenant_id,))
         
+        # Check if tip_enabled column exists, if not add it
+        try:
+            cursor.execute("PRAGMA table_info(gigs)")
+            columns = [col[1] for col in cursor.fetchall()]
+            if 'tip_enabled' not in columns:
+                cursor.execute("ALTER TABLE gigs ADD COLUMN tip_enabled INTEGER DEFAULT 1")
+                conn.commit()
+                app.logger.info("Added tip_enabled column to gigs table")
+        except sqlite3.OperationalError as e:
+            app.logger.warning(f"Could not check/add tip_enabled column: {e}")
+        
         # Create new active gig
-        if gig_name:
-            cursor.execute("""
-                INSERT INTO gigs (tenant_id, name, start_time, is_active)
-                VALUES (?, ?, CURRENT_TIMESTAMP, 1)
-            """, (tenant_id, gig_name))
-        else:
-            # Generate default name from timestamp
-            default_name = f"Gig {datetime.now().strftime('%Y-%m-%d %H:%M')}"
-            cursor.execute("""
-                INSERT INTO gigs (tenant_id, name, start_time, is_active)
-                VALUES (?, ?, CURRENT_TIMESTAMP, 1)
-            """, (tenant_id, default_name))
+        tip_enabled_int = 1 if tip_enabled else 0
+        try:
+            if gig_name:
+                cursor.execute("""
+                    INSERT INTO gigs (tenant_id, name, start_time, is_active, tip_enabled)
+                    VALUES (?, ?, CURRENT_TIMESTAMP, 1, ?)
+                """, (tenant_id, gig_name, tip_enabled_int))
+            else:
+                # Generate default name from timestamp
+                default_name = f"Gig {datetime.now().strftime('%Y-%m-%d %H:%M')}"
+                cursor.execute("""
+                    INSERT INTO gigs (tenant_id, name, start_time, is_active, tip_enabled)
+                    VALUES (?, ?, CURRENT_TIMESTAMP, 1, ?)
+                """, (tenant_id, default_name, tip_enabled_int))
+        except sqlite3.OperationalError as e:
+            # If tip_enabled column still doesn't exist, try without it
+            if 'tip_enabled' in str(e).lower():
+                app.logger.warning(f"tip_enabled column issue, trying without it: {e}")
+                if gig_name:
+                    cursor.execute("""
+                        INSERT INTO gigs (tenant_id, name, start_time, is_active)
+                        VALUES (?, ?, CURRENT_TIMESTAMP, 1)
+                    """, (tenant_id, gig_name))
+                else:
+                    default_name = f"Gig {datetime.now().strftime('%Y-%m-%d %H:%M')}"
+                    cursor.execute("""
+                        INSERT INTO gigs (tenant_id, name, start_time, is_active)
+                        VALUES (?, ?, CURRENT_TIMESTAMP, 1)
+                    """, (tenant_id, default_name))
+            else:
+                raise
         
         gig_id = cursor.lastrowid
         conn.commit()
         return gig_id
     except sqlite3.OperationalError as e:
         # Table doesn't exist yet
-        app.logger.warning(f"Gigs table not found: {e}")
+        app.logger.error(f"Gigs table error: {e}")
         return None
     except Exception as e:
         app.logger.error(f"Error starting gig: {e}")
@@ -2985,6 +3015,11 @@ def tenant_start_gig(tenant_slug):
         else:
             gig_name = None
         
+        # Get tip_enabled from request (default to True if not provided)
+        tip_enabled = True
+        if data and 'tip_enabled' in data:
+            tip_enabled = bool(data.get('tip_enabled'))
+        
         tenant_id = session.get('tenant_id')
         if not tenant_id:
             return jsonify({'success': False, 'message': 'Tenant ID not found'}), 400
@@ -2992,11 +3027,21 @@ def tenant_start_gig(tenant_slug):
         # Ensure gigs table exists before trying to start gig
         try:
             ensure_gigs_table_once()
+            # Also ensure tip_intents table exists
+            ensure_tip_intents_table_once()
         except Exception as ensure_error:
-            app.logger.error(f"Error ensuring gigs table: {ensure_error}")
+            app.logger.error(f"Error ensuring tables: {ensure_error}")
             # Continue anyway, start_gig will handle the error
         
-        gig_id = start_gig(tenant_id, gig_name if gig_name else None)
+        # If tips are enabled, check PayPal configuration
+        if tip_enabled:
+            paypal_client_id = os.environ.get('PAYPAL_CLIENT_ID')
+            paypal_client_secret = os.environ.get('PAYPAL_CLIENT_SECRET')
+            if not paypal_client_id or not paypal_client_secret:
+                app.logger.warning("PayPal not configured but tips are enabled for this gig")
+                # Don't fail, just warn - tips will fail when user tries to use them
+        
+        gig_id = start_gig(tenant_id, gig_name if gig_name else None, tip_enabled)
         
         if gig_id:
             # Retrieve the gig directly by ID instead of using get_active_gig
@@ -3038,7 +3083,8 @@ def tenant_start_gig(tenant_slug):
                 'gig': {
                     'id': active_gig['id'],
                     'name': active_gig['name'],
-                    'start_time': active_gig['start_time']
+                    'start_time': active_gig['start_time'],
+                    'tip_enabled': active_gig.get('tip_enabled', 1) == 1
                 }
             })
         else:
@@ -3121,6 +3167,11 @@ def tenant_get_active_gig(tenant_slug):
         
         active_gig = get_active_gig(tenant_id)
         
+        # Get tenant PayPal link
+        cursor.execute('SELECT paypal_link FROM tenants WHERE id = ?', (tenant_id,))
+        tenant_data = cursor.fetchone()
+        paypal_link = tenant_data['paypal_link'] if tenant_data else None
+        
         if active_gig:
             return jsonify({
                 'success': True,
@@ -3128,11 +3179,17 @@ def tenant_get_active_gig(tenant_slug):
                     'id': active_gig['id'],
                     'name': active_gig['name'],
                     'start_time': active_gig['start_time'],
-                    'announcement': active_gig.get('announcement', '')
-                }
+                    'announcement': active_gig.get('announcement', ''),
+                    'tip_enabled': active_gig.get('tip_enabled', 1) == 1
+                },
+                'paypal_link': paypal_link
             })
         else:
-            return jsonify({'success': True, 'gig': None})
+            return jsonify({
+                'success': True, 
+                'gig': None,
+                'paypal_link': paypal_link
+            })
     finally:
         conn.close()
 
@@ -3181,6 +3238,46 @@ def tenant_send_announcement(tenant_slug):
         return jsonify({'success': False, 'message': _('Error sending announcement')}), 500
     finally:
         conn.close()
+
+@app.route('/<tenant_slug>/update_tip_enabled', methods=['POST'])
+def tenant_update_tip_enabled(tenant_slug):
+    """Update tip_enabled setting for the active gig."""
+    if not session.get('is_tenant_admin') or session.get('tenant_slug') != tenant_slug:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+    
+    tenant_id = session.get('tenant_id')
+    if not tenant_id:
+        return jsonify({'success': False, 'message': 'Tenant ID not found'}), 400
+    
+    try:
+        data = request.get_json()
+        tip_enabled = bool(data.get('tip_enabled', True))
+        
+        active_gig = get_active_gig(tenant_id)
+        if not active_gig:
+            return jsonify({'success': False, 'message': 'No active gig found'}), 404
+        
+        gig_id = active_gig['id']
+        tip_enabled_int = 1 if tip_enabled else 0
+        
+        conn = create_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            UPDATE gigs 
+            SET tip_enabled = ?
+            WHERE id = ? AND tenant_id = ?
+        """, (tip_enabled_int, gig_id, tenant_id))
+        conn.commit()
+        conn.close()
+        
+        return jsonify({
+            'success': True, 
+            'message': 'Tip setting updated successfully',
+            'tip_enabled': tip_enabled
+        })
+    except Exception as e:
+        app.logger.error(f"Error updating tip_enabled: {e}")
+        return jsonify({'success': False, 'message': str(e)}), 500
 
 @app.route('/<tenant_slug>/update_default_language', methods=['POST'])
 def tenant_update_default_language(tenant_slug):
@@ -3600,12 +3697,30 @@ def get_setting(setting_key, tenant_id=None):
     }
     return defaults.get(setting_key, None)
 
-def count_user_requests(user_name, tenant_id=None):
-    # Filter by tenant_id if available
-    if tenant_id:
-        result = fetch_results("SELECT COUNT(*) AS request_count FROM requests WHERE requester = ? AND tenant_id = ?", (user_name, tenant_id))
+def count_user_requests(user_name, tenant_id=None, gig_id=None):
+    """
+    Count user requests. By default counts only pending requests.
+    If gig_id is provided, counts only pending requests for that gig.
+    """
+    # Build query to count only pending requests
+    if tenant_id and gig_id:
+        # Count pending requests for specific gig
+        result = fetch_results(
+            "SELECT COUNT(*) AS request_count FROM requests WHERE requester = ? AND tenant_id = ? AND gig_id = ? AND status = ?",
+            (user_name, tenant_id, gig_id, 'pending')
+        )
+    elif tenant_id:
+        # Count pending requests for tenant (all gigs)
+        result = fetch_results(
+            "SELECT COUNT(*) AS request_count FROM requests WHERE requester = ? AND tenant_id = ? AND status = ?",
+            (user_name, tenant_id, 'pending')
+        )
     else:
-        result = fetch_results("SELECT COUNT(*) AS request_count FROM requests WHERE requester = ?", (user_name,))
+        # Count all pending requests (no tenant filter)
+        result = fetch_results(
+            "SELECT COUNT(*) AS request_count FROM requests WHERE requester = ? AND status = ?",
+            (user_name, 'pending')
+        )
     
     if result:
         return result[0]['request_count']
@@ -3759,6 +3874,68 @@ def update_venue():
         'message': 'Venue updated successfully.',
         'venue_name': new_venue_name
     })
+
+@app.route('/<tenant_slug>/update_paypal_link', methods=['POST'])
+def tenant_update_paypal_link(tenant_slug):
+    """Update PayPal.me link for the tenant."""
+    if not session.get('is_tenant_admin') or session.get('tenant_slug') != tenant_slug:
+        return jsonify({'success': False, 'message': _('Unauthorized')}), 403
+    
+    data = request.get_json()
+    paypal_link = data.get('paypal_link', '').strip()
+    
+    # Validate and normalize PayPal.me link
+    if paypal_link:
+        # Remove http:// or https:// if present
+        paypal_link = paypal_link.replace('https://', '').replace('http://', '')
+        # Remove www. if present
+        paypal_link = paypal_link.replace('www.', '')
+        # Ensure it starts with paypal.me/
+        if not paypal_link.startswith('paypal.me/'):
+            if paypal_link.startswith('paypal.me'):
+                paypal_link = 'paypal.me/' + paypal_link.replace('paypal.me', '').lstrip('/')
+            else:
+                paypal_link = 'paypal.me/' + paypal_link.lstrip('/')
+    
+    tenant_id = session.get('tenant_id')
+    if not tenant_id:
+        return jsonify({'success': False, 'message': _('Tenant ID not found')}), 400
+    
+    conn = create_connection()
+    cursor = conn.cursor()
+    try:
+        # Check if updated_at column exists
+        cursor.execute("PRAGMA table_info(tenants)")
+        columns = [col[1] for col in cursor.fetchall()]
+        has_updated_at = 'updated_at' in columns
+        
+        # Update PayPal link
+        if has_updated_at:
+            cursor.execute("""
+                UPDATE tenants 
+                SET paypal_link = ?,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+            """, (paypal_link if paypal_link else None, tenant_id))
+        else:
+            cursor.execute("""
+                UPDATE tenants 
+                SET paypal_link = ?
+                WHERE id = ?
+            """, (paypal_link if paypal_link else None, tenant_id))
+        conn.commit()
+        
+        return jsonify({
+            'success': True, 
+            'message': _('PayPal link updated successfully'),
+            'paypal_link': paypal_link
+        })
+    except Exception as e:
+        app.logger.error(f"Error updating PayPal link: {e}", exc_info=True)
+        conn.rollback()
+        return jsonify({'success': False, 'message': _('Error updating PayPal link')}), 500
+    finally:
+        conn.close()
 
 @app.route('/get_venue_name', methods=['GET'])
 def fetch_venue_name():
@@ -3929,6 +4106,92 @@ def get_user_requested_song_ids():
         app.logger.error(f"Error fetching user requests: {e}")
         return jsonify({'requested_song_ids': []})
 
+# PayPal API Helper Functions
+def get_paypal_access_token(client_id, client_secret, mode='sandbox'):
+    """Get PayPal OAuth access token."""
+    base_url = 'https://api-m.sandbox.paypal.com' if mode == 'sandbox' else 'https://api-m.paypal.com'
+    url = f"{base_url}/v1/oauth2/token"
+    
+    headers = {
+        'Accept': 'application/json',
+        'Accept-Language': 'en_US',
+    }
+    
+    data = {
+        'grant_type': 'client_credentials'
+    }
+    
+    try:
+        response = requests.post(
+            url,
+            headers=headers,
+            data=data,
+            auth=(client_id, client_secret),
+            timeout=10
+        )
+        response.raise_for_status()
+        token_data = response.json()
+        return token_data.get('access_token')
+    except requests.exceptions.RequestException as e:
+        app.logger.error(f"Error getting PayPal access token: {e}")
+        return None
+
+def create_paypal_order(access_token, amount, currency, mode='sandbox', description=None):
+    """Create a PayPal order and return order ID."""
+    base_url = 'https://api-m.sandbox.paypal.com' if mode == 'sandbox' else 'https://api-m.paypal.com'
+    url = f"{base_url}/v2/checkout/orders"
+    
+    headers = {
+        'Content-Type': 'application/json',
+        'Authorization': f'Bearer {access_token}',
+        'PayPal-Request-Id': f'order-{int(time.time())}'
+    }
+    
+    payload = {
+        'intent': 'CAPTURE',
+        'purchase_units': [{
+            'amount': {
+                'currency_code': currency,
+                'value': f"{amount:.2f}"
+            }
+        }]
+    }
+    
+    if description:
+        payload['purchase_units'][0]['description'] = description
+    
+    try:
+        response = requests.post(url, headers=headers, json=payload, timeout=10)
+        response.raise_for_status()
+        order_data = response.json()
+        return order_data.get('id'), order_data
+    except requests.exceptions.RequestException as e:
+        app.logger.error(f"Error creating PayPal order: {e}")
+        if hasattr(e.response, 'text'):
+            app.logger.error(f"PayPal API error response: {e.response.text}")
+        return None, None
+
+def capture_paypal_order(access_token, order_id, mode='sandbox'):
+    """Capture a PayPal order and return capture details."""
+    base_url = 'https://api-m.sandbox.paypal.com' if mode == 'sandbox' else 'https://api-m.paypal.com'
+    url = f"{base_url}/v2/checkout/orders/{order_id}/capture"
+    
+    headers = {
+        'Content-Type': 'application/json',
+        'Authorization': f'Bearer {access_token}'
+    }
+    
+    try:
+        response = requests.post(url, headers=headers, json={}, timeout=10)
+        response.raise_for_status()
+        capture_data = response.json()
+        return capture_data
+    except requests.exceptions.RequestException as e:
+        app.logger.error(f"Error capturing PayPal order: {e}")
+        if hasattr(e.response, 'text'):
+            app.logger.error(f"PayPal API error response: {e.response.text}")
+        return None
+
 @app.route('/request_song/<int:song_id>', methods=['POST'])
 @limiter.limit("10 per minute")
 def request_song(song_id):
@@ -3969,12 +4232,22 @@ def request_song(song_id):
 
     try:
         data = request.get_json()
+        app.logger.info(f"📥 Request song data received: {data}")
         user_name = data.get('user')
+        tip_amount = data.get('tip_amount')  # Optional tip amount in euros (will be converted to cents)
+        app.logger.info(f"📥 Parsed: user_name={user_name}, tip_amount={tip_amount} (type: {type(tip_amount)}), tip_amount in data: {'tip_amount' in data if data else False}")
         if not user_name:
             return jsonify({'error': _('User Required')}), 400
         
         max_requests = int(get_setting('max_requests_per_user', tenant_id))  # Ensure max_requests is an integer with tenant isolation
-        user_requests = count_user_requests(user_name, tenant_id)
+        
+        # Get active gig for counting requests
+        active_gig_for_count = get_active_gig(tenant_id)
+        gig_id_for_count = active_gig_for_count['id'] if active_gig_for_count else None
+        
+        # Count only pending requests for the current active gig
+        user_requests = count_user_requests(user_name, tenant_id, gig_id_for_count)
+        app.logger.info(f"User {user_name} has {user_requests} pending requests (max: {max_requests}, gig_id: {gig_id_for_count})")
 
         if user_requests >= max_requests:
             # Log failed request - max requests reached
@@ -4052,21 +4325,210 @@ def request_song(song_id):
         active_gig = get_active_gig(tenant_id)
         gig_id = active_gig['id'] if active_gig else None
         
+        # Check if tips are enabled for this gig
+        tip_enabled = True  # Default to enabled for backward compatibility
+        if active_gig:
+            tip_enabled = active_gig.get('tip_enabled', 1) == 1
+        
+        # Validate tip amount if provided
+        tip_amount_cents = 0
+        app.logger.info(f"🔍 Validating tip: tip_amount={tip_amount} (type: {type(tip_amount)}), tip_enabled={tip_enabled}, active_gig={active_gig.get('id') if active_gig else None}")
+        app.logger.info(f"🔍 tip_amount is not None: {tip_amount is not None}, tip_amount > 0: {tip_amount > 0 if tip_amount is not None else False}")
+        if tip_amount is not None and tip_amount > 0:
+            app.logger.info(f"✅ Tip amount provided: {tip_amount}, proceeding with validation")
+            if not tip_enabled:
+                app.logger.warning(f"❌ Tip requested but not enabled for gig {active_gig.get('id') if active_gig else 'N/A'}")
+                return jsonify({'error': _('Tips are not enabled for this event')}), 400
+            # Convert euros to cents
+            try:
+                tip_amount_cents = int(float(tip_amount) * 100)
+                app.logger.info(f"✅ Converted tip_amount {tip_amount} EUR to {tip_amount_cents} cents")
+            except (ValueError, TypeError) as e:
+                app.logger.error(f"❌ Invalid tip_amount format: {tip_amount}, error: {e}")
+                return jsonify({'error': _('Invalid tip amount format')}), 400
+            if tip_amount_cents < 100:  # Minimum 1 euro
+                app.logger.warning(f"❌ Tip amount too small: {tip_amount_cents} cents")
+                return jsonify({'error': _('Minimum tip amount is 1 EUR')}), 400
+        else:
+            app.logger.info(f"ℹ️ No tip amount provided or tip_amount is 0: tip_amount={tip_amount}")
+        
         # Add the song to the queue with tenant_id, session_id, gig_id, and default status
+        # Use tip_amount in euros (as stored in requests table) vs tip_amount_cents (for TipIntent)
+        tip_amount_for_db = tip_amount if tip_amount else 0.0
         try:
             cursor.execute(
                 'INSERT INTO requests (song_id, requester, tenant_id, session_id, gig_id, status, tip_amount) VALUES (?, ?, ?, ?, ?, ?, ?)', 
-                (song_id, user_name, tenant_id, user_session_id, gig_id, 'pending', 0.0)
+                (song_id, user_name, tenant_id, user_session_id, gig_id, 'pending', tip_amount_for_db)
             )
-        except sqlite3.OperationalError:
+        except sqlite3.OperationalError as e:
+            app.logger.error(f"Error inserting request with gig_id: {e}")
             # If gig_id column doesn't exist yet, insert without it (backward compatibility)
-            cursor.execute(
-                'INSERT INTO requests (song_id, requester, tenant_id, session_id, status, tip_amount) VALUES (?, ?, ?, ?, ?, ?)', 
-                (song_id, user_name, tenant_id, user_session_id, 'pending', 0.0)
-            )
+            try:
+                cursor.execute(
+                    'INSERT INTO requests (song_id, requester, tenant_id, session_id, status, tip_amount) VALUES (?, ?, ?, ?, ?, ?)', 
+                    (song_id, user_name, tenant_id, user_session_id, 'pending', tip_amount_for_db)
+                )
+            except sqlite3.OperationalError as e2:
+                app.logger.error(f"Error inserting request without gig_id: {e2}")
+                conn.close()
+                return jsonify({'error': _('Database error: unable to insert request')}), 500
+        except Exception as e:
+            app.logger.error(f"Unexpected error inserting request: {e}", exc_info=True)
+            conn.close()
+            return jsonify({'error': _('Database error: unable to insert request')}), 500
         request_id = cursor.lastrowid
 
-        conn.commit()
+        # Create TipIntent if tip amount is provided
+        tip_intent_id = None
+        tip_intent_data = None
+        paypal_order_id = None
+        app.logger.info(f"🔍 Checking if TipIntent should be created: tip_amount_cents={tip_amount_cents}, tip_amount_cents > 0: {tip_amount_cents > 0}")
+        if tip_amount_cents > 0:
+            try:
+                app.logger.info(f"✅ Creating TipIntent: request_id={request_id}, tip_amount_cents={tip_amount_cents}")
+                # Get musician_id (tenant_id serves as musician_id in this context)
+                musician_id = tenant_id
+                
+                # Get PayPal credentials from environment
+                paypal_client_id = os.environ.get('PAYPAL_CLIENT_ID')
+                paypal_client_secret = os.environ.get('PAYPAL_CLIENT_SECRET')
+                paypal_mode = os.environ.get('PAYPAL_MODE', 'sandbox')
+                
+                if not paypal_client_id or not paypal_client_secret:
+                    app.logger.warning("PayPal credentials not configured - creating TipIntent without order")
+                    # Still create TipIntent but without order
+                    cursor.execute("""
+                        INSERT INTO tip_intents (
+                            musician_id, tenant_id, user_session_id, request_id,
+                            amount, currency, provider, status
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    """, (
+                        musician_id, tenant_id, user_session_id, request_id,
+                        tip_amount_cents, 'EUR', 'paypal', 'pending'
+                    ))
+                    tip_intent_id = cursor.lastrowid
+                    conn.commit()
+                    app.logger.info(f"TipIntent created without PayPal order (credentials missing): {tip_intent_id}")
+                    
+                    # Fetch the created tip_intent
+                    cursor.execute("""
+                        SELECT id, amount, currency, provider, status, provider_payment_id, created_at
+                        FROM tip_intents WHERE id = ?
+                    """, (tip_intent_id,))
+                    tip_intent = cursor.fetchone()
+                    
+                    app.logger.info(f"🔍 Fetching TipIntent {tip_intent_id}, result: {tip_intent is not None}")
+                    if tip_intent:
+                        # sqlite3.Row doesn't have .get(), use direct access with try/except
+                        provider_payment_id = tip_intent['provider_payment_id'] if 'provider_payment_id' in tip_intent.keys() else None
+                        tip_intent_data = {
+                            'id': tip_intent['id'],
+                            'amount': tip_intent['amount'],
+                            'amount_euros': tip_intent['amount'] / 100.0,
+                            'currency': tip_intent['currency'],
+                            'provider': tip_intent['provider'],
+                            'status': tip_intent['status'],
+                            'paypal_order_id': provider_payment_id
+                        }
+                        app.logger.info(f"✅ TipIntent data prepared (no PayPal): {tip_intent_data}")
+                    else:
+                        app.logger.error(f"❌ TipIntent {tip_intent_id} created but not found when fetching! Trying direct query...")
+                        # Try direct query to verify
+                        cursor.execute("SELECT COUNT(*) FROM tip_intents WHERE id = ?", (tip_intent_id,))
+                        count = cursor.fetchone()[0]
+                        app.logger.error(f"❌ Direct query count for tip_intent_id {tip_intent_id}: {count}")
+                else:
+                    # Create PayPal order
+                    access_token = get_paypal_access_token(paypal_client_id, paypal_client_secret, paypal_mode)
+                    if not access_token:
+                        app.logger.error("Failed to get PayPal access token")
+                        raise Exception("Failed to get PayPal access token")
+                    
+                    amount_euros = tip_amount_cents / 100.0
+                    tenant_name = session.get('tenant_name', 'the musician')
+                    description = f"Tip for {tenant_name}"
+                    
+                    paypal_order_id, order_data = create_paypal_order(
+                        access_token, 
+                        amount_euros, 
+                        'EUR', 
+                        paypal_mode,
+                        description
+                    )
+                    
+                    if not paypal_order_id:
+                        app.logger.error("Failed to create PayPal order")
+                        raise Exception("Failed to create PayPal order")
+                    
+                    app.logger.info(f"PayPal order created: {paypal_order_id}")
+                    
+                    # Create TipIntent with PayPal order ID
+                    cursor.execute("""
+                        INSERT INTO tip_intents (
+                            musician_id, tenant_id, user_session_id, request_id,
+                            amount, currency, provider, provider_payment_id, status
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """, (
+                        musician_id, tenant_id, user_session_id, request_id,
+                        tip_amount_cents, 'EUR', 'paypal', paypal_order_id, 'pending'
+                    ))
+                    tip_intent_id = cursor.lastrowid
+                    conn.commit()  # Commit before fetching
+                    app.logger.info(f"TipIntent created with id: {tip_intent_id}, PayPal order: {paypal_order_id}")
+                    
+                    # Fetch the created tip_intent
+                    cursor.execute("""
+                        SELECT id, amount, currency, provider, status, provider_payment_id, created_at
+                        FROM tip_intents WHERE id = ?
+                    """, (tip_intent_id,))
+                    tip_intent = cursor.fetchone()
+                    
+                    app.logger.info(f"🔍 Fetching TipIntent {tip_intent_id} (with PayPal), result: {tip_intent is not None}")
+                    if tip_intent:
+                        # sqlite3.Row doesn't have .get(), use direct access
+                        provider_payment_id = tip_intent['provider_payment_id'] if 'provider_payment_id' in tip_intent.keys() else None
+                        tip_intent_data = {
+                            'id': tip_intent['id'],
+                            'amount': tip_intent['amount'],
+                            'amount_euros': tip_intent['amount'] / 100.0,
+                            'currency': tip_intent['currency'],
+                            'provider': tip_intent['provider'],
+                            'status': tip_intent['status'],
+                            'paypal_order_id': provider_payment_id or paypal_order_id
+                        }
+                        app.logger.info(f"✅ TipIntent data prepared (with PayPal): {tip_intent_data}, paypal_order_id: {tip_intent_data.get('paypal_order_id')}")
+                    else:
+                        app.logger.error(f"❌ TipIntent {tip_intent_id} created but not found when fetching! Trying direct query...")
+                        # Try direct query to verify
+                        cursor.execute("SELECT COUNT(*) FROM tip_intents WHERE id = ?", (tip_intent_id,))
+                        count = cursor.fetchone()[0]
+                        app.logger.error(f"❌ Direct query count for tip_intent_id {tip_intent_id}: {count}")
+            except sqlite3.OperationalError as e:
+                # If tip_intents table doesn't exist yet, log but don't fail the request
+                app.logger.error(f"❌ TipIntent creation failed (table may not exist): {e}", exc_info=True)
+                app.logger.error(f"❌ Full error details: {str(e)}")
+                tip_intent_id = None
+                tip_intent_data = None
+            except Exception as e:
+                app.logger.error(f"❌ Error creating TipIntent: {e}", exc_info=True)
+                app.logger.error(f"❌ Exception type: {type(e).__name__}, message: {str(e)}")
+                import traceback
+                app.logger.error(f"❌ Traceback: {traceback.format_exc()}")
+                # Don't fail the request if TipIntent creation fails, but log it
+                tip_intent_id = None
+                tip_intent_data = None
+        
+        # Only commit if TipIntent was not created (to avoid double commit)
+        # TipIntent creation already commits in both branches
+        if tip_intent_id is None:
+            conn.commit()
+        
+        app.logger.info(f"🔍 Final check BEFORE closing connection:")
+        app.logger.info(f"   - tip_intent_data exists: {tip_intent_data is not None}")
+        app.logger.info(f"   - tip_intent_id: {tip_intent_id}")
+        app.logger.info(f"   - tip_amount_cents: {tip_amount_cents}")
+        if tip_intent_data:
+            app.logger.info(f"   - tip_intent_data keys: {list(tip_intent_data.keys())}")
         conn.close()
 
         # Log successful song request (async - non-blocking)
@@ -4094,8 +4556,70 @@ def request_song(song_id):
                 **log_data
             )
 
-        # Return success message
-        return jsonify({'success': True, 'message': _('Song request successful')}), 200
+        # Return success message with tip_intent data if created
+        response_data = {
+            'success': True, 
+            'message': _('Song request successful'),
+            'request_id': request_id
+        }
+        
+        # Debug: Check tip_intent_data before adding to response
+        app.logger.info(f"🔍 DEBUG: About to check tip_intent_data:")
+        app.logger.info(f"   - tip_intent_data is None: {tip_intent_data is None}")
+        app.logger.info(f"   - tip_intent_data value: {tip_intent_data}")
+        app.logger.info(f"   - tip_intent_id: {tip_intent_id}")
+        app.logger.info(f"   - tip_amount_cents: {tip_amount_cents}")
+        
+        # Fallback: If we have tip_intent_id but no data, try to fetch it directly
+        if tip_intent_id and not tip_intent_data:
+            app.logger.warning(f"⚠️ Fallback: tip_intent_id exists ({tip_intent_id}) but tip_intent_data is None. Trying to fetch directly...")
+            try:
+                fallback_conn = create_connection()
+                if fallback_conn:
+                    fallback_cursor = fallback_conn.cursor()
+                    fallback_cursor.execute("""
+                        SELECT id, amount, currency, provider, status, provider_payment_id, created_at
+                        FROM tip_intents WHERE id = ?
+                    """, (tip_intent_id,))
+                    fallback_tip_intent = fallback_cursor.fetchone()
+                    if fallback_tip_intent:
+                        provider_payment_id = fallback_tip_intent['provider_payment_id'] if 'provider_payment_id' in fallback_tip_intent.keys() else None
+                        tip_intent_data = {
+                            'id': fallback_tip_intent['id'],
+                            'amount': fallback_tip_intent['amount'],
+                            'amount_euros': fallback_tip_intent['amount'] / 100.0,
+                            'currency': fallback_tip_intent['currency'],
+                            'provider': fallback_tip_intent['provider'],
+                            'status': fallback_tip_intent['status'],
+                            'paypal_order_id': provider_payment_id
+                        }
+                        app.logger.info(f"✅ Fallback fetch successful: {tip_intent_data}")
+                    fallback_conn.close()
+            except Exception as e:
+                app.logger.error(f"❌ Fallback fetch failed: {e}")
+        
+        if tip_intent_data:
+            response_data['tip_intent'] = tip_intent_data
+            # Also include PayPal client ID for frontend SDK
+            paypal_client_id = os.environ.get('PAYPAL_CLIENT_ID')
+            paypal_mode = os.environ.get('PAYPAL_MODE', 'sandbox')
+            if paypal_client_id:
+                response_data['paypal_client_id'] = paypal_client_id
+                response_data['paypal_mode'] = paypal_mode
+            app.logger.info(f"✅ Returning response with tip_intent: {tip_intent_data}")
+            app.logger.info(f"✅ Response data now has tip_intent: {'tip_intent' in response_data}")
+        else:
+            app.logger.warning(f"⚠️ No tip_intent_data to return! tip_amount_cents was: {tip_amount_cents}, tip_intent_id: {tip_intent_id}")
+            # If we have tip_intent_id but no data, try to fetch it directly
+            if tip_intent_id:
+                app.logger.warning(f"⚠️ We have tip_intent_id {tip_intent_id} but tip_intent_data is None. This is a bug!")
+        
+        app.logger.info(f"📤 Final response_data keys: {list(response_data.keys())}, has tip_intent: {'tip_intent' in response_data}")
+        if 'tip_intent' in response_data:
+            app.logger.info(f"📤 tip_intent in response: {response_data['tip_intent']}")
+        else:
+            app.logger.warning(f"⚠️ tip_intent NOT in response! tip_amount_cents was: {tip_amount_cents}")
+        return jsonify(response_data), 200
 
     except Exception as e:
         # Log error
@@ -4109,6 +4633,342 @@ def request_song(song_id):
                 )
         app.logger.error(f"Error incrementing request: {e}")
         return jsonify({'error': _('Song Request Error')}), 500
+
+@app.route('/api/create_paypal_order', methods=['POST'])
+@limiter.limit("20 per minute")
+def create_paypal_order():
+    """Create a PayPal order for a tip intent."""
+    if not is_session_valid():
+        return jsonify({'error': 'Session invalid'}), 401
+    
+    try:
+        data = request.get_json()
+        tip_intent_id = data.get('tip_intent_id')
+        if not tip_intent_id:
+            return jsonify({'error': 'tip_intent_id is required'}), 400
+        
+        tenant_id = session.get('tenant_id')
+        if not tenant_id:
+            return jsonify({'error': 'Tenant ID not found'}), 400
+        
+        conn = create_connection()
+        cursor = conn.cursor()
+        
+        # Fetch tip_intent
+        cursor.execute("""
+            SELECT id, amount, currency, status, tenant_id
+            FROM tip_intents
+            WHERE id = ? AND tenant_id = ?
+        """, (tip_intent_id, tenant_id))
+        tip_intent = cursor.fetchone()
+        
+        if not tip_intent:
+            conn.close()
+            return jsonify({'error': 'Tip intent not found'}), 404
+        
+        if tip_intent['status'] != 'pending':
+            conn.close()
+            return jsonify({'error': 'Tip intent is not pending'}), 400
+        
+        # Get PayPal credentials from global environment variables only
+        # Platform-level configuration - single PayPal Business account
+        paypal_client_id = os.environ.get('PAYPAL_CLIENT_ID')
+        paypal_client_secret = os.environ.get('PAYPAL_CLIENT_SECRET')
+        paypal_mode = os.environ.get('PAYPAL_MODE', 'sandbox')
+        
+        if not paypal_client_id or not paypal_client_secret:
+            conn.close()
+            return jsonify({'error': 'PayPal not configured'}), 500
+        
+        # If order already exists, return it
+        if tip_intent.get('provider_payment_id'):
+            conn.close()
+            amount = tip_intent['amount'] / 100.0
+            return jsonify({
+                'success': True,
+                'order_id': tip_intent['provider_payment_id'],
+                'amount': amount,
+                'currency': tip_intent['currency'],
+                'paypal_client_id': paypal_client_id,
+                'paypal_mode': paypal_mode
+            }), 200
+        
+        # Create new PayPal order if it doesn't exist
+        amount = tip_intent['amount'] / 100.0
+        currency = tip_intent['currency']
+        
+        access_token = get_paypal_access_token(paypal_client_id, paypal_client_secret, paypal_mode)
+        if not access_token:
+            conn.close()
+            return jsonify({'error': 'Failed to get PayPal access token'}), 500
+        
+        # Get tenant name for description
+        cursor.execute("SELECT name FROM tenants WHERE id = ?", (tenant_id,))
+        tenant = cursor.fetchone()
+        tenant_name = tenant['name'] if tenant else 'the musician'
+        description = f"Tip for {tenant_name}"
+        
+        paypal_order_id, order_data = create_paypal_order(
+            access_token, 
+            amount, 
+            currency, 
+            paypal_mode,
+            description
+        )
+        
+        if not paypal_order_id:
+            conn.close()
+            return jsonify({'error': 'Failed to create PayPal order'}), 500
+        
+        # Update tip_intent with provider_payment_id
+        cursor.execute("""
+            UPDATE tip_intents
+            SET provider_payment_id = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+        """, (paypal_order_id, tip_intent_id))
+        
+        conn.commit()
+        conn.close()
+        
+        # Return order details for frontend PayPal SDK
+        return jsonify({
+            'success': True,
+            'order_id': paypal_order_id,
+            'amount': amount,
+            'currency': currency,
+            'paypal_client_id': paypal_client_id,
+            'paypal_mode': paypal_mode
+        }), 200
+        
+    except Exception as e:
+        app.logger.error(f"Error creating PayPal order: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/confirm_paypal_payment', methods=['POST'])
+@app.route('/api/tips/paypal/capture', methods=['POST'])
+@limiter.limit("20 per minute")
+def confirm_paypal_payment():
+    """Confirm/capture a PayPal payment for a tip intent."""
+    if not is_session_valid():
+        return jsonify({'error': 'Session invalid'}), 401
+    
+    try:
+        data = request.get_json()
+        tip_intent_id = data.get('tip_intent_id')
+        order_id = data.get('order_id')
+        
+        if not tip_intent_id or not order_id:
+            return jsonify({'error': 'tip_intent_id and order_id are required'}), 400
+        
+        tenant_id = session.get('tenant_id')
+        if not tenant_id:
+            return jsonify({'error': 'Tenant ID not found'}), 400
+        
+        conn = create_connection()
+        cursor = conn.cursor()
+        
+        # Fetch tip_intent
+        cursor.execute("""
+            SELECT id, provider_payment_id, status, tenant_id
+            FROM tip_intents
+            WHERE id = ? AND tenant_id = ?
+        """, (tip_intent_id, tenant_id))
+        tip_intent = cursor.fetchone()
+        
+        if not tip_intent:
+            conn.close()
+            return jsonify({'error': 'Tip intent not found'}), 404
+        
+        if tip_intent['status'] != 'pending':
+            conn.close()
+            return jsonify({'error': 'Tip intent is not pending'}), 400
+        
+        if tip_intent['provider_payment_id'] != order_id:
+            conn.close()
+            return jsonify({'error': 'Order ID mismatch'}), 400
+        
+        # Get PayPal credentials
+        paypal_client_id = os.environ.get('PAYPAL_CLIENT_ID')
+        paypal_client_secret = os.environ.get('PAYPAL_CLIENT_SECRET')
+        paypal_mode = os.environ.get('PAYPAL_MODE', 'sandbox')
+        
+        if not paypal_client_id or not paypal_client_secret:
+            conn.close()
+            return jsonify({'error': 'PayPal not configured'}), 500
+        
+        # Capture the PayPal order
+        access_token = get_paypal_access_token(paypal_client_id, paypal_client_secret, paypal_mode)
+        if not access_token:
+            conn.close()
+            return jsonify({'error': 'Failed to get PayPal access token'}), 500
+        
+        capture_data = capture_paypal_order(access_token, order_id, paypal_mode)
+        
+        if not capture_data:
+            # Update status to failed
+            cursor.execute("""
+                UPDATE tip_intents
+                SET status = 'failed', updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+            """, (tip_intent_id,))
+            conn.commit()
+            conn.close()
+            return jsonify({'error': 'Failed to capture PayPal payment'}), 500
+        
+        # Check if capture was successful
+        capture_status = capture_data.get('status', '').upper()
+        if capture_status == 'COMPLETED':
+            # Update tip_intent status to completed
+            cursor.execute("""
+                UPDATE tip_intents
+                SET status = 'completed', updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+            """, (tip_intent_id,))
+            conn.commit()
+            conn.close()
+            
+            return jsonify({
+                'success': True,
+                'message': 'Payment confirmed successfully',
+                'capture_id': capture_data.get('id')
+            }), 200
+        else:
+            # Update status to failed
+            cursor.execute("""
+                UPDATE tip_intents
+                SET status = 'failed', updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+            """, (tip_intent_id,))
+            conn.commit()
+            conn.close()
+            return jsonify({'error': f'Payment capture failed with status: {capture_status}'}), 400
+        
+    except Exception as e:
+        app.logger.error(f"Error confirming PayPal payment: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/create_tip', methods=['POST'])
+@limiter.limit("10 per minute")
+def create_tip():
+    """Create a standalone tip (not linked to a song request) for supporting the musician."""
+    if not is_session_valid():
+        return jsonify({'error': 'Session invalid'}), 401
+    
+    try:
+        data = request.get_json()
+        tip_amount = data.get('tip_amount')
+        
+        if not tip_amount or tip_amount <= 0:
+            return jsonify({'error': 'Valid tip amount is required'}), 400
+        
+        tenant_id = session.get('tenant_id')
+        if not tenant_id:
+            return jsonify({'error': 'Tenant ID not found'}), 400
+        
+        # Check if tips are enabled for active gig
+        active_gig = get_active_gig(tenant_id)
+        tip_enabled = True
+        if active_gig:
+            tip_enabled = active_gig.get('tip_enabled', 1) == 1
+        
+        if not tip_enabled:
+            return jsonify({'error': _('Tips are not enabled for this event')}), 400
+        
+        # Convert euros to cents
+        tip_amount_cents = int(float(tip_amount) * 100)
+        if tip_amount_cents < 100:  # Minimum 1 euro
+            return jsonify({'error': _('Minimum tip amount is 1 EUR')}), 400
+        
+        user_session_id = session.get('user_session_id', 'unknown')
+        musician_id = tenant_id
+        
+        conn = create_connection()
+        cursor = conn.cursor()
+        
+        # Get PayPal credentials
+        paypal_client_id = os.environ.get('PAYPAL_CLIENT_ID')
+        paypal_client_secret = os.environ.get('PAYPAL_CLIENT_SECRET')
+        paypal_mode = os.environ.get('PAYPAL_MODE', 'sandbox')
+        
+        paypal_order_id = None
+        if paypal_client_id and paypal_client_secret:
+            # Create PayPal order
+            access_token = get_paypal_access_token(paypal_client_id, paypal_client_secret, paypal_mode)
+            if access_token:
+                amount_euros = tip_amount_cents / 100.0
+                # Get tenant name for description
+                cursor.execute("SELECT name FROM tenants WHERE id = ?", (tenant_id,))
+                tenant = cursor.fetchone()
+                tenant_name = tenant['name'] if tenant else 'the musician'
+                description = f"Tip for {tenant_name}"
+                
+                paypal_order_id, order_data = create_paypal_order(
+                    access_token, 
+                    amount_euros, 
+                    'EUR', 
+                    paypal_mode,
+                    description
+                )
+                
+                if paypal_order_id:
+                    app.logger.info(f"PayPal order created for standalone tip: {paypal_order_id}")
+                else:
+                    app.logger.error("Failed to create PayPal order for standalone tip")
+            else:
+                app.logger.error("Failed to get PayPal access token for standalone tip")
+        else:
+            app.logger.warning("PayPal credentials not configured - creating tip intent without order")
+        
+        # Create TipIntent without request_id
+        cursor.execute("""
+            INSERT INTO tip_intents (
+                musician_id, tenant_id, user_session_id, request_id,
+                amount, currency, provider, provider_payment_id, status
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            musician_id, tenant_id, user_session_id, None,
+            tip_amount_cents, 'EUR', 'paypal', paypal_order_id, 'pending'
+        ))
+        tip_intent_id = cursor.lastrowid
+        
+        # Fetch the created tip_intent
+        cursor.execute("""
+            SELECT id, amount, currency, provider, status, provider_payment_id, created_at
+            FROM tip_intents WHERE id = ?
+        """, (tip_intent_id,))
+        tip_intent = cursor.fetchone()
+        
+        conn.commit()
+        conn.close()
+        
+        if tip_intent:
+            tip_intent_data = {
+                'id': tip_intent['id'],
+                'amount': tip_intent['amount'],
+                'amount_euros': tip_intent['amount'] / 100.0,
+                'currency': tip_intent['currency'],
+                'provider': tip_intent['provider'],
+                'status': tip_intent['status'],
+                'paypal_order_id': tip_intent.get('provider_payment_id')
+            }
+            
+            response_data = {
+                'success': True,
+                'tip_intent': tip_intent_data
+            }
+            
+            # Include PayPal client ID for frontend SDK
+            if paypal_client_id:
+                response_data['paypal_client_id'] = paypal_client_id
+                response_data['paypal_mode'] = paypal_mode
+            
+            return jsonify(response_data), 200
+        else:
+            return jsonify({'error': 'Failed to create tip intent'}), 500
+        
+    except Exception as e:
+        app.logger.error(f"Error creating tip: {e}")
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/mark_request_fulfilled/<int:request_id>', methods=['POST'])
 def mark_request_fulfilled(request_id):
@@ -5336,6 +6196,7 @@ def ensure_gigs_table():
                 end_time TIMESTAMP NULL,
                 is_active INTEGER DEFAULT 1,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                tip_enabled INTEGER DEFAULT 1,
                 FOREIGN KEY(tenant_id) REFERENCES tenants(id),
                 CHECK(is_active IN (0, 1))
             )
@@ -5376,6 +6237,16 @@ def ensure_gigs_table():
             else:
                 raise
         
+        # Add tip_enabled column to gigs table if it doesn't exist
+        try:
+            cursor.execute("ALTER TABLE gigs ADD COLUMN tip_enabled INTEGER DEFAULT 1")
+            app.logger.info("Added tip_enabled column to gigs table")
+        except sqlite3.OperationalError as e:
+            if "duplicate column name" in str(e).lower():
+                app.logger.info("Column tip_enabled already exists in gigs table")
+            else:
+                raise
+        
         conn.commit()
         app.logger.info("Successfully created 'gigs' table and indexes")
     except sqlite3.Error as e:
@@ -5384,9 +6255,76 @@ def ensure_gigs_table():
     finally:
         conn.close()
 
+def ensure_tip_intents_table():
+    """Ensure the tip_intents table exists. Called at app startup."""
+    conn = create_connection()
+    if not conn:
+        app.logger.error("Failed to create database connection for tip_intents table check")
+        return
+    
+    cursor = conn.cursor()
+    try:
+        # Check if table exists
+        cursor.execute("""
+            SELECT name FROM sqlite_master 
+            WHERE type='table' AND name='tip_intents'
+        """)
+        table_exists = cursor.fetchone()
+        
+        if table_exists:
+            conn.commit()
+            conn.close()
+            return
+        
+        # Create tip_intents table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS tip_intents (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                musician_id INTEGER NOT NULL,
+                tenant_id INTEGER NOT NULL,
+                user_session_id TEXT NOT NULL,
+                request_id INTEGER NULL,
+                amount INTEGER NOT NULL,
+                currency TEXT DEFAULT 'EUR',
+                provider TEXT DEFAULT 'paypal',
+                provider_payment_id TEXT NULL,
+                status TEXT DEFAULT 'pending',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(tenant_id) REFERENCES tenants(id),
+                FOREIGN KEY(request_id) REFERENCES requests(id),
+                CHECK(status IN ('pending', 'completed', 'failed', 'cancelled'))
+            )
+        """)
+        
+        # Create indexes
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_tip_intents_tenant_id 
+            ON tip_intents(tenant_id)
+        """)
+        
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_tip_intents_status 
+            ON tip_intents(status)
+        """)
+        
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_tip_intents_request_id 
+            ON tip_intents(request_id)
+        """)
+        
+        conn.commit()
+        app.logger.info("Successfully created 'tip_intents' table and indexes")
+    except sqlite3.Error as e:
+        app.logger.error(f"Error creating tip_intents table: {e}")
+        conn.rollback()
+    finally:
+        conn.close()
+
 # Ensure gigs table exists at startup
 # This is called when the module is imported, which happens on PythonAnywhere
 _gigs_table_ensured = False
+_tip_intents_table_ensured = False
 
 def ensure_gigs_table_once():
     """Ensure gigs table exists, but only once per app instance."""
@@ -5401,14 +6339,29 @@ def ensure_gigs_table_once():
     except Exception as e:
         app.logger.error(f"Error ensuring gigs table at startup: {e}")
 
+def ensure_tip_intents_table_once():
+    """Ensure tip_intents table exists, but only once per app instance."""
+    global _tip_intents_table_ensured
+    if _tip_intents_table_ensured:
+        return
+    
+    try:
+        with app.app_context():
+            ensure_tip_intents_table()
+            _tip_intents_table_ensured = True
+    except Exception as e:
+        app.logger.error(f"Error ensuring tip_intents table at startup: {e}")
+
 # Call immediately when module loads
 ensure_gigs_table_once()
+ensure_tip_intents_table_once()
 
 # Also ensure on first request (fallback for PythonAnywhere)
 @app.before_request
-def ensure_gigs_table_before_request():
-    """Ensure gigs table exists before each request (only runs once due to flag)."""
+def ensure_tables_before_request():
+    """Ensure tables exist before each request (only runs once due to flag)."""
     ensure_gigs_table_once()
+    ensure_tip_intents_table_once()
 
 if __name__ == '__main__':
     #app.run(debug=True)

@@ -8,6 +8,7 @@
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/search-mobile.css') }}" />
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styleguide.css') }}" />
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/globals.css') }}" />
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/tip-dialog.css') }}" />
     <script src="{{ url_for('static', filename='image-utils.js') }}"></script>
     <script>
         // Set tenant slug globally for image utilities
@@ -16,6 +17,7 @@
         window.autoRefreshInterval = {{ auto_refresh_interval }} * 1000; // Convert seconds to milliseconds
     </script>
     <script src="{{ url_for('static', filename='search.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='tip-dialog.js') }}" defer></script>
     <meta name="viewport" content="width=393, initial-scale=1">
 </head>
 
@@ -52,6 +54,11 @@
                             {% if tenant and tenant.website_url %}
                             <a href="{{ tenant.website_url }}" target="_blank">
                                 🌐 {{ _('About') }} {{ tenant.name }}
+                            </a>
+                            {% endif %}
+                            {% if tenant %}
+                            <a href="#" id="supportMusicianLink" onclick="event.preventDefault(); if(window.tipDialog) { window.tipDialog.showStandaloneTipDialog(); }">
+                                ❤️ {{ _('Support') }} {{ tenant.name }}
                             </a>
                             {% endif %}
                             <div class="menu-divider"></div> <!-- Divider -->

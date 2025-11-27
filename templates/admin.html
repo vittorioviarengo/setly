@@ -165,6 +165,38 @@
                 </div>
             </div>
 
+            <!-- PayPal Link Card -->
+            <div class="admin-card">
+                <div class="card-header">
+                    <span class="card-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                    </span>
+                    <div>
+                        <h2>{{ _('PayPal Link') }}</h2>
+                        <p class="card-subtitle">{{ _('Configure your PayPal.me link to receive contributions') }}</p>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <form id="paypalLinkForm">
+                        <div style="margin-bottom: 1rem;">
+                            <label for="paypalLinkInput" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">{{ _('PayPal.me Link') }}</label>
+                            <input type="text" id="paypalLinkInput" name="paypal_link" 
+                                   value="{% if tenant and tenant.paypal_link %}{{ tenant.paypal_link }}{% endif %}" 
+                                   placeholder="paypal.me/tuonome"
+                                   style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;">
+                            <small style="color: #666; display: block; margin-top: 0.5rem;">
+                                {{ _('Example: paypal.me/vittorio') }}<br>
+                                {{ _('Get your link from') }} <a href="https://www.paypal.com/paypalme" target="_blank">paypal.com/paypalme</a>
+                            </small>
+                        </div>
+                        <button type="submit" class="btn" style="width: 100%;">
+                            {{ _('Save PayPal Link') }}
+                        </button>
+                        <p id="paypalLinkMessage" style="margin-top: 0.75rem; font-weight: 500; display: none;"></p>
+                    </form>
+                </div>
+            </div>
+
             <!-- Artist Bio Card -->
             <div class="admin-card">
                 <div class="card-header">
@@ -904,6 +936,56 @@
             });
         }
 
+        function updatePayPalLink(event) {
+            event.preventDefault();
+            const paypalLink = document.getElementById('paypalLinkInput').value.trim();
+            
+            fetch('{% if tenant %}/{{ tenant.slug }}/update_paypal_link{% else %}/update_paypal_link{% endif %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 
+                    paypal_link: paypalLink
+                })
+            })
+            .then(async response => {
+                const data = await response.json();
+                const messageEl = document.getElementById('paypalLinkMessage');
+                
+                if (!response.ok) {
+                    // HTTP error status
+                    messageEl.textContent = '✗ ' + (data.message || `Errore ${response.status}: ${response.statusText}`);
+                    messageEl.style.color = 'var(--error-color)';
+                    messageEl.style.display = 'block';
+                    setTimeout(() => messageEl.style.display = 'none', 5000);
+                    return;
+                }
+                
+                if (data.success) {
+                    messageEl.textContent = '✓ Link PayPal aggiornato con successo!';
+                    messageEl.style.color = 'var(--success-color)';
+                    // Update the input with normalized value
+                    if (data.paypal_link) {
+                        document.getElementById('paypalLinkInput').value = data.paypal_link;
+                    }
+                } else {
+                    messageEl.textContent = '✗ ' + (data.message || 'Errore nell\'aggiornamento del link PayPal');
+                    messageEl.style.color = 'var(--error-color)';
+                }
+                messageEl.style.display = 'block';
+                setTimeout(() => messageEl.style.display = 'none', 5000);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                const messageEl = document.getElementById('paypalLinkMessage');
+                messageEl.textContent = '✗ Errore nell\'aggiornamento del link PayPal: ' + error.message;
+                messageEl.style.color = 'var(--error-color)';
+                messageEl.style.display = 'block';
+                setTimeout(() => messageEl.style.display = 'none', 5000);
+            });
+        }
+
         function updateBio(event) {
             event.preventDefault();
             const artistName = document.getElementById('artistNameInput').value;
@@ -1071,6 +1153,9 @@
             // Events form
             const eventsForm = document.getElementById('eventsForm');
             if (eventsForm) eventsForm.addEventListener('submit', updateEventsLink);
+
+            const paypalLinkForm = document.getElementById('paypalLinkForm');
+            if (paypalLinkForm) paypalLinkForm.addEventListener('submit', updatePayPalLink);
             
             // Bio form
             const bioForm = document.getElementById('bioForm');

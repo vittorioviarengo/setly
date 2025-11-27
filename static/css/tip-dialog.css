@@ -1,0 +1,559 @@
+/* Tip Dialog Styles */
+.tip-dialog-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    z-index: 10000;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    animation: tipDialogFadeIn 0.2s ease-out;
+}
+
+.tip-dialog-overlay.active {
+    display: flex;
+}
+
+@keyframes tipDialogFadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.tip-dialog {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+    max-width: 500px;
+    width: 100%;
+    max-height: 90vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    animation: tipDialogSlideIn 0.3s ease-out;
+    position: relative;
+}
+
+@keyframes tipDialogSlideIn {
+    from {
+        transform: translateY(-20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.tip-dialog-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid #e0e0e0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.tip-dialog-title {
+    font-size: 20px;
+    font-weight: 600;
+    margin: 0;
+    flex: 1;
+}
+
+.tip-dialog-close {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    font-size: 28px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+    padding: 0;
+    line-height: 1;
+}
+
+.tip-dialog-close:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.tip-dialog-body {
+    padding: 24px;
+    overflow-y: auto;
+    flex: 1;
+    padding-bottom: 100px; /* Space for fixed buttons on mobile */
+}
+
+.tip-dialog-song-image {
+    width: 100%;
+    max-width: 200px;
+    height: auto;
+    border-radius: 8px;
+    margin: 0 auto 16px;
+    display: block;
+}
+
+.tip-dialog-song-info {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.tip-dialog-artist {
+    font-size: 16px;
+    color: #666;
+    font-weight: 500;
+}
+
+.tip-dialog-message {
+    margin-bottom: 24px;
+    text-align: center;
+    line-height: 1.6;
+}
+
+.tip-dialog-message p {
+    margin: 8px 0;
+}
+
+.tip-dialog-tip-section {
+    margin-bottom: 24px;
+}
+
+.tip-dialog-label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: #333;
+}
+
+.tip-amount-chips {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.tip-chip {
+    background: #f5f5f5;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 12px 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 14px;
+    font-weight: 600;
+    text-align: center;
+    color: #333;
+}
+
+.tip-chip:hover {
+    background: #e8e8e8;
+    border-color: #667eea;
+}
+
+.tip-chip.selected {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-color: #667eea;
+    color: white;
+}
+
+.tip-chip small {
+    display: block;
+    font-size: 11px;
+    font-weight: normal;
+    margin-top: 4px;
+    opacity: 0.9;
+}
+
+
+.tip-custom-amount {
+    margin-top: 12px;
+}
+
+.tip-custom-amount input {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 16px;
+}
+
+.tip-custom-amount input:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.tip-dialog-payment-info {
+    background: #f8f9fa;
+    padding: 12px;
+    border-radius: 8px;
+    text-align: center;
+    margin-bottom: 24px;
+    font-size: 14px;
+    color: #666;
+}
+
+.tip-dialog-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 24px;
+    position: relative;
+}
+
+.tip-dialog-btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    min-width: 120px;
+}
+
+.tip-dialog-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.tip-dialog-btn-secondary {
+    background: #f5f5f5;
+    color: #333;
+}
+
+.tip-dialog-btn-secondary:hover:not(:disabled) {
+    background: #e8e8e8;
+}
+
+.tip-dialog-btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    box-shadow: 0 4px 6px rgba(102, 126, 234, 0.3);
+}
+
+.tip-dialog-btn-primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(102, 126, 234, 0.4);
+}
+
+.tip-dialog-success {
+    background: #e8f5e9;
+    color: #2e7d32;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    text-align: center;
+    font-weight: 500;
+}
+
+.tip-dialog-error {
+    background: #ffebee;
+    color: #c62828;
+    padding: 16px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    text-align: center;
+    font-weight: 500;
+    border: 2px solid #ef5350;
+    box-shadow: 0 2px 4px rgba(198, 40, 40, 0.2);
+    animation: errorShake 0.5s ease-in-out;
+}
+
+@keyframes errorShake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+.tip-dialog-error strong {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 16px;
+}
+
+.tip-dialog-info {
+    background: #e3f2fd;
+    color: #1565c0;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    text-align: center;
+}
+
+.tip-dialog-payment-amount {
+    text-align: center;
+    margin: 24px 0;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.payment-amount-label {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 8px;
+}
+
+.payment-amount-value {
+    font-size: 32px;
+    font-weight: 700;
+    color: #667eea;
+}
+
+.tip-disabled {
+    background: #fff3e0;
+    color: #e65100;
+    padding: 12px;
+    border-radius: 8px;
+}
+
+/* Nudge Styles */
+.tip-nudge-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    animation: tipDialogFadeIn 0.2s ease-out;
+}
+
+.tip-nudge-dialog {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+    max-width: 400px;
+    width: 100%;
+    padding: 24px;
+    animation: tipDialogSlideIn 0.3s ease-out;
+}
+
+.tip-nudge-content {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.tip-nudge-content h3 {
+    margin: 0 0 12px 0;
+    font-size: 18px;
+    color: #333;
+}
+
+.tip-nudge-content p {
+    margin: 0;
+    color: #666;
+    font-size: 14px;
+}
+
+.tip-nudge-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.tip-nudge-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: #666;
+    cursor: pointer;
+}
+
+.tip-nudge-checkbox input {
+    width: auto;
+}
+
+.tip-nudge-buttons {
+    display: flex;
+    gap: 12px;
+}
+
+.tip-nudge-btn {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.tip-nudge-btn-secondary {
+    background: #f5f5f5;
+    color: #333;
+}
+
+.tip-nudge-btn-secondary:hover {
+    background: #e8e8e8;
+}
+
+.tip-nudge-btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.tip-nudge-btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+}
+
+/* Mobile responsive */
+@media (max-width: 600px) {
+    .tip-dialog-overlay {
+        padding: 0;
+        align-items: flex-end;
+    }
+
+    .tip-dialog {
+        max-width: 100%;
+        max-height: 95vh;
+        height: 95vh;
+        border-radius: 20px 20px 0 0;
+        margin-top: auto;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .tip-dialog-header {
+        padding: 16px 20px;
+        flex-shrink: 0;
+    }
+
+    .tip-dialog-title {
+        font-size: 18px;
+    }
+
+    .tip-dialog-body {
+        padding: 20px;
+        padding-bottom: 20px; /* Reduced since buttons are sticky now */
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .tip-dialog-song-image {
+        max-width: 150px;
+        margin-bottom: 12px;
+    }
+
+    .tip-dialog-song-info {
+        margin-bottom: 16px;
+    }
+
+    .tip-dialog-artist {
+        font-size: 14px;
+    }
+
+    .tip-dialog-message {
+        margin-bottom: 20px;
+        font-size: 14px;
+    }
+
+    .tip-dialog-message p {
+        margin: 6px 0;
+    }
+
+    .tip-dialog-tip-section {
+        margin-bottom: 16px;
+    }
+
+    .tip-custom-amount {
+        margin-top: 10px;
+    }
+
+    .tip-custom-amount input {
+        padding: 10px;
+        font-size: 14px;
+    }
+
+    .tip-dialog-label {
+        font-size: 14px;
+        margin-bottom: 10px;
+    }
+
+    .tip-amount-chips {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+
+    .tip-chip {
+        padding: 10px 6px;
+        font-size: 13px;
+    }
+
+    .tip-chip small {
+        font-size: 10px;
+        margin-top: 2px;
+    }
+
+    .tip-chip-custom {
+        grid-column: span 2;
+    }
+
+    .tip-dialog-payment-info {
+        padding: 10px;
+        margin-bottom: 16px;
+        font-size: 12px;
+    }
+
+    .tip-dialog-payment-amount {
+        margin: 16px 0;
+        padding: 16px;
+    }
+
+    .payment-amount-value {
+        font-size: 28px;
+    }
+
+    .tip-dialog-actions {
+        position: sticky;
+        bottom: 0;
+        background: white;
+        padding: 16px 20px;
+        border-top: 1px solid #e0e0e0;
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+        flex-direction: column;
+        gap: 10px;
+        z-index: 10;
+        margin-top: auto;
+        flex-shrink: 0;
+        width: 100%;
+    }
+
+    .tip-dialog-btn {
+        width: 100%;
+        padding: 14px 24px;
+        font-size: 16px;
+        min-width: auto;
+    }
+
+    /* Ensure body scrolls but buttons stay fixed */
+    .tip-dialog-body {
+        scroll-padding-bottom: 120px;
+    }
+}
+

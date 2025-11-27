@@ -41,3 +41,4 @@ Dovresti vedere `gigs` nell'output.
 - Non è necessario eseguire manualmente la migrazione se usi la versione più recente del codice
 - Le modifiche sono state committate su Git e sono disponibili con `git pull`
 
+
